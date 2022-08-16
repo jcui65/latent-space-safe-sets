@@ -1,8 +1,8 @@
 
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
-sys.path.insert(1, '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets')
-
+#sys.path.insert(1, '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets')
+sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 import torch
 import torch.nn as nn
 import numpy as np
@@ -130,7 +130,9 @@ def load_replay_buffer(params, encoder=None, first_only=False):#it doesn't have 
     log.info('Loading data')
     trajectories = []#SimplePointBot or SimplePointBotConstraints
     for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe & obstacle
-        real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
+        #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
+        real_dir = os.path.join('', 'data',
+                                directory)  #
         trajectories += load_trajectories(num, file=real_dir)#now you have 50+50=100 pieces of trajs each containing 100 time steps
         if first_only:
             print('wahoo')

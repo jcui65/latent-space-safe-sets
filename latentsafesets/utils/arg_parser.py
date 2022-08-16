@@ -1,7 +1,7 @@
 
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
-sys.path.insert(1, '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets')
+sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 
 import latentsafesets.utils as utils
 
@@ -21,7 +21,7 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)
-    parser.add_argument('--num_updates', type=int, default=45)#40)#35)#25)#5)#20)#15)#10)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=75)#50)##25)#45)#40)#35)#5)#20)#15)#10)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
 
     add_controller_args(parser)
@@ -70,7 +70,7 @@ def add_encoder_args(parser):
                         help='How many states to sample for each embedding update')
     parser.add_argument('--enc_init_iters', type=int, default=100000,
                         help='Initial training iterations')
-    parser.add_argument('--enc_checkpoint', type=str, default='/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',
+    parser.add_argument('--enc_checkpoint', type=str, default='outputs/2022-07-13/17-24-59/vae.pth',#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',#
                         #'outputs/2022-07-18/19-38-58/vae.pth',#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',#
                         help='File to load a CEM model from')#None,
     parser.add_argument('--enc_data_aug', action='store_true')
