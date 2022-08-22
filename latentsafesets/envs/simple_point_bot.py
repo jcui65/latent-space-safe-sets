@@ -336,7 +336,7 @@ class SimplePointBot(Env, utils.EzPickle):
         circle = plt.Circle(self.end_pos, radius=3, color='k')
         ax.add_patch(circle)
         ax.annotate("start", xy=(self.start_pos[0], self.start_pos[1] - 8), fontsize=10,
-                    ha="center")#just annotating the texts!
+                    ha="center")#just annotating the texts!#-8 means it is using the map coordinates!
         ax.annotate("goal", xy=(self.end_pos[0], self.end_pos[1] - 8), fontsize=10, ha="center")
 
 

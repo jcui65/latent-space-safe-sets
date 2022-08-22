@@ -68,7 +68,7 @@ if __name__ == '__main__':
     constr_viols = []
     task_succ = []
     n_episodes = 0
-
+    tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
     for i in range(num_updates):#default 25 in spb
         update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
         os.makedirs(update_dir)#mkdir!
@@ -88,12 +88,14 @@ if __name__ == '__main__':
             traj_rews = []#rews: reward
             constr_viol = False
             succ = False
+
             for k in trange(params['horizon']):#default 100 in spb#This is MPC
                 #print('obs.shape',obs.shape)(3,64,64)
                 #print('env.state',env.state)#env.state [35.44344669 54.30340498]
                 #action = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
                 #storch=ptu.torchify(env.state)#state torch
-                action = policy.actcbfd(obs/255,env.state)  # the CEM (candidates, elites, etc.) is in here
+                action,tp,fp,fn,tn,tpc,fpc,fnc,tnc = policy.actcbfd(obs/255,env.state,tp,fp,fn,tn,tpc,fpc,fnc,tnc)
+                # the CEM (candidates, elites, etc.) is in here
                 #next_obs, reward, done, info = env.step(action)#saRSa
                 next_obs, reward, done, info = env.stepsafety(action)  # 63 in simple_point_bot.py
                 next_obs = np.array(next_obs)#to make this image a numpy array
@@ -136,7 +138,7 @@ if __name__ == '__main__':
             pu.make_movie(movie_traj, file=os.path.join(update_dir, 'trajectory%d.gif' % j))
 
             log.info('    Cost: %d' % traj_reward)#see it in the terminal!
-
+            #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
             in_ss = 0
             rtg = 0
             for transition in reversed(transitions):
@@ -154,7 +156,6 @@ if __name__ == '__main__':
         std_rew = float(np.std(update_rewards))
         avg_rewards.append(mean_rew)
         std_rewards.append(std_rew)
-
         log.info('Iteration %d average reward: %.4f' % (i, mean_rew))
         pu.simple_plot(avg_rewards, std=std_rewards, title='Average Rewards',
                        file=os.path.join(logdir, 'rewards.pdf'),

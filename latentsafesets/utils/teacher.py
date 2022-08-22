@@ -102,7 +102,7 @@ class AbstractTeacher(ABC):
             if state is None:
                 action = self.env.action_space.sample().astype(np.float64)#sample between -3 and 3
             else:#I think the control is usually either -3 or +3
-                action = self._expert_control(state, i).astype(np.float64)
+                action = self._expert_control(state, i).astype(np.float64)#i is here
             if self.noisy:
                 action_input = np.random.normal(action, self.noise_std)
                 action_input = np.clip(action_input, self.ac_low, self.ac_high)
@@ -196,6 +196,25 @@ class ConstraintTeacher(AbstractTeacher):
     def reset(self):
         self.d = (np.random.random(2) * 2 - 1) * spb.MAX_FORCE
 
+class ConstraintTeachersymmetric(AbstractTeacher):
+    def __init__(self, env, noisy=True):
+        super().__init__(env, noisy, on_policy=False)
+        self.d = (np.random.random(2) * 2 - 1) * spb.MAX_FORCE
+        self.goal = (88, 75)#within the obstacle! lead to collision!
+        self.random_start = True
+        self.deven=self.d
+
+    def _expert_control(self, state, i):
+        if i < 15:#as said in the paper, random action
+            return self.d
+        else:
+            to_obstactle = np.subtract(self.goal, state)
+            to_obstacle_normalized = to_obstactle / np.linalg.norm(to_obstactle)#direction
+            to_obstactle_scaled = to_obstacle_normalized * spb.MAX_FORCE / 2
+            return to_obstactle_scaled
+
+    def reset(self):
+        self.d = (np.random.random(2) * 2 - 1) * spb.MAX_FORCE
 
 class ReacherTeacher(AbstractTeacher):
     def __init__(self, env, noisy=True):

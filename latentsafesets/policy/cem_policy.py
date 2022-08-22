@@ -56,9 +56,9 @@ class CEMSafeSetPolicy(Policy):
         self.safe_set_thresh_mult_iters = params['safe_set_thresh_mult_iters']#5
         self.constraint_thresh = params['constr_thresh']#0.2
         self.goal_thresh = params['gi_thresh']#0.5
-        self.ignore_safe_set = params['safe_set_ignore']#False, for ablation study!#changed to true after using cbf dot
+        self.ignore_safe_set = True#params['safe_set_ignore']#False, for ablation study!#changed to true after using cbf dot
         self.ignore_constraints = params['constr_ignore']#false
-        self.ignore_cbfdots = params['cbfd_ignore']  # false
+        self.ignore_cbfdots = params['cbfd_ignore']  #True# false
 
         self.mean = torch.zeros(self.d_act)#the dimension of action
         self.std = torch.ones(self.d_act)
@@ -181,7 +181,7 @@ class CEMSafeSetPolicy(Policy):
         return action.detach().cpu().numpy()
 
     @torch.no_grad()
-    def actcbfd(self, obs,state):#some intermediate step that the cbf dot part still requires states rather than latent states
+    def actcbfd(self, obs,state,tp,fp,fn,tn,tpc,fpc,fnc,tnc):#some intermediate step that the cbf dot part still requires states rather than latent states
         """
         Returns the action that this controller would take at time t given observation obs.
 
@@ -324,11 +324,21 @@ class CEMSafeSetPolicy(Policy):
                     (rd8h.reshape(rd8h.shape[0], rd8h.shape[1], 1), rd8v.reshape(rd8v.shape[0], rd8v.shape[1], 1)),
                     dim=2)#dim: (1000,5,2)
                 rdn=torch.norm(rd8,dim=2)#rdn for relative distance norm
+                rdnv=rdn<15#rdnv for rdn violator
+                rdnvi=torch.sum(rdnv,dim=1)#rdn violator indices
+                #print('rdnvi', rdnvi)
+                rdnvi=rdnvi.reshape(rdnvi.shape[0],1)
+
+                rdnvc = rdn < 10  # rdnv for rdn violator critical
+                rdnvci = torch.sum(rdnvc, dim=1)  # rdn violator critical indices
+                #print('rdnvci', rdnvci)
+                rdnvci = rdnvci.reshape(rdnvi.shape[0], 1)
+
                 #print(rdn.shape)#torch.Size([1000, 5])
                 cbf=rdn**2-15**2#13**2#20:30#don't forget the square!# Note that this is also used in the online training afterwards
                 acbf=-cbf*act_ss_thresh#acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
                 asrv1=action_samples[:,:,0]#asrv1 means action sample reversed in the 1st dimension (horizontal dimension)!
-                asrv2=-action_samples[:,:,1]#action_samples[:,:,1]#asrv2 means action sample reversed in the 2st dimension (vertical dimension)!
+                asrv2=action_samples[:,:,1]#-action_samples[:,:,1]#asrv2 means action sample reversed in the 2st dimension (vertical dimension)!
                 asrv = torch.concat((asrv1.reshape(asrv1.shape[0], asrv1.shape[1], 1), asrv2.reshape(asrv2.shape[0], asrv2.shape[1], 1)),dim=2)  # dim: (1000,5,2)
                 rda=torch.concat((rd8,asrv),dim=2)#check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
 
@@ -350,13 +360,75 @@ class CEMSafeSetPolicy(Policy):
                     cbfdots_viols = torch.sum(cbfdots_all<acbf, dim=1)#those that violate the constraints#1000 0,1,2,3,4,5s#
                     #print('acbf',acbf)#bigger than or equal to is the right thing to do! The violations are <!
                     #print('cbfdots_viols',cbfdots_viols)
+                    #print('cbfdots_viols', cbfdots_viols)
                     cbfdots_viols=cbfdots_viols.reshape(cbfdots_viols.shape[0],1)#the threshold now should be predictions dependent
                     #print('cbfdots_viols.shape',cbfdots_viols.shape)
                     #print('cbfdots_viols',cbfdots_viols)
                     #print(cbfdots.shape)
                 else:#if ignoring the cbf dot constraints
                     cbfdots_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)#no constraint violators!
-                self.ignore_safe_set=True#Including 18:47 Aug 4th as well as 15:14 Aug 5th
+                #self.ignore_safe_set=True#Including 18:47 Aug 4th as well as 15:14 Aug 5th
+                if torch.max(rdnvi>0) or torch.max(cbfdots_viols)>0:#
+                    #print('rdnvi>0!')
+                    #print('rdnvi', rdnvi.reshape(rdnvi.shape[0]))
+                    #print('rdnvi-cbfdots_viols',(rdnvi-cbfdots_viols).reshape(rdnvi.shape[0]))
+                    rdnvimask=rdnvi>0.5
+                    cbfdots_violsmask=cbfdots_viols>0.5
+                    rdnvnotimask = rdnvi < 0.5
+                    cbfdots_notviolsmask = cbfdots_viols < 0.5
+                    tpmask=rdnvimask*cbfdots_violsmask
+                    fpmask=rdnvnotimask*cbfdots_violsmask
+                    fnmask=rdnvimask*cbfdots_notviolsmask
+                    tnmask=rdnvnotimask*cbfdots_notviolsmask
+                    tpcount=torch.sum(tpmask)
+                    fpcount=torch.sum(fpmask)
+                    fncount=torch.sum(fnmask)
+                    tncount=torch.sum(tnmask)
+                    tp+=tpcount
+                    fp+=fpcount
+                    fn+=fncount
+                    tn+=tncount
+                    #print('tp,fp,fn,tn', tp.item(), fp.item(), fn.item(), tn.item())
+                    log.info(
+                        'tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
+                    #if torch.max(rdnvci > 0) or torch.max(cbfdots_viols)>0:#:#
+
+                    #print('really critical!')
+                    #print('rdnvci-cbfdots_viols', (rdnvci - cbfdots_viols).reshape(rdnvi.shape[0]))
+                    #print('really critical done this time!')
+                    rdnvcimask = rdnvci > 0.5
+                    rdnvnotcimask = rdnvci < 0.5
+                    tpcmask = rdnvcimask * cbfdots_violsmask
+                    fpcmask = rdnvnotcimask * cbfdots_violsmask
+                    fncmask = rdnvcimask * cbfdots_notviolsmask
+                    tncmask = rdnvnotcimask * cbfdots_notviolsmask
+                    tpccount = torch.sum(tpcmask)
+                    fpccount = torch.sum(fpcmask)
+                    fnccount = torch.sum(fncmask)
+                    tnccount = torch.sum(tncmask)
+                    tpc += tpccount
+                    fpc += fpccount
+                    fnc += fnccount
+                    tnc += tnccount
+                    #print('tpc,fpc,fnc,tnc', tpc.item(), fpc.item(), fnc.item(), tnc.item())
+                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (
+                    tp, fp, fn, tn, tpc, fpc, fnc, tnc))
+                    #else:
+
+                else:
+                    tp = tp
+                    fp = fp
+                    fn = fn
+                    tn = tn+rdnvi.shape[0]
+                    tpc = tpc
+                    fpc = fpc
+                    fnc = fnc
+                    tnc = tnc + rdnvci.shape[0]
+
+
+                #elif torch.max(cbfdots_viols)>0:#
+                    #print('the cbf dot estimator is too sensitive!')
+                    #print('rdnvi-cbfdots_viols', (rdnvi - cbfdots_viols).reshape(rdnvi.shape[0]))
                 if not self.ignore_safe_set:
                     safe_set_all = self.safe_set.safe_set_probability(last_states, already_embedded=True)#get the prediction for the safety of the last state
                     safe_set_viols = torch.mean(safe_set_all#not max this time, but the mean of the 20 candidates
@@ -374,7 +446,7 @@ class CEMSafeSetPolicy(Policy):
 
         # Return the best action
         action = actions_sorted[-1][0]#the best one
-        return action.detach().cpu().numpy()
+        return action.detach().cpu().numpy(), tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
     def reset(self):#where it is used?
         # It's important to call this after each episode

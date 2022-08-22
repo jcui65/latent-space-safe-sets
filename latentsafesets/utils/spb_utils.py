@@ -139,6 +139,6 @@ def evaluate_cbfdot_func(cbfdot,
             raise NotImplementedError("[name redacted :)] has not implemented logic for skipping %d yet" % skip)
 
     if plot:
-        env.draw(heatmap=data, file=file, show=show, board=False)
+        env.draw(heatmap=data, file=file, show=show, board=False)#True)#False is the default version
 
     return data
