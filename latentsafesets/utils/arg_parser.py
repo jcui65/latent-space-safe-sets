@@ -195,7 +195,7 @@ def add_cbfd_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2022-08-06/12-29-56/cbfd_158000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#
+    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#
     # 'outputs/2022-08-06/15-02-09/cbfd_10000.pth')#'outputs/2022-08-06/15-02-09/cbfd_20000.pth')#
     #'outputs/2022-08-06/15-02-09/cbfd_30000.pth')#'outputs/2022-08-06/15-02-09/cbfd_180000.pth')#
     #'outputs/2022-08-07/01-56-19/update_3/cbfd.pth')#'outputs/2022-08-07/01-36-19/update_4/cbfd.pth')#'outputs/2022-08-07/01-09-48/update_5/cbfd.pth')#
