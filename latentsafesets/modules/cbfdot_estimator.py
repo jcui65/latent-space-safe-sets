@@ -24,9 +24,8 @@ class CBFdotEstimator(nn.Module, EncodedModule):#supervised learning very simila
         self.targ_update_counter = 0
         self.loss_func = torch.nn.SmoothL1Loss()#a regression loss#designate the loss function#torch.nn.BCEWithLogitsLoss()#
         self.trained = False
-        #self.net = GenericNet(self.d_latent, 1, params['cbfd_n_hidden'], params['cbfd_hidden_size']).to(
-            #ptu.TORCH_DEVICE)#the network that uses relu activation
-        self.net = GenericNetcbf(self.d_latent, 1, params['cbfd_n_hidden'],params['cbfd_hidden_size']).to(ptu.TORCH_DEVICE)
+        self.net = GenericNet(self.d_latent, 1, params['cbfd_n_hidden'], params['cbfd_hidden_size']).to(ptu.TORCH_DEVICE)#the network that uses relu activation
+        #self.net = GenericNetcbf(self.d_latent, 1, params['cbfd_n_hidden'],params['cbfd_hidden_size']).to(ptu.TORCH_DEVICE)
         #print(self.net)#input size 4, output size 1#the network that uses the tanh activation
         lr = params['cbfd_lr']
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr)

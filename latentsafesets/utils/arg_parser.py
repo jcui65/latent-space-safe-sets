@@ -21,7 +21,7 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)
-    parser.add_argument('--num_updates', type=int, default=75)#50)##25)#45)#40)#35)#5)#20)#15)#10)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=75)#200)#150)#50)##25)#45)#40)#35)#5)#20)#15)#10)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
 
     add_controller_args(parser)
@@ -84,7 +84,7 @@ def add_ss_args(parser):
     parser.add_argument('--safe_set_type', type=str, default='bellman')
     parser.add_argument('--safe_set_batch_size', type=int, default=256,
                         help='Batch size for safe set learning')
-    parser.add_argument('--safe_set_bellman_coef', type=float, default=0.3)#0.8)#0.3 is original#0.9)#
+    parser.add_argument('--safe_set_bellman_coef', type=float, default=0.3)#0.99)#0.95)#0.8)#0.3 is original#0.9)#
     parser.add_argument('--safe_set_bellman_reduction', type=str, default='max',
                         choices=('add', 'max'))
     parser.add_argument('--safe_set_ensemble', action='store_true')
@@ -195,7 +195,10 @@ def add_cbfd_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2022-08-06/15-02-09/cbfd_180000.pth')#'outputs/2022-08-07/01-56-19/update_3/cbfd.pth')#'outputs/2022-08-07/01-36-19/update_4/cbfd.pth')#'outputs/2022-08-07/01-09-48/update_5/cbfd.pth')#
+    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2022-08-06/12-29-56/cbfd_20000.pth')#'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
+    # 'outputs/2022-08-06/15-02-09/cbfd_10000.pth')#'outputs/2022-08-06/15-02-09/cbfd_20000.pth')#
+    #'outputs/2022-08-06/15-02-09/cbfd_30000.pth')#'outputs/2022-08-06/15-02-09/cbfd_180000.pth')#
+    #'outputs/2022-08-07/01-56-19/update_3/cbfd.pth')#'outputs/2022-08-07/01-36-19/update_4/cbfd.pth')#'outputs/2022-08-07/01-09-48/update_5/cbfd.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/cbfd.pth')#None)#'outputs/2022-08-06/11-44-04/cbfd.pth')#'outputs/2022-08-06/12-29-56/cbfd.pth')#
     #'outputs/2022-08-06/11-44-04/cbfd.pth')#'outputs/2022-08-06/10-21-50/cbfd.pth')#'outputs/2022-08-03/01-06-16/cbfd.pth')#
     #'outputs/2022-07-15/17-41-16/initial_train/constr.pth')#'outputs/2022-07-20/14-46-50/update_16/constr.pth')#

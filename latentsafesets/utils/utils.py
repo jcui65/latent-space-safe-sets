@@ -291,7 +291,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
         if params['cbfd_checkpoint']:
             cbfdot.load(params['cbfd_checkpoint'])
         modules['cbfd'] = cbfdot
-        print(modules['cbfd'])
+        #print(modules['cbfd'])
     return modules
 
 

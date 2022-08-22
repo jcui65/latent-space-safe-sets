@@ -180,6 +180,9 @@ class ProbabilisticDynamicsModel(nn.Module):
         delta_normalized_logstd = delta_normalized_both[:, self.d_latent:]#pay close attention to the line below
         delta_normalized_std = torch.exp(delta_normalized_logstd)#+1e-6#torch.exp(delta_normalized_logstd)
         delta_normalized_std=torch.where(delta_normalized_std<1e-6,1e-6,delta_normalized_std)#why not working?
+        nansstd = torch.isnan(delta_normalized_std)
+        # print(nansstd)#
+        delta_normalized_std[nansstd] = 1e-6
         dist = torch.distributions.normal.Normal(delta_normalized_mean, delta_normalized_std)
         return dist
 

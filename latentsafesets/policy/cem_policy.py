@@ -58,7 +58,7 @@ class CEMSafeSetPolicy(Policy):
         self.goal_thresh = params['gi_thresh']#0.5
         self.ignore_safe_set = True#params['safe_set_ignore']#False, for ablation study!#changed to true after using cbf dot
         self.ignore_constraints = params['constr_ignore']#false
-        self.ignore_cbfdots = params['cbfd_ignore']  #True# false
+        self.ignore_cbfdots = params['cbfd_ignore']  #True#True# false
 
         self.mean = torch.zeros(self.d_act)#the dimension of action
         self.std = torch.ones(self.d_act)
@@ -222,7 +222,9 @@ class CEMSafeSetPolicy(Policy):
                     act_cbfd_thresh *= self.safe_set_thresh_mult  # *0.8 by default
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
-                        return self.env.action_space.sample()#really random action!
+                        log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (
+                            tp, fp, fn, tn, tpc, fpc, fnc, tnc))
+                        return self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
 
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
@@ -389,29 +391,29 @@ class CEMSafeSetPolicy(Policy):
                     fn+=fncount
                     tn+=tncount
                     #print('tp,fp,fn,tn', tp.item(), fp.item(), fn.item(), tn.item())
-                    log.info(
-                        'tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
-                    if torch.max(rdnvci > 0):
-                        #print('really critical!')
-                        #print('rdnvci-cbfdots_viols', (rdnvci - cbfdots_viols).reshape(rdnvi.shape[0]))
-                        #print('really critical done this time!')
-                        rdnvcimask = rdnvci > 0.5
-                        rdnvnotcimask = rdnvci < 0.5
-                        tpcmask = rdnvcimask * cbfdots_violsmask
-                        fpcmask = rdnvnotcimask * cbfdots_violsmask
-                        fncmask = rdnvcimask * cbfdots_notviolsmask
-                        tncmask = rdnvnotcimask * cbfdots_notviolsmask
-                        tpccount = torch.sum(tpcmask)
-                        fpccount = torch.sum(fpcmask)
-                        fnccount = torch.sum(fncmask)
-                        tnccount = torch.sum(tncmask)
-                        tpc += tpccount
-                        fpc += fpccount
-                        fnc += fnccount
-                        tnc += tnccount
-                        #print('tpc,fpc,fnc,tnc', tpc.item(), fpc.item(), fnc.item(), tnc.item())
-                        log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (
-                        tp, fp, fn, tn, tpc, fpc, fnc, tnc))
+                    #log.info(
+                        #'tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
+                    #if torch.max(rdnvci > 0):
+                    #print('really critical!')
+                    #print('rdnvci-cbfdots_viols', (rdnvci - cbfdots_viols).reshape(rdnvi.shape[0]))
+                    #print('really critical done this time!')
+                    rdnvcimask = rdnvci > 0.5
+                    rdnvnotcimask = rdnvci < 0.5
+                    tpcmask = rdnvcimask * cbfdots_violsmask
+                    fpcmask = rdnvnotcimask * cbfdots_violsmask
+                    fncmask = rdnvcimask * cbfdots_notviolsmask
+                    tncmask = rdnvnotcimask * cbfdots_notviolsmask
+                    tpccount = torch.sum(tpcmask)
+                    fpccount = torch.sum(fpcmask)
+                    fnccount = torch.sum(fncmask)
+                    tnccount = torch.sum(tncmask)
+                    tpc += tpccount
+                    fpc += fpccount
+                    fnc += fnccount
+                    tnc += tnccount
+                    #print('tpc,fpc,fnc,tnc', tpc.item(), fpc.item(), fnc.item(), tnc.item())
+                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (
+                    tp, fp, fn, tn, tpc, fpc, fnc, tnc))
                     #else:
 
                 else:
@@ -428,6 +430,8 @@ class CEMSafeSetPolicy(Policy):
                 #elif torch.max(cbfdots_viols)>0:#
                     #print('the cbf dot estimator is too sensitive!')
                     #print('rdnvi-cbfdots_viols', (rdnvi - cbfdots_viols).reshape(rdnvi.shape[0]))
+
+                #cbfdots_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)  # no constraint violators!#for testing!
                 if not self.ignore_safe_set:
                     safe_set_all = self.safe_set.safe_set_probability(last_states, already_embedded=True)#get the prediction for the safety of the last state
                     safe_set_viols = torch.mean(safe_set_all#not max this time, but the mean of the 20 candidates
