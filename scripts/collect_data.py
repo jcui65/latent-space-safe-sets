@@ -7,7 +7,7 @@ from latentsafesets.utils.arg_parser import parse_args
 import latentsafesets.utils as utils
 from latentsafesets.utils.teacher import ConstraintTeacher, ReacherTeacher,\
     ReacherConstraintTeacher, StrangeTeacher, PushTeacher, OutburstPushTeacher, \
-    SimplePointBotTeacher
+    SimplePointBotTeacher, SimplePointBotTeacherMPC, SimplePointBotTeacherMPCCBFD, ConstraintTeacherMPC
 import latentsafesets.utils.plot_utils as pu
 
 import logging
@@ -26,6 +26,20 @@ env_teachers = {#it is a dictionary, right?
         PushTeacher, OutburstPushTeacher
     ],
 }
+
+
+env_teachersmpc = {#it is a dictionary, right?
+    'spb': [
+        SimplePointBotTeacherMPC, ConstraintTeacherMPC, SimplePointBotTeacherMPCCBFD
+    ],
+    'reacher': [
+        ReacherTeacher, ReacherConstraintTeacher, StrangeTeacher
+    ],
+    'push': [
+        PushTeacher, OutburstPushTeacher
+    ],
+}
+
 
 
 def generate_teacher_demo_data(env, data_dir, teacher, n=100, noisy=False, logdir=None):
@@ -78,7 +92,8 @@ def main():
     env = utils.make_env(params)#around line 153#SimplePointBot
     print('horizon',env.horizon)#horizon 100, that is what will be printed!
 
-    teachers = env_teachers[params['env']]#[SimplePointBotTeacher, ConstraintTeacher, StrangeTeacher]
+    #teachers = env_teachers[params['env']]#[SimplePointBotTeacher, ConstraintTeacher, StrangeTeacher]
+    teachers = env_teachersmpc[params['env']]  # [SimplePointBotTeacher, ConstraintTeacher, StrangeTeacher]
     data_dirs = params['data_dirs']#['SimplePointBot','SimplePointBotConstraints',]
     data_counts = params['data_counts']#[50,50] for spb
 

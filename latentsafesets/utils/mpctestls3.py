@@ -79,7 +79,7 @@ N2=25#10#5#2#it is the plotting horizon, 5s=50steps
 #[PRIC,L,G]
 PRIC= la.solve_discrete_are(A,B,Q,R)#P_ric
 #PLYAP = la.solve_discrete_lyapunov(A,Q)#P_lyap
-P=Q#used in part 7
+#P=Q#used in part 7
 bignumber=100000000#as if it is infinity
 xmin=[-1,-1]#[-bignumber,-1]#0]#0#-100000#-inf
 xmax=[+bignumber,+bignumber]#10000000000#inf

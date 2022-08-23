@@ -99,22 +99,28 @@ class SimplePointBot(Env, utils.EzPickle):
             obs = self.state#it is a 2-d state
         #find the nearest distance to the obstacle according to different regions
         #I set 8 regions versue the central obstacle: upper left, upper middle, upper right, right middle, lower right, lower middle, lower left, left middle
-        if (old_state<=self.wall_coords[0][0]).all():#left upper#old_state#check it!
-            reldistold=old_state-self.wall_coords[0][0]#relative distance old#np.linalg.norm()
-        elif self.wall_coords[0][0][0]<=old_state[0]<=self.wall_coords[0][1][0] and old_state[1]<=self.wall_coords[0][0][1]:
-            reldistold = np.array([0,old_state[1] - self.wall_coords[0][0][1]])#middle up
-        elif old_state[0]>=self.wall_coords[0][1][0] and old_state[1]<=self.wall_coords[0][0][1]:
-            reldistold = old_state - (self.wall_coords[0][1][0],self.wall_coords[0][0][1])#upper right
-        elif old_state[0]>=self.wall_coords[0][1][0] and self.wall_coords[0][0][1]<=old_state[1]<=self.wall_coords[0][1][1]:
-            reldistold = np.array([old_state[0] - self.wall_coords[0][1][0],0])#right middle
-        elif (old_state>=self.wall_coords[0][1]).all():#old_state#lower right
-            reldistold = old_state - self.wall_coords[0][1]
-        elif self.wall_coords[0][0][0]<=old_state[0]<=self.wall_coords[0][1][0] and old_state[1]>=self.wall_coords[0][1][1]:
-            reldistold = np.array([0,old_state[1] - self.wall_coords[0][1][1]])#middle down/lower middle
-        elif old_state[0]<=self.wall_coords[0][0][0] and old_state[1]>=self.wall_coords[0][1][1]:
-            reldistold = (old_state - (self.wall_coords[0][0][0],self.wall_coords[0][1][1]))#lower left
-        elif old_state[0]<=self.wall_coords[0][0][0] and self.wall_coords[0][0][1]<=old_state[1]<=self.wall_coords[0][1][1]:
-            reldistold = np.array([old_state[0] - self.wall_coords[0][0][0],0])#middle left
+        leftup=self.wall_coords[0][0]
+        leftupx = self.wall_coords[0][0][0]
+        leftupy = self.wall_coords[0][0][1]
+        rightdown=self.wall_coords[0][1]
+        rightdownx = self.wall_coords[0][1][0]
+        rightdowny=self.wall_coords[0][1][1]
+        if (old_state<=leftup).all():#left upper#old_state#check it!
+            reldistold=old_state-leftup#relative distance old#np.linalg.norm()
+        elif leftupx<=old_state[0]<=rightdownx and old_state[1]<=leftupy:
+            reldistold = np.array([0,old_state[1] - leftupy])#middle up
+        elif old_state[0]>=rightdownx and old_state[1]<=leftupy:
+            reldistold = old_state - (rightdownx,leftupy)#upper right
+        elif old_state[0]>=rightdownx and leftupy<=old_state[1]<=rightdowny:
+            reldistold = np.array([old_state[0] - rightdownx,0])#right middle
+        elif (old_state>=rightdown).all():#old_state#lower right
+            reldistold = old_state - rightdown
+        elif leftupx<=old_state[0]<=rightdownx and old_state[1]>=rightdowny:
+            reldistold = np.array([0,old_state[1] - rightdowny])#middle down/lower middle
+        elif old_state[0]<=leftupx and old_state[1]>=rightdowny:
+            reldistold = (old_state - (leftupx,rightdowny))#lower left
+        elif old_state[0]<=leftupx and leftupy<=old_state[1]<=rightdowny:
+            reldistold = np.array([old_state[0] - leftupx,0])#middle left
         else:
             #print(old_state)#it can be [98.01472841 92.11425524]
             reldistold=np.array([0,0])#9.9#
