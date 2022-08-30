@@ -54,6 +54,10 @@ class CEMSafeSetPolicy(Policy):
         self.safe_set_thresh = params['safe_set_thresh']#0.8
         self.safe_set_thresh_mult = params['safe_set_thresh_mult']#0.8
         self.safe_set_thresh_mult_iters = params['safe_set_thresh_mult_iters']#5
+
+        self.cbfd_thresh=params['cbfdot_thresh']
+        self.cbfd_thresh_mult = params['cbfdot_thresh_mult']  # 0.8
+
         self.constraint_thresh = params['constr_thresh']#0.2
         self.goal_thresh = params['gi_thresh']#0.5
         self.ignore_safe_set = True#params['safe_set_ignore']#False, for ablation study!#changed to true after using cbf dot
@@ -198,7 +202,7 @@ class CEMSafeSetPolicy(Policy):
         itr = 0#
         reset_count = 0#
         act_ss_thresh = self.safe_set_thresh#initially 0.8
-        act_cbfd_thresh=self.safe_set_thresh#initially 0.8
+        act_cbfd_thresh=self.cbfd_thresh#initially 0.8
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -219,7 +223,7 @@ class CEMSafeSetPolicy(Policy):
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
-                    act_cbfd_thresh *= self.safe_set_thresh_mult  # *0.8 by default
+                    act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
                         log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (
@@ -338,7 +342,7 @@ class CEMSafeSetPolicy(Policy):
 
                 #print(rdn.shape)#torch.Size([1000, 5])
                 cbf=rdn**2-15**2#13**2#20:30#don't forget the square!# Note that this is also used in the online training afterwards
-                acbf=-cbf*act_ss_thresh#acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
+                acbf=-cbf*act_cbfd_thresh#acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
                 asrv1=action_samples[:,:,0]#asrv1 means action sample reversed in the 1st dimension (horizontal dimension)!
                 asrv2=action_samples[:,:,1]#-action_samples[:,:,1]#asrv2 means action sample reversed in the 2st dimension (vertical dimension)!
                 asrv = torch.concat((asrv1.reshape(asrv1.shape[0], asrv1.shape[1], 1), asrv2.reshape(asrv2.shape[0], asrv2.shape[1], 1)),dim=2)  # dim: (1000,5,2)
