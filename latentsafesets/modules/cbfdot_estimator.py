@@ -18,7 +18,7 @@ class CBFdotEstimator(nn.Module, EncodedModule):#supervised learning very simila
         super(CBFdotEstimator, self).__init__()
         EncodedModule.__init__(self, encoder)
 
-        self.d_obs = params['d_obs']#(3,64,64)
+        self.d_obs = params['d_obs']#(3,64,64)#dimension of observation
         self.d_latent = 4#2+2#params['d_latent']#32
         self.batch_size = params['cbfd_batch_size']#256
         self.targ_update_counter = 0

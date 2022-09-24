@@ -61,7 +61,7 @@ class CEMSafeSetPolicy(Policy):
         self.constraint_thresh = params['constr_thresh']#0.2
         self.goal_thresh = params['gi_thresh']#0.5
         self.ignore_safe_set = True#params['safe_set_ignore']#False, for ablation study!#changed to true after using cbf dot
-        self.ignore_constraints = params['constr_ignore']#false
+        self.ignore_constraints = True#params['constr_ignore']#false
         self.ignore_cbfdots = params['cbfd_ignore']  #True#True# false
 
         self.mean = torch.zeros(self.d_act)#the dimension of action
@@ -226,8 +226,8 @@ class CEMSafeSetPolicy(Policy):
                     act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
-                        log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (
-                            tp, fp, fn, tn, tpc, fpc, fnc, tnc))
+                        log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
+                            tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
                         return self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
 
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
@@ -277,8 +277,9 @@ class CEMSafeSetPolicy(Policy):
                 #print(action_samples.dtype)#torch.float32
                 se=storch+action_samples#se means state estimated#shape(1000,5,2)
                 #se1=stateevolve
-
-                walls=[((75,55),(100,95))]#
+                xmove=0#-25#30#
+                ymove=-40#0#-30#
+                walls=[((75+xmove,45+ymove),(100+xmove,105+ymove))]#[((75+xmove,55+ymove),(100+xmove,95+ymove))]#
                 #I devide the map into 8 regions clockwise: left up, middle up, right up, right middle, right down, middle down, left down, left middle
                 rd1h = torch.where((se[:, :, 0]<=walls[0][0][0])*(se[:, :, 1]<=walls[0][0][1]), se[:, :, 0]-walls[0][0][0], se[:, :, 0])
                 #Thus, rd1h means relative distance region 1 horizontal, where region 1 means left up of the centeral obstacle
@@ -374,7 +375,10 @@ class CEMSafeSetPolicy(Policy):
                 else:#if ignoring the cbf dot constraints
                     cbfdots_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)#no constraint violators!
                 #self.ignore_safe_set=True#Including 18:47 Aug 4th as well as 15:14 Aug 5th
-                if torch.max(rdnvi>0) or torch.max(cbfdots_viols)>0:#
+                #print(state)
+                #print(state[0])
+                #print(state[1])
+                if torch.max(rdnvi)>0 or torch.max(cbfdots_viols)>0:#
                     #print('rdnvi>0!')
                     #print('rdnvi', rdnvi.reshape(rdnvi.shape[0]))
                     #print('rdnvi-cbfdots_viols',(rdnvi-cbfdots_viols).reshape(rdnvi.shape[0]))
@@ -416,8 +420,249 @@ class CEMSafeSetPolicy(Policy):
                     fnc += fnccount
                     tnc += tnccount
                     #print('tpc,fpc,fnc,tnc', tpc.item(), fpc.item(), fnc.item(), tnc.item())
-                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (
-                    tp, fp, fn, tn, tpc, fpc, fnc, tnc))
+                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
+                    tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
+                    #else:
+
+                else:
+                    tp = tp
+                    fp = fp
+                    fn = fn
+                    tn = tn+rdnvi.shape[0]
+                    tpc = tpc
+                    fpc = fpc
+                    fnc = fnc
+                    tnc = tnc + rdnvci.shape[0]
+
+
+                #elif torch.max(cbfdots_viols)>0:#
+                    #print('the cbf dot estimator is too sensitive!')
+                    #print('rdnvi-cbfdots_viols', (rdnvi - cbfdots_viols).reshape(rdnvi.shape[0]))
+
+                #cbfdots_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)  # no constraint violators!#for testing!
+                if not self.ignore_safe_set:
+                    safe_set_all = self.safe_set.safe_set_probability(last_states, already_embedded=True)#get the prediction for the safety of the last state
+                    safe_set_viols = torch.mean(safe_set_all#not max this time, but the mean of the 20 candidates
+                                                .reshape((num_models, num_candidates, 1)),#(20,1000,1)
+                                                dim=0) < act_ss_thresh#(1000,1)
+                else:#ignore safe set constraints
+                    safe_set_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
+                goal_preds = self.goal_indicator(predictions, already_embedded=True)#the prob of being goal at those states#Do I add the CBF term here?(20,1000,5)
+                goal_states = torch.sum(torch.mean(goal_preds, dim=0) > self.goal_thresh, dim=1)#sum over planning horizon#f_G in the paper(1000,1)
+                #maybe the self.goal_thresh is a bug source?
+                values = values + (constraint_viols +cbfdots_viols+ safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
+                values = values.squeeze()#all those violators, assign them with big cost of -1e5
+
+            itr += 1#CEM Evolution method
+
+        # Return the best action
+        action = actions_sorted[-1][0]#the best one
+        return action.detach().cpu().numpy(), tp,fp,fn,tn,tpc,fpc,fnc,tnc
+
+    def actcbfdcircle(self, obs,state,tp,fp,fn,tn,tpc,fpc,fnc,tnc):#some intermediate step that the cbf dot part still requires states rather than latent states
+        """
+        Returns the action that this controller would take at time t given observation obs.
+
+        Arguments:
+            obs: The current observation. Cannot be a batch
+
+        Returns: An action (and possibly the predicted cost)
+        """
+
+        # encode observation:
+        obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
+        emb = self.encoder.encode(obs)#in latent space now!
+
+        itr = 0#
+        reset_count = 0#
+        act_ss_thresh = self.safe_set_thresh#initially 0.8
+        act_cbfd_thresh=self.cbfd_thresh#initially 0.8
+        while itr < self.max_iters:#5
+            if itr == 0:
+                # Action samples dim (num_candidates, planning_hor, d_act)
+                if self.mean is None:#right after reset
+                    action_samples = self._sample_actions_random()#1000*5 2d array
+                else:
+                    num_random = int(self.random_percent * self.popsize)#sample 1000 trajectories
+                    num_dist = self.popsize - num_random#=0 when random_percent=1
+                    action_samples_dist = self._sample_actions_normal(self.mean, self.std, n=num_dist)
+                    action_samples_random = self._sample_actions_random(num_random)#uniformly random from last iter ation
+                    action_samples = torch.cat((action_samples_dist, action_samples_random), dim=0)
+            else:
+                # Chop off the numer of elites so we don't use constraint violating trajectories
+                num_constraint_satisfying = sum(values > -1e5)#no any constraints violation
+                #print(num_constraint_satisfying)
+                iter_num_elites = min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
+                #what if I change this into num_constraint_satisfying+2?
+                if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
+                    reset_count += 1
+                    act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
+                    act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
+                    if reset_count > self.safe_set_thresh_mult_iters:
+                        self.mean = None
+                        log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
+                            tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
+                        return self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+
+                    itr = 0#that is why it always stops at iteration 0 when error occurs!
+                    self.mean, self.std = None, None
+                    continue
+
+                # Sort
+                sortid = values.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
+                actions_sorted = action_samples[sortid]
+                elites = actions_sorted[-iter_num_elites:]
+                #print('elites.shape',elites.shape)#once it is torch.Size([1, 5, 2]), it's gone!
+                #print('elites',elites)
+
+                # Refitting to Best Trajs
+                self.mean, self.std = elites.mean(0), elites.std(0)
+                # print('self.mean',self.mean,'self.std',self.std)#it's self.std that got nan!
+                #print(self.std[0,0])
+                #import ipdb#it seems that they are lucky to run into the following case
+                if torch.isnan(self.std[0,0]):#self.std[0,0]==torch.nan:
+                    #ipdb.set_trace()
+                    print('elites.shape',elites.shape)#
+                    #print('nan',self.std[0,0])
+                    #self.std=0.5*torch.rand_like(self.mean)+0.1#1e-2#is it just a work around?
+                    self.std = 0.0 * torch.ones_like(self.mean)#0.8 * torch.ones_like(self.mean)##1.0 * torch.ones_like(self.mean)# 1e-2#is it just a work around?
+                    #0.8 is the hyperparameter I choose which I think may have good performance
+                action_samples = self._sample_actions_normal(self.mean, self.std)#(1000,5,2)
+                #print('action_samples', action_samples)#it becomes nan!
+
+            if itr < self.max_iters - 1:#why the ensemble param in dynamics is 5! For MPC!
+                # dimension (num_models, num_candidates, planning_hor, d_latent)
+                #print('emb.shape',emb.shape)# torch.Size([1, 32])
+                #print('action_samples.shape',action_samples.shape)#torch.Size([1000, 5, 2])
+                predictions = self.dynamics_model.predict(emb, action_samples, already_embedded=True)
+                num_models, num_candidates, planning_hor, d_latent = predictions.shape#the possible H sequence of all candidates' all trials
+
+                last_states = predictions[:, :, -1, :].reshape(
+                    (num_models * num_candidates, d_latent))#the last state under the action sequence#the 20000*32 comes out!
+                all_values = self.value_function.get_value(last_states, already_embedded=True)#all values from 1000 candidates*20 particles
+                nans = torch.isnan(all_values)
+                all_values[nans] = -1e5
+                values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
+
+                #print(state.shape)#(2,)
+                #print(state.dtype)#float64
+                storch=ptu.torchify(state)#state torch
+                #print(action_samples.shape)#torch.Size([1000, 5, 2])
+                #print(action_samples.dtype)#torch.float32
+                se=storch+action_samples#se means state estimated#shape(1000,5,2)
+                #se1=stateevolve
+                xmove=0#-25#30#
+                ymove=0#-40#-30#
+                #walls=[((75+xmove,45+ymove),(100+xmove,105+ymove))]#[((75+xmove,55+ymove),(100+xmove,95+ymove))]#
+                #I devide the map into 8 regions clockwise: left up, middle up, right up, right middle, right down, middle down, left down, left middle
+                device=se.device
+                circlecenter=torch.tensor([90,75]).to(device)
+                circleradius=30#25#
+                rd=se-torch.asarray(circlecenter)#relative distance vector
+                #print('rd',rd)
+                rdtan2=torch.atan2(rd[:,:,1],rd[:,:,0])#get the angle
+                rdy=circleradius*torch.sin(rdtan2)#relative distance in y direction led by the circular obstacle
+                rdx=circleradius*torch.cos(rdtan2)
+                rdr = torch.concat(
+                    (rdx.reshape(rdx.shape[0], rdx.shape[1], 1), rdy.reshape(rdy.shape[0], rdy.shape[1], 1)),
+                    dim=2)  # dim: (1000,5,2)#rdr means relative distance induced by the radius of the circular obstacle
+                #print('rdr',rdr)
+                rd8=rd-rdr
+                #print('rd8',rd8)
+                rdn=torch.norm(rd8,dim=2)#rdn for relative distance norm
+                #print('rdn',rdn)
+                rdnv=rdn<15#15=10+5#rdnv for rdn violator
+                rdnvi=torch.sum(rdnv,dim=1)#rdn violator indices
+                #print('rdnvi', rdnvi)
+                rdnvi=rdnvi.reshape(rdnvi.shape[0],1)
+
+                rdnvc = rdn < 10  # rdnv for rdn violator critical
+                rdnvci = torch.sum(rdnvc, dim=1)  # rdn violator critical indices
+                #print('rdnvci', rdnvci)
+                rdnvci = rdnvci.reshape(rdnvi.shape[0], 1)
+
+                #print(rdn.shape)#torch.Size([1000, 5])
+                cbf=rdn**2-15**2#13**2#20:30#don't forget the square!# Note that this is also used in the online training afterwards
+                #print('cbf',cbf)
+                acbf=-cbf*act_cbfd_thresh#acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
+                asrv1=action_samples[:,:,0]#asrv1 means action sample reversed in the 1st dimension (horizontal dimension)!
+                asrv2=action_samples[:,:,1]#-action_samples[:,:,1]#asrv2 means action sample reversed in the 2st dimension (vertical dimension)!
+                asrv = torch.concat((asrv1.reshape(asrv1.shape[0], asrv1.shape[1], 1), asrv2.reshape(asrv2.shape[0], asrv2.shape[1], 1)),dim=2)  # dim: (1000,5,2)
+                rda=torch.concat((rd8,asrv),dim=2)#check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
+
+
+                # Blow up cost for trajectories that are not constraint satisfying and/or don't end up
+                #   in the safe set
+                if not self.ignore_constraints:#Do I add the CBF term here?#to see the constraint condition of 1000 trajs
+                    constraints_all = torch.sigmoid(self.constraint_function(predictions, already_embedded=True))#all the candidates#each in the model
+                    constraint_viols = torch.sum(torch.max(constraints_all, dim=0)[0] >= self.constraint_thresh, dim=1)#those that violate the constraints#if constraint_viols>=1, then game over!
+                else:#ignore the constraints
+                    constraint_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)#no constraint violators!
+
+                #self.ignore_cbfdots=True#just for 10:57 at Aug 4th
+                if not self.ignore_cbfdots:#Do I add the CBF term here?#to see the constraint condition of 1000 trajs
+                    cbfdots_all = self.cbfdot_function(rda, already_embedded=True)#all the candidates#torch.sigmoid()#each in the model#(20,1000,5)
+                    #print(cbfdots_all.shape)#torch.Size([1000, 5, 1])#
+                    cbfdots_all=cbfdots_all.reshape(cbfdots_all.shape[0],cbfdots_all.shape[1])#
+                    #print('cbfdots_all', cbfdots_all)
+                    cbfdots_viols = torch.sum(cbfdots_all<acbf, dim=1)#those that violate the constraints#1000 0,1,2,3,4,5s#
+                    #print('acbf',acbf)#bigger than or equal to is the right thing to do! The violations are <!
+                    #print('cbfdots_viols',cbfdots_viols)
+                    #print('cbfdots_viols', cbfdots_viols)
+                    cbfdots_viols=cbfdots_viols.reshape(cbfdots_viols.shape[0],1)#the threshold now should be predictions dependent
+                    #print('cbfdots_viols.shape',cbfdots_viols.shape)
+                    #print('cbfdots_viols',cbfdots_viols)
+                    #print(cbfdots.shape)
+                else:#if ignoring the cbf dot constraints
+                    cbfdots_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)#no constraint violators!
+                #self.ignore_safe_set=True#Including 18:47 Aug 4th as well as 15:14 Aug 5th
+                #print(state)
+                #print(state[0])
+                #print(state[1])
+                if torch.max(rdnvi)>0 or torch.max(cbfdots_viols)>0:#
+                    #print('rdnvi>0!')
+                    #print('rdnvi', rdnvi.reshape(rdnvi.shape[0]))
+                    #print('rdnvi-cbfdots_viols',(rdnvi-cbfdots_viols).reshape(rdnvi.shape[0]))
+                    rdnvimask=rdnvi>0.5
+                    cbfdots_violsmask=cbfdots_viols>0.5
+                    rdnvnotimask = rdnvi < 0.5
+                    cbfdots_notviolsmask = cbfdots_viols < 0.5
+                    tpmask=rdnvimask*cbfdots_violsmask
+                    fpmask=rdnvnotimask*cbfdots_violsmask
+                    fnmask=rdnvimask*cbfdots_notviolsmask
+                    tnmask=rdnvnotimask*cbfdots_notviolsmask
+                    tpcount=torch.sum(tpmask)
+                    fpcount=torch.sum(fpmask)
+                    fncount=torch.sum(fnmask)
+                    tncount=torch.sum(tnmask)
+                    tp+=tpcount
+                    fp+=fpcount
+                    fn+=fncount
+                    tn+=tncount
+                    #print('tp,fp,fn,tn', tp.item(), fp.item(), fn.item(), tn.item())
+                    #log.info(
+                        #'tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
+                    #if torch.max(rdnvci > 0):
+                    #print('really critical!')
+                    #print('rdnvci-cbfdots_viols', (rdnvci - cbfdots_viols).reshape(rdnvi.shape[0]))
+                    #print('really critical done this time!')
+                    rdnvcimask = rdnvci > 0.5
+                    rdnvnotcimask = rdnvci < 0.5
+                    tpcmask = rdnvcimask * cbfdots_violsmask
+                    fpcmask = rdnvnotcimask * cbfdots_violsmask
+                    fncmask = rdnvcimask * cbfdots_notviolsmask
+                    tncmask = rdnvnotcimask * cbfdots_notviolsmask
+                    tpccount = torch.sum(tpcmask)
+                    fpccount = torch.sum(fpcmask)
+                    fnccount = torch.sum(fncmask)
+                    tnccount = torch.sum(tncmask)
+                    tpc += tpccount
+                    fpc += fpccount
+                    fnc += fnccount
+                    tnc += tnccount
+                    #print('tpc,fpc,fnc,tnc', tpc.item(), fpc.item(), fnc.item(), tnc.item())
+                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
+                    tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
                     #else:
 
                 else:

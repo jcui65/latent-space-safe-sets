@@ -54,7 +54,9 @@ class SimplePointBot(Env, utils.EzPickle):
         self._episode_steps = 0#start with 0!
         # self.obstacle = self._complex_obstacle(OBSTACLE_COORDS)
         if walls is None:
-            walls = [((75, 55), (100, 95))]#the position and dimension of the wall
+            xmove = 0  #-25#30#
+            ymove=-40#0#-30#
+            walls = [((75+xmove,45+ymove),(100+xmove,105+ymove))]#the position and dimension of the wall[((75+xmove,55+ymove),(100+xmove,95+ymove))]#the position and dimension of the wall
         self.walls = [self._complex_obstacle(wall) for wall in walls]#140, the bound of the wall
         #it is a list of functions that depend on states
         self.wall_coords = walls
@@ -194,8 +196,9 @@ class SimplePointBot(Env, utils.EzPickle):
         draw = ImageDraw.Draw(im)#on this blank cloth?
 
         draw_circle(draw, state, 10, ACTOR_COLOR)#draw a circle at state with radius=10 in red!!!
-        for wall in self.wall_coords:#draw an obstacle with blue with black outline width 1
-            draw.rectangle(wall, fill=OBSTACLE_COLOR, outline=(0, 0, 0), width=1)
+        draw_circle(draw, np.array([90,75]), 30, OBSTACLE_COLOR)#25#  # draw a circle at state with radius=10 in red!!!
+        #for wall in self.wall_coords:#draw an obstacle with blue with black outline width 1
+            #draw.rectangle(wall, fill=OBSTACLE_COLOR, outline=(0, 0, 0), width=1)
 
         return np.array(im)#you have got the image in the form of numpy array!
 
@@ -219,7 +222,7 @@ class SimplePointBot(Env, utils.EzPickle):
     @staticmethod
     def _complex_obstacle(bounds):
         """#it returns a function, OK?
-        Returns a function that returns true if a given state is within the
+        Returns a function that returns true (1) if a given state is within the
         bounds and false otherwise
         :param bounds: bounds in form [[X_min, Y_min], [X_max, Y_max]]
         :return: function described above
@@ -270,11 +273,12 @@ class SimplePointBot(Env, utils.EzPickle):
         if heatmap is not None:
             assert heatmap.shape == (WINDOW_HEIGHT, WINDOW_WIDTH)
             heatmap = np.flip(heatmap, axis=0)
-            im = plt.imshow(heatmap, cmap='hot')
+            im = plt.imshow(heatmap, cmap='hot')#it is following the numpy rule when plotting from numpy
             plt.colorbar(im)
 
         if board:
-            self.draw_board(ax)#see line 237
+            #self.draw_board(ax)#see line 237
+            self.draw_boardcircle(ax)  # see line 237
 
         if trajectories is not None and type(trajectories) == list:
             if type(trajectories[0]) == list:
@@ -314,7 +318,7 @@ class SimplePointBot(Env, utils.EzPickle):
                                           radius=2, color='lime')
                 ax.add_patch(start_circle)
 
-    def draw_board(self, ax):
+    def draw_board(self, ax):#that is using the matplotlib's rule as it is plotting matplotlib plots rather than numpy plots!
         plt.xlim(0, WINDOW_WIDTH)
         plt.ylim(0, WINDOW_HEIGHT)
 
@@ -330,6 +334,20 @@ class SimplePointBot(Env, utils.EzPickle):
                     fill=True
                 )
             )
+
+        circle = plt.Circle(self.start_pos, radius=3, color='k')
+        ax.add_patch(circle)
+        circle = plt.Circle(self.end_pos, radius=3, color='k')
+        ax.add_patch(circle)
+        ax.annotate("start", xy=(self.start_pos[0], self.start_pos[1] - 8), fontsize=10,
+                    ha="center")#just annotating the texts!
+        ax.annotate("goal", xy=(self.end_pos[0], self.end_pos[1] - 8), fontsize=10, ha="center")
+
+    def draw_boardcircle(self, ax):#that is using the matplotlib's rule as it is plotting matplotlib plots rather than numpy plots!
+        plt.xlim(0, WINDOW_WIDTH)
+        plt.ylim(0, WINDOW_HEIGHT)
+
+        ax.add_patch(patches.Circle(np.array([90,75]),30,linewidth=1,color='red',fill=True))#25#
 
         circle = plt.Circle(self.start_pos, radius=3, color='k')
         ax.add_patch(circle)

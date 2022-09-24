@@ -1,8 +1,8 @@
 
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
-sys.path.insert(1, '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets')
-
+#sys.path.insert(1, '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets')
+sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 import latentsafesets.utils as utils
 from latentsafesets.utils.arg_parser import parse_args
 
