@@ -60,7 +60,7 @@ class CBFdotTrainer(Trainer):#modified from contraint trainer
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
 
     def update(self, replay_buffer, update_dir):#this is the update process after initial train
-        log.info('Beginning cbf dott update optimization')
+        log.info('Beginning cbf dot update optimization')
 
         for _ in trange(self.params['cbfd_update_iters']):
             out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
@@ -74,7 +74,9 @@ class CBFdotTrainer(Trainer):#modified from contraint trainer
 
         log.info('Creating cbf dot function heatmap')
         self.loss_plotter.plot()
-        self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)#a few lines later
+        #self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)#a few lines later
+        #self.plotc(os.path.join(update_dir, "cbfdc.pdf"), replay_buffer)  # a few lines later
+        self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
 
     def plot(self, file, replay_buffer):
@@ -82,5 +84,13 @@ class CBFdotTrainer(Trainer):#modified from contraint trainer
         next_obs = out_dict['next_obs']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdot(next_obs, self.cbfd,
+                             file,
+                             env=self.env)
+
+    def plotconly(self, file, replay_buffer):
+        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        next_obs = out_dict['next_obs']
+        #rdo = out_dict['rdo']
+        pu.visualize_cbfdotconly(next_obs, self.cbfd,
                              file,
                              env=self.env)

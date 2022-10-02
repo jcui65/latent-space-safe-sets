@@ -55,8 +55,13 @@ class SimplePointBot(Env, utils.EzPickle):
         # self.obstacle = self._complex_obstacle(OBSTACLE_COORDS)
         if walls is None:
             xmove = 0  #-25#30#
-            ymove=-40#0#-30#
-            walls = [((75+xmove,45+ymove),(100+xmove,105+ymove))]#the position and dimension of the wall[((75+xmove,55+ymove),(100+xmove,95+ymove))]#the position and dimension of the wall
+            ymove=-45#-40#-35#-33#-30#-25#0#-30#
+            lux=50
+            luy=55
+            width=20#25#
+            height=50#40
+            walls = [((lux+xmove,luy+ymove),(lux+width+xmove,luy+height+ymove))]#
+            #[((75+xmove,45+ymove),(100+xmove,105+ymove))]#the position and dimension of the wall[((75+xmove,55+ymove),(100+xmove,95+ymove))]#the position and dimension of the wall
         self.walls = [self._complex_obstacle(wall) for wall in walls]#140, the bound of the wall
         #it is a list of functions that depend on states
         self.wall_coords = walls
@@ -196,9 +201,12 @@ class SimplePointBot(Env, utils.EzPickle):
         draw = ImageDraw.Draw(im)#on this blank cloth?
 
         draw_circle(draw, state, 10, ACTOR_COLOR)#draw a circle at state with radius=10 in red!!!
-        draw_circle(draw, np.array([90,75]), 30, OBSTACLE_COLOR)#25#  # draw a circle at state with radius=10 in red!!!
-        #for wall in self.wall_coords:#draw an obstacle with blue with black outline width 1
-            #draw.rectangle(wall, fill=OBSTACLE_COLOR, outline=(0, 0, 0), width=1)
+        centerx=115#118#110
+        centery=75
+        radi=19#20#15#14#
+        draw_circle(draw, np.array([centerx,centery]), radi, OBSTACLE_COLOR)#25#  # draw a circle at state with radius=10 in red!!!
+        for wall in self.wall_coords:#draw an obstacle with blue with black outline width 1
+            draw.rectangle(wall, fill=OBSTACLE_COLOR, outline=(0, 0, 0), width=1)
 
         return np.array(im)#you have got the image in the form of numpy array!
 
@@ -272,13 +280,14 @@ class SimplePointBot(Env, utils.EzPickle):
 
         if heatmap is not None:
             assert heatmap.shape == (WINDOW_HEIGHT, WINDOW_WIDTH)
-            heatmap = np.flip(heatmap, axis=0)
+            #heatmap = np.flip(heatmap, axis=0)#
             im = plt.imshow(heatmap, cmap='hot')#it is following the numpy rule when plotting from numpy
             plt.colorbar(im)
 
         if board:
             #self.draw_board(ax)#see line 237
-            self.draw_boardcircle(ax)  # see line 237
+            #self.draw_boardcircle(ax)  # see line 237
+            self.draw_boardsquarecircle(ax)  # see line 237
 
         if trajectories is not None and type(trajectories) == list:
             if type(trajectories[0]) == list:
@@ -347,7 +356,10 @@ class SimplePointBot(Env, utils.EzPickle):
         plt.xlim(0, WINDOW_WIDTH)
         plt.ylim(0, WINDOW_HEIGHT)
 
-        ax.add_patch(patches.Circle(np.array([90,75]),30,linewidth=1,color='red',fill=True))#25#
+        centerx=110
+        centery=75
+        radi=20
+        ax.add_patch(patches.Circle(np.array([centerx,centery]),radi,linewidth=1,color='red',fill=True))#25#
 
         circle = plt.Circle(self.start_pos, radius=3, color='k')
         ax.add_patch(circle)
@@ -357,6 +369,35 @@ class SimplePointBot(Env, utils.EzPickle):
                     ha="center")#just annotating the texts!
         ax.annotate("goal", xy=(self.end_pos[0], self.end_pos[1] - 8), fontsize=10, ha="center")
 
+    def draw_boardsquarecircle(self, ax):#that is using the matplotlib's rule as it is plotting matplotlib plots rather than numpy plots!
+        plt.xlim(0, WINDOW_WIDTH)
+        plt.ylim(0, WINDOW_HEIGHT)
+
+        for wall in self.wall_coords:#in simple env, there is only one wall
+            width, height = np.subtract(wall[1], wall[0])
+            ax.add_patch(
+                patches.Rectangle(
+                    xy=wall[0],  # point of origin.
+                    width=width,
+                    height=height,
+                    linewidth=1,
+                    color='red',
+                    fill=True
+                )
+            )
+
+        centerx = 115#118#110#
+        centery = 85#80#75#
+        radi = 20#19#15#14#
+        ax.add_patch(patches.Circle(np.array([centerx, centery]), radi, linewidth=1, color='red', fill=True))  # 25#
+
+        circle = plt.Circle(self.start_pos, radius=3, color='k')
+        ax.add_patch(circle)
+        circle = plt.Circle(self.end_pos, radius=3, color='k')
+        ax.add_patch(circle)
+        ax.annotate("start", xy=(self.start_pos[0], self.start_pos[1] - 8), fontsize=10,
+                    ha="center")#just annotating the texts!
+        ax.annotate("goal", xy=(self.end_pos[0], self.end_pos[1] - 8), fontsize=10, ha="center")
 
 class SimplePointBotLong(SimplePointBot):
     def __init__(self, from_pixels=True):
