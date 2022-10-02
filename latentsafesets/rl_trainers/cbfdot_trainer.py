@@ -74,7 +74,7 @@ class CBFdotTrainer(Trainer):#modified from contraint trainer
 
         log.info('Creating cbf dot function heatmap')
         self.loss_plotter.plot()
-        #self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)#a few lines later
+        self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)#a few lines later
         #self.plotc(os.path.join(update_dir, "cbfdc.pdf"), replay_buffer)  # a few lines later
         self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))

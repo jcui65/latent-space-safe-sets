@@ -51,7 +51,7 @@ class CBFdotTrainer(Trainer):
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
 
     def update(self, replay_buffer, update_dir):
-        log.info('Beginning cbf dott update optimization')
+        log.info('Beginning cbf dot update optimization!')
 
         for _ in trange(self.params['cbfd_update_iters']):
             out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
@@ -69,6 +69,7 @@ class CBFdotTrainer(Trainer):
         self.loss_plotter.plot()
         self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
+        self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
 
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
@@ -76,6 +77,15 @@ class CBFdotTrainer(Trainer):
         pu.visualize_cbfdot(next_obs, self.cbfd,
                              file,
                              env=self.env)
+
+    def plotconly(self, file, replay_buffer):
+        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        next_obs = out_dict['next_obs']
+        #rdo = out_dict['rdo']
+        pu.visualize_cbfdotconly(next_obs, self.cbfd,
+                             file,
+                             env=self.env)
+
 
 class MPCTrainer(Trainer):
 
