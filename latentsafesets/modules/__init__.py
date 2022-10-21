@@ -8,3 +8,4 @@ from .vanilla_vae import VanillaVAE
 from .bc_safe_set import BCSafeSet
 from .bellman_safe_set import BellmanSafeSet
 from .cbfdot_estimator import CBFdotEstimator
+from .cbfdot_estimator_latent import CBFdotEstimatorlatent

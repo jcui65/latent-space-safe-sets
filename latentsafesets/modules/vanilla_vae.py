@@ -15,9 +15,9 @@ class VanillaVAE(nn.Module):
     def __init__(self, params):
         super(VanillaVAE, self).__init__()
 
-        self.d_obs = params['d_obs']#(3, 64, 64)
+        self.d_obs = params['d_obs']#(3, 64, 64), input dimension
         self.d_latent = params['d_latent']#32
-        self.kl_multiplier = params['enc_kl_multiplier']#1e-6
+        self.kl_multiplier = params['enc_kl_multiplier']#1e-6, beta
         self.trained = False
 
         self.frame_stack = params['frame_stack']#false by default
@@ -36,8 +36,8 @@ class VanillaVAE(nn.Module):
         return mu, log_std
 
     def encode(self, inputs):
-        mu, log_std = self(inputs)
-        std = torch.exp(log_std)
+        mu, log_std = self(inputs)# forward
+        std = torch.exp(log_std)#this is just the standard deviation
         samples = torch.empty(mu.shape).normal_(mean=0, std=1).to(ptu.TORCH_DEVICE)#reparameterization trick
         encoding = mu + std * samples
         return encoding.detach()
@@ -51,6 +51,7 @@ class VanillaVAE(nn.Module):
         samples = torch.empty(mu.shape).normal_(mean=0, std=1).to(ptu.TORCH_DEVICE)
         encoding = mu + std * samples
         kl_loss = 0.5 * torch.mean(mu ** 2 + std ** 2 - torch.log(std ** 2) - 1)
+        # if I want to do latent safe set/states, then I mainly need to modify the kl loss!
         reconstruction = self.decoder(encoding)
         targets = obs
         r_loss = F.mse_loss(reconstruction, targets, reduction='mean')

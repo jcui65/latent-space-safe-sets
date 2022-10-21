@@ -107,8 +107,11 @@ def evaluate_cbfdot_func(cbfdot,
         row_states = []
         row_statesc = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
+            #old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
+            old_state = env._state_to_image((x, y)) / 255
+            row_states.append(old_state)
             #print('old_state',old_state)#tuple
+            '''
             #print('selfwall_coords[0][0]',selfwall_coords[0][0])#tuple
             #print('(old_state <= selfwall_coords[0][0])',(old_state <= selfwall_coords[0][0]))
             if (old_state <= selfwall_coords[0][0]).all():  # old_state#check it!
@@ -134,10 +137,17 @@ def evaluate_cbfdot_func(cbfdot,
             else:
                 # print(old_state)#it can be [98.01472841 92.11425524]
                 reldistold = np.array([0, 0])  # 9.9#
-            rda=np.concatenate((reldistold,action))#thanks it is one-by-one
-            row_states.append(rda)
+            '''
+            #rda=np.concatenate((reldistold,action))#thanks it is one-by-one
+            #row_states.append(rda)
+            #print('obs.shape',obs.shape)
+            #print('action',action)
+            #rdal=np.concatenate((obs,action))
+            #row_states.append(rdal)
 
-        vals = cbfdot.cbfdots(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
+        #vals = cbfdot.cbfdots(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
+        vals = cbfdot.cbfdots(np.array(row_states),already_embedded = True).squeeze()  # it is like calling forward of const_estimator!
+
         if skip == 1:
             data[y] = vals.squeeze()
         elif skip == 2:

@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
             # Maintain ground truth info for plotting purposes
             movie_traj = [{'obs': obs.reshape((-1, 3, 64, 64))[0]}]#a dict
-            traj_rews = []#rews: reward
+            traj_rews = []#rews: rewards
             constr_viol = False
             succ = False
 

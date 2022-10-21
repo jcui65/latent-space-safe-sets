@@ -191,16 +191,16 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_batch_size', type=int, default=256)
     parser.add_argument('--cbfd_thresh', type=float, default=0.2,
                         help='Threshold for an obs to be considered in violation of cbf dots')
-    parser.add_argument('--cbfd_init_iters', type=int, default=320000,#160000,#80000,#40000,#20000,#30000,#10000,#
+    parser.add_argument('--cbfd_init_iters', type=int, default=20000,#30000,#320000,#160000,#80000,#40000,#10000,#2000,#
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
+    parser.add_argument('--cbfd_checkpoint', type=str, default=None)#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
     # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#
     # 'outputs/2022-08-06/15-02-09/cbfd_10000.pth')#'outputs/2022-08-06/15-02-09/cbfd_20000.pth')#
     #'outputs/2022-08-06/15-02-09/cbfd_30000.pth')#'outputs/2022-08-06/15-02-09/cbfd_180000.pth')#
     #'outputs/2022-08-07/01-56-19/update_3/cbfd.pth')#'outputs/2022-08-07/01-36-19/update_4/cbfd.pth')#'outputs/2022-08-07/01-09-48/update_5/cbfd.pth')#
-    # 'outputs/2022-08-06/22-42-02/update_13/cbfd.pth')#None)#'outputs/2022-08-06/11-44-04/cbfd.pth')#'outputs/2022-08-06/12-29-56/cbfd.pth')#
+    # 'outputs/2022-08-06/22-42-02/update_13/cbfd.pth')#'outputs/2022-08-06/11-44-04/cbfd.pth')#'outputs/2022-08-06/12-29-56/cbfd.pth')#
     #'outputs/2022-08-06/11-44-04/cbfd.pth')#'outputs/2022-08-06/10-21-50/cbfd.pth')#'outputs/2022-08-03/01-06-16/cbfd.pth')#
     #'outputs/2022-07-15/17-41-16/initial_train/constr.pth')#'outputs/2022-07-20/14-46-50/update_16/constr.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/constr.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/constr.pth')#

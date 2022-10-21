@@ -237,7 +237,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
                  gi=False, constr=False,cbfd=False):
     from latentsafesets.modules import VanillaVAE, ValueEnsemble, \
         ValueFunction, PETSDynamics, GoalIndicator, ConstraintEstimator, BCSafeSet, \
-        BellmanSafeSet, CBFdotEstimator
+        BellmanSafeSet, CBFdotEstimatorlatent
     import latentsafesets.utils.pytorch_utils as ptu
 
     modules = {}
@@ -287,7 +287,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
         modules['constr'] = constraint
 
     if cbfd:
-        cbfdot = CBFdotEstimator(encoder, params).to(ptu.TORCH_DEVICE)
+        cbfdot = CBFdotEstimatorlatent(encoder, params).to(ptu.TORCH_DEVICE)
         if params['cbfd_checkpoint']:
             cbfdot.load(params['cbfd_checkpoint'])
         modules['cbfd'] = cbfdot

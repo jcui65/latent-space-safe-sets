@@ -73,10 +73,10 @@ class VAEEncoder(nn.Module):
 
     def encode(self, x):
         ptu.torchify(x)
-        mu, log_std = self(x)
+        mu, log_std = self(x)#it is the forward function
         std = log_std.mul(0.5).exp_()
-        dist = torch.distributions.normal.Normal(mu, std)
-        z = dist.rsample()
+        dist = torch.distributions.normal.Normal(mu, std)#it is the std, not the variance
+        z = dist.rsample()#size d_latent
         return z
 
 
@@ -89,7 +89,7 @@ class VAEDecoder(nn.Module):
         out_channels = image_channels if len(d_obs) == 3 else image_channels * d_obs[0]#in this case len(d_obs)=4, len(d_obs[0])=3
 
         self.decoder = nn.Sequential(
-            nn.Linear(d_latent, h_dim),#takes z as input
+            nn.Linear(d_latent, h_dim),#takes z whose dimension is d_latent as input and outputs an h_dim size vector
             UnFlatten(),
             nn.ConvTranspose2d(h_dim, 128, kernel_size=5, stride=2),
             nn.ReLU(),
@@ -102,7 +102,7 @@ class VAEDecoder(nn.Module):
         )
 
     def forward(self, x):#the x here is z, right?
-        batch_dims = x.shape[:-1]
+        batch_dims = x.shape[:-1]#batch size, right?
         if len(batch_dims) == 0:
             batch_dims = (1,)
         hidden = x.view(-1, self.d_latent)
@@ -115,7 +115,7 @@ class VAEDecoder(nn.Module):
         return z
 
     def decode(self, x):#what is the usage?
-        return self(x)
+        return self(x)#it is just the forward function
 
 class GenericNetcbf(nn.Module):
 

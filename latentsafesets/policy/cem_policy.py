@@ -712,6 +712,8 @@ class CEMSafeSetPolicy(Policy):
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         emb = self.encoder.encode(obs)#in latent space now!
+        embrepeat=emb.repeat(1000,5,1)
+        #print('embrepeat.shape',embrepeat.shape)
         itr = 0#
         reset_count = 0#
         act_ss_thresh = self.safe_set_thresh#initially 0.8
@@ -855,9 +857,10 @@ class CEMSafeSetPolicy(Policy):
                 rdnvcis = rdnvcis.reshape(rdnvis.shape[0], 1)# print(rdn.shape)#torch.Size([1000, 5])
                 cbfs = rdns ** 2 - 15 ** 2  # 13**2#20:30#don't forget the square!# Note that this is also used in the online training afterwards
                 acbfs = -cbfs * act_cbfd_thresh  # acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
-                rdas = torch.concat((rd8s, action_samples),
-                                   dim=2)  # check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
-
+                #rdas = torch.concat((rd8s, action_samples),
+                                   #dim=2)  # check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
+                #print('action_samples.shape',action_samples.shape)
+                rdas=torch.concat((embrepeat, action_samples),dim=2)
                 #the circle part
                 device=se.device
                 centerx=115#118#
@@ -883,8 +886,8 @@ class CEMSafeSetPolicy(Policy):
                 cbfc=rdnc**2-15**2#13**2#20:30#don't forget the square!# Note that this is also used in the online training afterwards
                 #print('cbf',cbf)
                 acbfc=-cbfc*act_cbfd_thresh#acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
-                rdac=torch.concat((rd8c,action_samples),dim=2)#check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
-
+                #rdac=torch.concat((rd8c,action_samples),dim=2)#check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
+                rdac = torch.concat((embrepeat, action_samples), dim=2)
                 # Blow up cost for trajectories that are not constraint satisfying and/or don't end up
                 #   in the safe set
                 if not self.ignore_constraints:#Do I add the CBF term here?#to see the constraint condition of 1000 trajs
