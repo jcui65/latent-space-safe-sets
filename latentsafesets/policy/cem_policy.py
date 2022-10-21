@@ -860,7 +860,7 @@ class CEMSafeSetPolicy(Policy):
                 #rdas = torch.concat((rd8s, action_samples),
                                    #dim=2)  # check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
                 #print('action_samples.shape',action_samples.shape)
-                rdas=torch.concat((embrepeat, action_samples),dim=2)
+                #rdas=torch.concat((embrepeat, action_samples),dim=2)
                 #the circle part
                 device=se.device
                 centerx=115#118#
@@ -887,7 +887,7 @@ class CEMSafeSetPolicy(Policy):
                 #print('cbf',cbf)
                 acbfc=-cbfc*act_cbfd_thresh#acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
                 #rdac=torch.concat((rd8c,action_samples),dim=2)#check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
-                rdac = torch.concat((embrepeat, action_samples), dim=2)
+                #rdac = torch.concat((embrepeat, action_samples), dim=2)
                 # Blow up cost for trajectories that are not constraint satisfying and/or don't end up
                 #   in the safe set
                 if not self.ignore_constraints:#Do I add the CBF term here?#to see the constraint condition of 1000 trajs
@@ -897,13 +897,15 @@ class CEMSafeSetPolicy(Policy):
                     constraint_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)#no constraint violators!
                 #self.ignore_cbfdots=True#just for 10:57 at Aug 4th
                 if not self.ignore_cbfdots:#Do I add the CBF term here?#to see the constraint condition of 1000 trajs
-                    cbfdots_alls = self.cbfdot_function(rdas,
-                                                        already_embedded=True)  # all the candidates#torch.sigmoid()#each in the model#(20,1000,5)
+                    #cbfdots_alls = self.cbfdot_function(rdas,
+                                                        #already_embedded=True)  # all the candidates#torch.sigmoid()#each in the model#(20,1000,5)
+                    cbfdots_alls = self.cbfdot_function(embrepeat,action_samples,already_embedded=True) #with the reformulated cbfd estimator
                     cbfdots_alls = cbfdots_alls.reshape(cbfdots_alls.shape[0], cbfdots_alls.shape[1])  #
                     cbfdots_violss = torch.sum(cbfdots_alls < acbfs,
                                                dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
-                    cbfdots_allc = self.cbfdot_function(rdac, already_embedded=True)#all the candidates#torch.sigmoid()#each in the model#(20,1000,5)
+                    #cbfdots_allc = self.cbfdot_function(rdac, already_embedded=True)#all the candidates#torch.sigmoid()#each in the model#(20,1000,5)
+                    cbfdots_allc = self.cbfdot_function(embrepeat, action_samples,already_embedded=True)  # with the reformulated cbfd estimator
                     cbfdots_allc=cbfdots_allc.reshape(cbfdots_allc.shape[0],cbfdots_allc.shape[1])#
                     cbfdots_violsc = torch.sum(cbfdots_allc<acbfc, dim=1)#those that violate the constraints#1000 0,1,2,3,4,5s#
                     cbfdots_violsc=cbfdots_violsc.reshape(cbfdots_violsc.shape[0],1)#the threshold now should be predictions dependent

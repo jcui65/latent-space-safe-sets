@@ -110,10 +110,11 @@ class CBFdotlatentTrainer(Trainer):
             #print('obs.shape',obs.shape)
             rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']#0 or 1
             #rda=np.concatenate((rdo,action),axis=1)
-            rdal = np.concatenate((obs, action), axis=1)#l for latent
+            #rdal = np.concatenate((obs, action), axis=1)#l for latent
             #print('rdal',rdal)
             #print('rdal.shape',rdal.shape)# (256, 34)
-            loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
+            #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
+            loss, info = self.cbfd.update(obs,action, hvd, already_embedded=True)  #
             self.loss_plotter.add_data(info)#self.constr.update, not self.update!
 
             if i % self.params['log_freq'] == 0:
@@ -137,11 +138,12 @@ class CBFdotlatentTrainer(Trainer):
             #print('rdo.shape',rdo.shape)#(256, 2)
             #print('action.shape',action.shape)#(256, 2)
             #rda = np.concatenate((rdo, action),axis=1)
-            rdal = np.concatenate((obs, action), axis=1)
+            #rdal = np.concatenate((obs, action), axis=1)
             #print('rda.shape',rda.shape)#(256, 4)
             #loss, info = self.constr.update(next_obs, constr, already_embedded=True)
             #loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
-            loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
+            #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
+            loss, info = self.cbfd.update(obs,action, hvd, already_embedded=True)  #
             self.loss_plotter.add_data(info)
 
         log.info('Creating cbf dot function heatmap')

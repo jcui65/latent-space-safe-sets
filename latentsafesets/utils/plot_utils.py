@@ -212,7 +212,8 @@ def visualize_onezero(obs, onezero, file, env=None):
 def visualize_cbfdot(obs, onezero, file, env=None):
     if issubclass(type(env), SimplePointBot):
         #print('entering this one!')
-        spbu.evaluate_cbfdot_func(onezero, env, file=file, skip=1,action=(0,0))#61 in spb_utils
+        #spbu.evaluate_cbfdot_func(onezero, env, file=file, skip=1,action=(0,0))#61 in spb_utils
+        spbu.evaluate_cbfdotlatent_func(onezero, env, file=file, skip=1, action=(0, 0))  # 61 in spb_utils
         #spbu.evaluate_cbfdotc_func(onezero, env, file=file, skip=1, action=(0, 0))  # 61 in spb_utils
         return
     #print('entering the other one!')

@@ -32,7 +32,7 @@ class CBFdotTrainer(Trainer):#modified from contraint trainer
 
         log.info('Beginning cbfdot initial optimization')
 
-        for i in range(self.params['cbfd_init_iters']):#10000
+        for i in range(self.params['cbfd_init_iters']):#for example, 10000
             out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
             rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']#0 or 1
             #rdo for relative distance old, hvd for h value difference

@@ -32,44 +32,56 @@ class CBFdotEstimatorlatent(nn.Module, EncodedModule):#supervised learning very 
         lr = params['cbfd_lr']
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr)
 
-    def forward(self, obs, already_embedded=False):
+    def forward(self, obs, action, already_embedded=False):
         """
         Returns inputs to sigmoid for probabilities
         """
+        #print('obs.shape',obs.shape)
         if not already_embedded:
             embedding = self.encoder.encode(obs).detach()#workaround#currently I am in the state space
         else:
             embedding = obs
         #print('embedding.shape',embedding.shape)#torch.Size([1000,5,4])#torch.Size([256,4])#torch.Size([180,4])#
-        log_probs = self.net(embedding)#why 3 kinds of sizes?
+        #device = embedding.device
+        action=ptu.torchify(action)
+        #print('embedding',embedding)
+        #print('embedding.shape', embedding.shape)#torch.Size([256, 32])
+        #print('action',action)
+        #print('action.shape', action.shape)# torch.Size([256, 2])
+        ea=torch.concat((embedding,action),-1)
+        log_probs = self.net(ea)#self.net(embedding)#why 3 kinds of sizes?
         return log_probs
 
-    def cbfdots(self, obs, already_embedded=False):#the forward function for numpy input
+    def cbfdots(self, obs,already_embedded=False):#the forward function for numpy input#this is used in plotting
         obs = ptu.torchify(obs)
-        embedding = self.encoder.encode(obs).detach()  # workaround#currently I am in the state space
+        #embedding = self.encoder.encode(obs).detach()  # workaround#currently I am in the state space
         #print('embedding.shape',embedding.shape)# torch.Size([180, 32])
-        device = embedding.device
-        zero2=torch.zeros((embedding.shape[0],2)).to(device)
-        ea0=torch.concat((embedding,zero2),1)
-        logits = self(ea0, already_embedded=True)
+        #device = embedding.device
+        device = obs.device
+        #zero2=torch.zeros((embedding.shape[0],2)).to(device)
+        zero2 = torch.zeros((obs.shape[0], 2)).to(device)
+        action=zero2
+        #ea0=torch.concat((embedding,zero2),1)
+        #logits = self(ea0,action, already_embedded=True)
+        logits = self(obs, action)
         probs = logits#torch.sigmoid(logits)#
         return ptu.to_numpy(probs)
 
-    def update(self, next_obs, constr, already_embedded=False):#the training process
+    def update(self, next_obs,action, constr, already_embedded=False):#the training process
         self.trained = True
         next_obs = ptu.torchify(next_obs)#input
         constr = ptu.torchify(constr)#output
 
         self.optimizer.zero_grad()
-        loss = self.loss(next_obs, constr, already_embedded)
+        loss = self.loss(next_obs, action,constr, already_embedded)
         loss.backward()
         self.step()
 
         return loss.item(), {'cbfd': loss.item()}
 
-    def loss(self, next_obs, constr, already_embedded=False):
-        logits = self(next_obs, already_embedded).squeeze()#.forward!
-        targets = constr
+    def loss(self, next_obs,action, constr, already_embedded=False):
+        logits = self(next_obs, action,already_embedded).squeeze()#.forward!#prediction
+        targets = constr#label
         loss = self.loss_func(logits, targets)
         return loss
 
