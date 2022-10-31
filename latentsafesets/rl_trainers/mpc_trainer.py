@@ -167,6 +167,90 @@ class CBFdotlatentTrainer(Trainer):
                              file,
                              env=self.env)
 
+class CBFdotlatentplanaTrainer(Trainer):
+    def __init__(self, env, params, cbfd, loss_plotter):
+        self.params = params
+        self.cbfd =cbfd
+        self.loss_plotter = loss_plotter
+        self.env = env
+
+        self.env_name = params['env']
+
+    def initial_train(self, replay_buffer, update_dir):
+        if self.cbfd.trained:
+            self.plot(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer)
+            return
+
+        log.info('Beginning cbfdot initial optimization')
+
+        for i in range(self.params['cbfd_init_iters']):#10000
+            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
+            obs=out_dict['obs']
+            #print('obs',obs)
+            #print('obs.shape',obs.shape)
+            #rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']#0 or 1
+            rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
+            #rda=np.concatenate((rdo,action),axis=1)
+            #rdal = np.concatenate((obs, action), axis=1)#l for latent
+            #print('rdal',rdal)
+            #print('rdal.shape',rdal.shape)# (256, 34)
+            #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
+            #loss, info = self.cbfd.update(obs,action, hvd, already_embedded=True)  #
+            loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #
+            self.loss_plotter.add_data(info)#self.constr.update, not self.update!
+
+            if i % self.params['log_freq'] == 0:
+                self.loss_plotter.print(i)
+            if i % self.params['plot_freq'] == 0:
+                log.info('Creating cbfdot function heatmap')
+                self.loss_plotter.plot()
+                self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer)
+            if i % self.params['checkpoint_freq'] == 0 and i > 0:
+                self.cbfd.save(os.path.join(update_dir, 'cbfd_%d.pth' % i))
+
+        self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
+
+    def update(self, replay_buffer, update_dir):
+        log.info('Beginning cbf dot update optimization!')
+
+        for _ in trange(self.params['cbfd_update_iters']):
+            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+            #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
+            #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
+            obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
+            #print('rdo.shape',rdo.shape)#(256, 2)
+            #print('action.shape',action.shape)#(256, 2)
+            #rda = np.concatenate((rdo, action),axis=1)
+            #rdal = np.concatenate((obs, action), axis=1)
+            #print('rda.shape',rda.shape)#(256, 4)
+            #loss, info = self.constr.update(next_obs, constr, already_embedded=True)
+            #loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
+            #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
+            loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #
+            self.loss_plotter.add_data(info)
+
+        log.info('Creating cbf dot function heatmap')
+        self.loss_plotter.plot()
+        self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)
+        self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
+        #self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
+
+    def plot(self, file, replay_buffer):
+        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
+        pu.visualize_cbfdot(next_obs, self.cbfd,
+                             file,
+                             env=self.env)
+
+    def plotconly(self, file, replay_buffer):
+        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        next_obs = out_dict['next_obs']
+        #rdo = out_dict['rdo']
+        pu.visualize_cbfdotconly(next_obs, self.cbfd,
+                             file,
+                             env=self.env)
+
+
 class MPCTrainer(Trainer):
 
     def __init__(self, env, params, modules):
@@ -188,7 +272,8 @@ class MPCTrainer(Trainer):
         self.trainers.append(ConstraintTrainer(env, params, modules['constr'], loss_plotter))
         self.trainers.append(GoalIndicatorTrainer(env, params, modules['gi'], loss_plotter))
         #self.trainers.append(CBFdotTrainer(env, params, modules['cbfd'], loss_plotter))
-        self.trainers.append(CBFdotlatentTrainer(env, params, modules['cbfd'], loss_plotter))
+        #self.trainers.append(CBFdotlatentTrainer(env, params, modules['cbfd'], loss_plotter))
+        self.trainers.append(CBFdotlatentplanaTrainer(env, params, modules['cbfd'], loss_plotter))
 
     def initial_train(self, replay_buffer):#by default the replay buffer is the encoded version
         update_dir = os.path.join(self.logdir, 'initial_train')#create that folder!

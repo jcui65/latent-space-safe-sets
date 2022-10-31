@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=-1, help='Random seed')
     parser.add_argument('--log_freq', type=int, default=100,
                         help='How frequently to log updates')
-    parser.add_argument('--plot_freq', type=int, default=500,
+    parser.add_argument('--plot_freq', type=int, default=1000,#500,
                         help='How frequently to produce plots')
     parser.add_argument('--checkpoint_freq', type=int, default=2000,
                         help='How frequently to save model checkpoints')
@@ -182,8 +182,8 @@ def add_gi_args(parser):
 
 def add_cbfd_args(parser):
     # Constraint Estimator params
-    parser.add_argument('--cbfdot_thresh', type=float, default=838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
-    parser.add_argument('--cbfdot_thresh_mult', type=float, default=1.25)#0.8)#
+    parser.add_argument('--cbfdot_thresh', type=float, default=1.0)#838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
+    parser.add_argument('--cbfdot_thresh_mult', type=float, default=1.0)#1.25)#0.8)#
     parser.add_argument('--cbfd_lr', type=float, default=1e-4,
                         help='Learning rate for cbfd network')
     parser.add_argument('--cbfd_hidden_size', type=int, default=200)
@@ -191,7 +191,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_batch_size', type=int, default=256)
     parser.add_argument('--cbfd_thresh', type=float, default=0.2,
                         help='Threshold for an obs to be considered in violation of cbf dots')
-    parser.add_argument('--cbfd_init_iters', type=int, default=20000,#1000,#30000,#320000,#160000,#80000,#40000,#10000,#2000,#
+    parser.add_argument('--cbfd_init_iters', type=int, default=320000,#200000,#2000,#10000,#30000,#160000,#100000,#20000,#1000,#320000,#80000,#40000,#
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)

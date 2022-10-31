@@ -97,9 +97,11 @@ if __name__ == '__main__':
                 #action,tp,fp,fn,tn,tpc,fpc,fnc,tnc = policy.actcbfd(obs/255,env.state,tp,fp,fn,tn,tpc,fpc,fnc,tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdcircle(obs / 255, env.state, tp, fp, fn, tn, tpc,
                                                                             #fpc, fnc, tnc)
-                action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarecircle(obs / 255, env.state, tp, fp, fn, tn,
-                                                                                  tpc,
-                                                                                  fpc, fnc, tnc)
+                #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarecircle(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
+                #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
+                action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,
+                                                                                        fn, tn,
+                                                                                        tpc, fpc, fnc, tnc)
                 # the CEM (candidates, elites, etc.) is in here
                 #next_obs, reward, done, info = env.step(action)#saRSa
                 next_obs, reward, done, info = env.stepsafety(action)  # 63 in simple_point_bot.py

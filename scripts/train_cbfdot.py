@@ -1,9 +1,10 @@
 
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
-sys.path.insert(1, '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets')
+sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 
-from latentsafesets.rl_trainers import CBFdotTrainer
+#from latentsafesets.rl_trainers import CBFdotTrainer
+from latentsafesets.rl_trainers import CBFdotTrainer, CBFdotlatentplanaTrainer
 import latentsafesets.utils as utils
 from latentsafesets.utils.arg_parser import parse_args
 
@@ -36,5 +37,6 @@ if __name__ == '__main__':
 
     loss_plotter = utils.LossPlotter(logdir)
 
-    trainer = CBFdotTrainer(env, params, cbfdot, loss_plotter)
+    #trainer = CBFdotTrainer(env, params, cbfdot, loss_plotter)
+    trainer = CBFdotlatenplanaTrainer(env, params, cbfdot, loss_plotter)
     trainer.initial_train(replay_buffer, logdir)

@@ -1,7 +1,7 @@
 
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
-sys.path.insert(1, '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets')
+sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 
 from latentsafesets.rl_trainers import VAETrainer
 import latentsafesets.utils as utils

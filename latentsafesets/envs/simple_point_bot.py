@@ -55,11 +55,11 @@ class SimplePointBot(Env, utils.EzPickle):
         # self.obstacle = self._complex_obstacle(OBSTACLE_COORDS)
         if walls is None:
             xmove = 0  #-25#30#
-            ymove=-45#-40#-35#-33#-30#-25#0#-30#
-            lux=50
+            ymove=0#-45#-40#-35#-33#-30#-25#-30#
+            lux=75#50#
             luy=55
-            width=20#25#
-            height=50#40
+            width=25#20#
+            height=40#50#
             walls = [((lux+xmove,luy+ymove),(lux+width+xmove,luy+height+ymove))]#
             #[((75+xmove,45+ymove),(100+xmove,105+ymove))]#the position and dimension of the wall[((75+xmove,55+ymove),(100+xmove,95+ymove))]#the position and dimension of the wall
         self.walls = [self._complex_obstacle(wall) for wall in walls]#140, the bound of the wall
@@ -126,10 +126,7 @@ class SimplePointBot(Env, utils.EzPickle):
             #print(old_state)#it can be [98.01472841 92.11425524]
             reldistold=np.array([0,0])#9.9#
         hvalueold = np.linalg.norm(reldistold) ** 2 - 15 ** 2#get the value of the h function
-        if self._from_pixels:
-            obs = self._state_to_image(self.state)#line 169#it is a 3-channel image
-        else:
-            obs = self.state#it is a 2-d state
+
         if (next_state <= self.wall_coords[0][0]).all():  # old_state#check it!
             reldistnew = next_state - self.wall_coords[0][0]#relative distance new # np.linalg.norm()
         elif self.wall_coords[0][0][0] <= next_state[0] <= self.wall_coords[0][1][0] and next_state[1] <= \
@@ -201,9 +198,9 @@ class SimplePointBot(Env, utils.EzPickle):
         draw = ImageDraw.Draw(im)#on this blank cloth?
 
         draw_circle(draw, state, 10, ACTOR_COLOR)#draw a circle at state with radius=10 in red!!!
-        centerx=115#118#110
+        centerx=88#115#118#110
         centery=75
-        radi=19#20#15#14#
+        radi=0.001#19#20#15#14#
         draw_circle(draw, np.array([centerx,centery]), radi, OBSTACLE_COLOR)#25#  # draw a circle at state with radius=10 in red!!!
         for wall in self.wall_coords:#draw an obstacle with blue with black outline width 1
             draw.rectangle(wall, fill=OBSTACLE_COLOR, outline=(0, 0, 0), width=1)
@@ -386,9 +383,9 @@ class SimplePointBot(Env, utils.EzPickle):
                 )
             )
 
-        centerx = 115#118#110#
-        centery = 85#80#75#
-        radi = 20#19#15#14#
+        centerx = 88#115#118#110#
+        centery = 75#85#80#75#
+        radi = 0.001#20#19#15#14#
         ax.add_patch(patches.Circle(np.array([centerx, centery]), radi, linewidth=1, color='red', fill=True))  # 25#
 
         circle = plt.Circle(self.start_pos, radius=3, color='k')

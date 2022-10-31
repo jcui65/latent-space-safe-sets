@@ -94,11 +94,11 @@ def evaluate_cbfdot_func(cbfdot,
     data = np.zeros((spb.WINDOW_HEIGHT, spb.WINDOW_WIDTH))
     #if walls is None:
     xmove = 0  # -25#30#
-    ymove = -45#-40#-35#-33#-30#-25#0  #
-    lux = 50
+    ymove = 0  #-45#-40#-35#-33#-30#-25#
+    lux = 75#50#
     luy = 55
-    width = 20#25#
-    height = 50#40#
+    width = 25#20#
+    height = 40#50#
     walls = [((lux + xmove, luy + ymove), (lux + width + xmove, luy + height + ymove))] #[((75, 55), (100, 95))] #the position and dimension of the wall
     #self.walls = [self._complex_obstacle(wall) for wall in walls]  # 140, the bound of the wall
     # it is a list of functions that depend on states
@@ -311,11 +311,11 @@ def evaluate_cbfdotlatent_func(cbfdot,
     data = np.zeros((spb.WINDOW_HEIGHT, spb.WINDOW_WIDTH))
     #if walls is None:
     xmove = 0  # -25#30#
-    ymove = -45#-40#-35#-33#-30#-25#0  #
+    ymove = 0  #-45#-40#-35#-33#-30#-25#
     lux = 50
     luy = 55
-    width = 20#25#
-    height = 50#40#
+    width = 25#20#
+    height = 40#50#
     walls = [((lux + xmove, luy + ymove), (lux + width + xmove, luy + height + ymove))] #[((75, 55), (100, 95))] #the position and dimension of the wall
     #self.walls = [self._complex_obstacle(wall) for wall in walls]  # 140, the bound of the wall
     # it is a list of functions that depend on states
@@ -363,8 +363,8 @@ def evaluate_cbfdotlatent_func(cbfdot,
             #row_states.append(rdal)
 
         #vals = cbfdot.cbfdots(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
-        vals = cbfdot.cbfdots(np.array(row_states),already_embedded = True).squeeze()  # it is like calling forward of const_estimator!
-
+        #vals = cbfdot.cbfdots(np.array(row_states),already_embedded = True).squeeze()  # it is like calling forward of const_estimator!
+        vals = cbfdot.cbfdots(np.array(row_states)).squeeze() #latent and latent plan a are the same in this case # it is like calling forward of const_estimator!
         if skip == 1:
             data[y] = vals.squeeze()
         elif skip == 2:

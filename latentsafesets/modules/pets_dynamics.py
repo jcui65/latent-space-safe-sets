@@ -25,19 +25,19 @@ class PETSDynamics(nn.Module, EncodedModule):
 
         self.plot_freq = params['plot_freq']#500
         self.checkpoint_freq = params['checkpoint_freq']#2000
-        self.normalize_delta = params['dyn_normalize_delta']#False, but what is it?
+        self.normalize_delta = params['dyn_normalize_delta']#False, but what is it?#Now I know that it is for predicting delta s/z rather than s/z
         self.n_particles = params['n_particles']#20
         self.trained = False
 
         # Dynamics args
-        self.n_models = params['dyn_n_models']#5
+        self.n_models = params['dyn_n_models']#5#it is the B in the original paper!
         size = params['dyn_size']#128 units as seen in the paper
         n_layers = params['dyn_n_layers']#3 thus there are 3-1=2 hidden layers
         self.models = nn.ModuleList([#see line 146 for definition
             ProbabilisticDynamicsModel(self.d_latent, self.d_act, size=size, n_layers=n_layers)
                 .to(ptu.TORCH_DEVICE)
-            for _ in range(self.n_models)
-        ])
+            for _ in range(self.n_models)#don't forget this line!
+        ])#now we have 5 models!
         self.delta_rms = utils.RunningMeanStd(shape=(self.d_latent,))
 
         self.logdir = params['logdir']#'outputs/2022-07-18/19-38-58'
@@ -76,7 +76,7 @@ class PETSDynamics(nn.Module, EncodedModule):
                                         torch.sqrt(self.delta_rms.var).detach())
 
         loss = 0
-        for i, model in list(enumerate(self.models)):
+        for i, model in list(enumerate(self.models)):#there are 5 of them
             # Mini samples so the models are not identical
             emb_batch = emb[i]
             next_emb_batch = next_emb[i]
@@ -95,9 +95,9 @@ class PETSDynamics(nn.Module, EncodedModule):
     def predict(self, obs, act_seq, already_embedded=False):
         """
         Given the current obs, predict sequences of observations for each action sequence
-        in act_seq for each model in self.dynamics_models#(there are altogether 20 models, right?)
+        in act_seq for each model in self.dynamics_models#(there are altogether 20 or 5 models, right?)
 
-        This corresponds to the TS-1 in the PETS paper#ref 43 in the LS3 paper!
+        This corresponds to the TS-1 in the PETS paper#ref 43 in the LS3 paper!#choose different models every time
         :param obs: Tensor, dimension (d_latent) if already embedded or (*d_obs)
         :param act_seq: Tensor, dimension (num_candidates, planning_hor, d_act)#here it is (1000,5,2)
         :param already_embedded: Whether or not obs is already embedded in the latent space
@@ -118,10 +118,10 @@ class PETSDynamics(nn.Module, EncodedModule):
             #print('t',t,'act',act)#when t=0 act=nan! the problem is from outside!
             act_tiled = act.repeat((self.n_particles, 1))#([20000,32])?
             model_ind = np.random.randint(0, self.n_models)#5
-            model = self.models[model_ind]#randomly choose models?
+            model = self.models[model_ind]#randomly choose models?#it is TS-1
             #print('running_emb.shape',running_emb.shape)#torch.Size([20000, 32])
             #print('act_tiled.shape',act_tiled.shape)#torch.Size([20000, 2])
-            next_emb = model.get_next_emb(running_emb, act_tiled)
+            next_emb = model.get_next_emb(running_emb, act_tiled)#propogate
             #print('next_emb.shape', next_emb.shape)#torch.Size([20000, 32])
             predicted_emb[:, :, t, :] = next_emb.reshape((self.n_particles, num_candidates, self.d_latent))
             #predicted_emb should have shape (20,1000,5,32)
@@ -164,13 +164,13 @@ class ProbabilisticDynamicsModel(nn.Module):
         self.delta_mean = None
         self.delta_std = None
 
-    def update_statistics(self, mean, std):
+    def update_statistics(self, mean, std):#is it part of the cem process?
         self.delta_mean = mean
         self.delta_std = std
 
     def forward(self, emb, acs):
         inp = emb
-        concat = torch.cat((inp, acs), dim=1)
+        concat = torch.cat((inp, acs), dim=1)#latent states and action
         delta_normalized_both = self.delta_network(concat)
         delta_normalized_mean = delta_normalized_both[:, :self.d_latent]
         #print('delta_normalized_mean',delta_normalized_both)
@@ -184,14 +184,14 @@ class ProbabilisticDynamicsModel(nn.Module):
         # print(nansstd)#
         delta_normalized_std[nansstd] = 1e-6
         dist = torch.distributions.normal.Normal(delta_normalized_mean, delta_normalized_std)
-        return dist
+        return dist#dist means distribution, not distance!
 
     def loss(self, emb, delta_unnormalized, act):
         delta_normalized = self._normalize_delta(delta_unnormalized)#204
-        dist = self(emb, act)
+        dist = self(emb, act)#the forward function
         log_prob = dist.log_prob(delta_normalized)
-        loss = torch.mean(log_prob)
-        return -loss#equation 8 in the paper!
+        loss = torch.mean(log_prob)#log_prob returns the logarithm of the density or probability.
+        return -loss#equation 8 in the paper!#that's why we need the negative of the log prob, as we want to minimize it!
 
     def get_next_emb(self, emb, acs):
         #if torch.min(emb)<=0:#it doesn't matter!
@@ -206,7 +206,7 @@ class ProbabilisticDynamicsModel(nn.Module):
         #print('acs01', acs)#this becomes nan!
         #print('torch.min(emb)',torch.min(emb))
         #print('torch.min(acs)', torch.min(acs))
-        dist = self(emb, acs)
+        dist = self(emb, acs)#the forward function!
         delta_normalized = dist.rsample()#applying reparameterization trick
         #print('torch.min(delta_normalized)',torch.min(delta_normalized))
         #print('torch.min(self.delta_mean)',torch.min(self.delta_mean))
@@ -217,7 +217,7 @@ class ProbabilisticDynamicsModel(nn.Module):
         #if torch.min(self.delta_std)==0:
             #print('torch.min(delta_std)==0!',torch.min(self.delta_std))
         #print('embinner02.shape',emb.shape)#torch.Size([20000, 32])
-        return emb + delta
+        return emb + delta#the new embedding
 
     def get_next_emb_and_loss(self, emb, delta_unnormalized, act):
         """
