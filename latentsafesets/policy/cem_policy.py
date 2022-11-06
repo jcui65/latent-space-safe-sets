@@ -1383,7 +1383,7 @@ class CEMSafeSetPolicy(Policy):
                 rdnvcis = torch.sum(rdnvcs, dim=1)  # rdn violator critical indices# print('rdnvci', rdnvci)
                 rdnvcis = rdnvcis.reshape(rdnvis.shape[0], 1)# print(rdn.shape)#torch.Size([1000, 5])
                 cbfs = rdns ** 2 - 15 ** 2  # 13**2#20:30#don't forget the square!# Note that this is also used in the online training afterwards
-                acbfs = -cbfs * act_cbfd_thresh  # acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
+                #acbfs = -cbfs * act_cbfd_thresh  # acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
                 #rdas = torch.concat((rd8s, action_samples),
                                    #dim=2)  # check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
                 #print('action_samples.shape',action_samples.shape)
@@ -1422,13 +1422,18 @@ class CEMSafeSetPolicy(Policy):
                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     cbf_initalls4 = cbf_initalls4.reshape(cbf_initalls4.shape[0], cbf_initalls4.shape[1],
                                                         cbf_initalls4.shape[2])  #
-                    #acbfs = -act_cbfd_thresh * cbf_initalls4  #
+                    acbfs = -act_cbfd_thresh * cbf_initalls4  #
                     #print('acbfs.shape',acbfs.shape)#torch.Size([20, 1000, 5])right#torch.Size([20, 1000, 5, 1])wrong#
-                    cbfdots_violss = torch.sum(torch.mean(cbfdots_alls,dim=0) < acbfs,  # the acbfs is subject to change
-                                               dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
+                    #cbfdots_violss = torch.sum(torch.mean(cbfdots_alls,dim=0) < acbfs,  # the acbfs is subject to change
+                                               #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     #cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0),
                                                # the acbfs is subject to change
                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
+                    lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements
+                    #print('lhse.shape',lhse.shape)
+                    rhse,rhsi=torch.max(acbfs, dim=0)#rhsi means right hand side indices
+                    #print('rhse.shape', rhse.shape)
+                    cbfdots_violss = torch.sum(( lhse< rhse),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction
                     cbfdots_violss = torch.zeros((num_candidates, 1),
