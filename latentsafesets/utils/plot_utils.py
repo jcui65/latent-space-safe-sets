@@ -300,12 +300,14 @@ def visualize_cbfdotconly(obs, onezero, file, env=None):
     plt.savefig(file)
     plt.close()
 
-def visualize_cbfdotlatentunbiased(obs, onezero, file, env=None):
+def visualize_cbfdotlatentunbiased(obs, onezero, file, env=None,coeff=1/3):
     if issubclass(type(env), SimplePointBot):
         #print('entering this one!')
         #spbu.evaluate_cbfdot_func(onezero, env, file=file, skip=1,action=(0,0))#61 in spb_utils
-        spbu.evaluate_cbfdotlatentunbiased_func(onezero, env, file=file, skip=1, action=(0, 0))  # 61 in spb_utils
+        #spbu.evaluate_cbfdotlatentunbiased_func(onezero, env, file=file, skip=1, action=(0, 0))  # 61 in spb_utils
+        spbu.evaluate_cbfdotlatentunbiased13_func(onezero, env, file=file, skip=1, action=(0, 0),coeff=coeff)  # 61 in spb_utils
         return
+    print(obs)
 
 def visualize_dynamics(obs_seqs, act_seqs, dynamics_func, encoder, file):
     """

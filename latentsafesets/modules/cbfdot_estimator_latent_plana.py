@@ -4,7 +4,8 @@ from .interfaces import EncodedModule
 
 import torch
 import torch.nn as nn
-
+from torch.autograd.functional import hessian
+from torch.nn.utils import _stateless
 
 class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning very similar to gi or constraint estimator
     """
@@ -30,7 +31,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             ptu.TORCH_DEVICE)
         #print(self.net)#input size 4, output size 1#the network that uses the tanh activation
         lr = params['cbfd_lr']
-        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr)
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr)#,weight_decay=0.001)#0.1)#0.0001)#0.01)#1.0)#
 
     def forward(self, obs, already_embedded=False):
         """
@@ -80,10 +81,33 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         return loss.item(), {'cbfd': loss.item()}
 
     def loss(self, next_obs, constr, already_embedded=False):
+        #next_obs=torch.autograd.Variable(next_obs,requires_grad=True)
         logits = self(next_obs, already_embedded).squeeze()#.forward!#prediction
+        #print('logits',logits)
         targets = constr#label
-        loss = self.loss_func(logits, targets)
-        return loss
+        loss1 = self.loss_func(logits, targets)
+        #external_grad = torch.ones_like(loss1)
+        #loss1.backward(gradient=external_grad)
+        #logits.mean().backward(retain_graph=True)#(torch.ones_like(loss1))#
+        #gv=next_obs.grad
+        #print('gv',gv)
+        #epsilon=250#200#
+        #print('torch.norm(gv).item()',torch.norm(gv).item())
+        #model = self.net #CBFdotEstimatorlatentplana(encoder, params).to(ptu.TORCH_DEVICE)#model = torch.nn.Linear(2, 2)#
+        #inp = torch.rand(1, 2)
+
+        #names = list(n for n, _ in model.named_parameters())#list(n for n, _ in model.named_parameters())
+        #print('names',names)
+        #hv = hessian(model,next_obs)
+        #hv=hessian(lambda *params: _stateless.functional_call(model, {n: p for n, p in zip(names, params)}, next_obs),next_obs)
+                 #tuple(model.parameters()))
+        #loss2=0.0000001*torch.clamp(torch.norm(gv)-epsilon,0)#0.01*max((torch.norm(gv).item()-epsilon),0)
+        #print('loss2',loss2)
+        #if (torch.norm(gv).item()-epsilon)<=0:
+            #loss2=0
+        #else:
+            #loss2=0.01*(torch.norm(gv).item()-epsilon)
+        return loss1#+loss2#
 
     def step(self):
         """

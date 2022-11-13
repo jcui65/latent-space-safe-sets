@@ -21,7 +21,7 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)
-    parser.add_argument('--num_updates', type=int, default=250)#500)#200)#1500)#75)#150)#50)##25)#45)#40)#35)#5)#20)#15)#10)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=200)#250)#500)#1500)#75)#150)#50)##25)#45)#40)#35)#5)#20)#15)#10)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
 
     add_controller_args(parser)
@@ -191,12 +191,13 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_batch_size', type=int, default=256)
     parser.add_argument('--cbfd_thresh', type=float, default=0.2,
                         help='Threshold for an obs to be considered in violation of cbf dots')
-    parser.add_argument('--cbfd_init_iters', type=int, default=200000,#320000,#2000,#10000,#30000,#160000,#100000,#20000,#1000,#320000,#80000,#40000,#
+    parser.add_argument('--cbfd_init_iters', type=int, default=10000,#640000,#200000,#2000,#10000,#30000,#160000,#100000,#20000,#1000,#320000,#80000,#40000,#
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#None)#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
-    # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#
+    parser.add_argument('--cbfd_checkpoint', type=str, default=None)#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
+    # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.
+    # pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#
     # 'outputs/2022-08-06/15-02-09/cbfd_10000.pth')#'outputs/2022-08-06/15-02-09/cbfd_20000.pth')#
     #'outputs/2022-08-06/15-02-09/cbfd_30000.pth')#'outputs/2022-08-06/15-02-09/cbfd_180000.pth')#
     #'outputs/2022-08-07/01-56-19/update_3/cbfd.pth')#'outputs/2022-08-07/01-36-19/update_4/cbfd.pth')#'outputs/2022-08-07/01-09-48/update_5/cbfd.pth')#

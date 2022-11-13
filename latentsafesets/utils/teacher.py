@@ -93,7 +93,7 @@ class AbstractTeacher(ABC):
         """
         self.reset()
         transitions = []#AN EMPTY LIST
-        obs = self.env.reset(random_start=self.random_start)#obs is a 3 channel image!
+        obs = self.env.reset(random_start=self.random_start)    #obs is a 3 channel image!
         #around line 85 in simple_point_bot.py#random_start is false by default
         # state = np.zeros((0, 0))
         state = None

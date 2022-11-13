@@ -21,7 +21,7 @@ class ValueEnsemble(nn.Module, EncodedModule):
 
         self.models = nn.ModuleList([
             ValueFunction(encoder, params) for _ in range(self.n_models)
-        ])
+        ])#5 value functions?
 
     def reduce(self, out):
         if self.reduction == 'mean':

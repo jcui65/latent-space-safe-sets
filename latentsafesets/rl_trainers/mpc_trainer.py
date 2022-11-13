@@ -205,7 +205,9 @@ class CBFdotlatentplanaTrainer(Trainer):
                 log.info('Creating cbfdot function heatmap')
                 self.loss_plotter.plot()
                 self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer)
-                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased.pdf"), replay_buffer)  # a few lines later
+                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,coeff=1/3)  # a few lines later
+                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-14.pdf" % i), replay_buffer,
+                                        coeff=1 / 4)  # a few lines later
             if i % self.params['checkpoint_freq'] == 0 and i > 0:
                 self.cbfd.save(os.path.join(update_dir, 'cbfd_%d.pth' % i))
 
@@ -235,7 +237,9 @@ class CBFdotlatentplanaTrainer(Trainer):
         self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
         #self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
-        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased.pdf"), replay_buffer)  # a few lines later
+        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased13.pdf"), replay_buffer,coeff=1/3)  # a few lines later
+        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased14.pdf"), replay_buffer,
+                                coeff=1 / 4)  # a few lines later
 
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
@@ -252,13 +256,13 @@ class CBFdotlatentplanaTrainer(Trainer):
                              file,
                              env=self.env)
 
-    def plotlatentunbiased(self, file, replay_buffer):
+    def plotlatentunbiased(self, file, replay_buffer,coeff):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
         next_obs = out_dict['next_obs']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdotlatentunbiased(next_obs, self.cbfd,
                              file,
-                             env=self.env)
+                             env=self.env,coeff=coeff)
 
 class MPCTrainer(Trainer):
 
