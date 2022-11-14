@@ -17,7 +17,8 @@ class EncodedReplayBuffer:
         self.data = {}#finally it becomes a dict where each key's value have size number of values
         self._index = 0
         self._len = 0
-        self.im_keys = ('obs', 'next_obs')
+        #self.im_keys = ('obs', 'next_obs')
+        self.im_keys = ('obs', 'next_obs','obs_relative','next_obs_relative')
 
     def store_transitions(self, transitions):#transitions is 1 traj having 100 steps
         """

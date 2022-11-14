@@ -30,9 +30,15 @@ class PETSDynamicsTrainer(Trainer):
             out_dict = replay_buffer.sample(self.params['dyn_batch_size'],#256#get sub-dict of corresponding indices
                                             ensemble=self.ensemble)#59 in replay_buffer_encoded
             #print('out_dict',out_dict)
-            #obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']#get values of those indices
+            obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']#get values of those indices
+            #print('obs.shape', obs.shape)#(5, 256, 32)#
+            #print('next_obs.shape', next_obs.shape)#(5, 256, 32)#
+            #print('act1.shape', act.shape)#(5, 256, 2)#
             obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict[
                 'action']  # get values of those indices
+            #print('obs_relative.shape',obs.shape) #now (5, 256, 32)##(5, 256, 3, 64, 64)#
+            #print('next_obs_relative.shape', next_obs.shape)#now (5, 256, 32)#
+            #print('act2.shape',act.shape)#(5, 256, 2)#
             #this is the update of self.dynamics, rather than the update of self!
             loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
 

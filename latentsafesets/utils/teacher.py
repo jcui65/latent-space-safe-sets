@@ -197,6 +197,10 @@ class AbstractTeacher(ABC):
                           }#add key and value into it!
             # print({k: v.dtype for k, v in transition.items() if 'obs' in k})
             transitions.append(transition)#a list of dictionaries!
+            #print("transition['obs'].shape",transition['obs'].shape)
+            #print("transition['obs_relative'].shape", transition['obs_relative'].shape)
+            #print("transition['next_obs'].shape", transition['next_obs'].shape)
+            #print("transition['next_state_relative'].shape", transition['next_obs_relative'].shape)
             state = info['next_state']
             obs = next_obs#this step is really important!
             obs_relative = next_obs_relative

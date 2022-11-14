@@ -100,6 +100,7 @@ def save_trajectory_relative(trajectory, file, n):#file: data/SimplePointBot or 
     for field in im_fields:#obs, next_obs, .json do their jobs, respectively
         if field in trajectory[0]:#a dictionary, trajectory [0] is the 0th/first step/frame
             dat = np.array([frame[field] for frame in trajectory], dtype=np.uint8)#
+            #print('dat.shape',dat.shape)#(100, 3, 64, 64)
             #it is 100 pieces of 3-channel image of obs or next_obs
             np.save(os.path.join(file, "%d_%s.npy" % (n, field)), dat)#save the images in .npy file
     traj_no_ims = [{key: frame[key] for key in frame if key not in im_fields}
@@ -161,6 +162,8 @@ def load_trajectories_relative(num_traj, file):#data/simplepointbot
         for j, frame in list(enumerate(trajectory)):#each frame in one trajectory
             for key in im_dat:#from obs and next_obs
                 frame[key] = im_dat[key][j]#the frame is the jth frame in 1 traj
+                #print('key',key)#(3,64,64)
+                #print('frame[key].shape',frame[key].shape)
         trajectories.append(trajectory)#now you recover the full trajectory info with images
 
     return trajectories#that is a sequence/buffer/pool of trajs including images
