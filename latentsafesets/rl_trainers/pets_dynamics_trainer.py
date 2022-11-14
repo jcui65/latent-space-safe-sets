@@ -29,7 +29,10 @@ class PETSDynamicsTrainer(Trainer):
         for i in range(self.params['dyn_init_iters']):#10000
             out_dict = replay_buffer.sample(self.params['dyn_batch_size'],#256#get sub-dict of corresponding indices
                                             ensemble=self.ensemble)#59 in replay_buffer_encoded
-            obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']#get values of those indices
+            #print('out_dict',out_dict)
+            #obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']#get values of those indices
+            obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict[
+                'action']  # get values of those indices
             #this is the update of self.dynamics, rather than the update of self!
             loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
 
@@ -54,7 +57,8 @@ class PETSDynamicsTrainer(Trainer):
         for _ in trange(self.params['dyn_update_iters']):#512
             out_dict = replay_buffer.sample(self.params['dyn_batch_size'],
                                             ensemble=self.ensemble)
-            obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']
+            #obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']
+            obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['action']
 
             loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
             self.loss_plotter.add_data(info)#the update is just the dynamics update
@@ -67,6 +71,7 @@ class PETSDynamicsTrainer(Trainer):
     def visualize(self, file, replay_buffer):
         out_dict = replay_buffer.sample_chunk(8, 10)
 
-        obs = out_dict['obs']
+        #obs = out_dict['obs']
+        obs = out_dict['obs_relative']
         act = out_dict['action']
         pu.visualize_dynamics(obs, act, self.dynamics, self.dynamics.encoder, file)

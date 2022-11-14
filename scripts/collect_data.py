@@ -64,7 +64,27 @@ def generate_teacher_demo_datasafety(env, data_dir, teacher, n=100, noisy=False,
         demonstrations.append(traj)#traj is one piece of trajectories
         utils.save_trajectory(traj, file, i)#86 in utils.py#save 1 traj having 100 steps
         if i < 50 and logdir is not None:
-            pu.make_movie(traj, os.path.join(logdir, '%s_%d.gif' % (data_dir, i)))
+            pu.make_movie(traj, os.path.join(logdir, '%s_%d.gif' % (data_dir, i)))#do I add relative here or in other place?
+    return demonstrations#list of list of trajectories?
+
+def generate_teacher_demo_datasafety_relative(env, data_dir, teacher, n=100, noisy=False, logdir=None):
+    log.info("Generating teacher demo trajectories")
+    file = os.path.join('data_relative', data_dir)#create the data folder!
+    if not os.path.exists(file):#['SimplePointBot','SimplePointBotConstraints',]#
+        os.makedirs(file)#data/SimplePointBot or data/SimplePointBotConstraints
+    else:
+        raise RuntimeError("Directory %s already exists." % file)#not good code writing
+    teacher = teacher(env, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
+    demonstrations = []#an empty list
+    for i in range(n):
+        traj = teacher.generate_trajectorysafety_relative()#line 33 in teacher.py#100 transitions
+        reward = sum([frame['reward'] for frame in traj])#traj is a list of dictionaries
+        #why not directly use rtg[0]?
+        print('Trajectory %d, Reward %d' % (i, reward))
+        demonstrations.append(traj)#traj is one piece of trajectories
+        utils.save_trajectory_relative(traj, file, i)#86 in utils.py#save 1 traj having 100 steps
+        if i < 50 and logdir is not None:
+            pu.make_movie_relative(traj, os.path.join(logdir, '%s_%d.gif' % (data_dir, i)))#do I add relative here or in other place?
     return demonstrations#list of list of trajectories?
 
 def main():
@@ -84,7 +104,8 @@ def main():
     for teacher, data_dir, count in list(zip(teachers, data_dirs, data_counts)):
         #still 2, always take the least number: https://www.programiz.com/python-programming/methods/built-in/zip
         #generate_teacher_demo_data(env, data_dir, teacher, count, True, logdir)#see around 31
-        generate_teacher_demo_datasafety(env, data_dir, teacher, count, True, logdir)  # see around 31
+        #generate_teacher_demo_datasafety(env, data_dir, teacher, count, True, logdir)  # see around 31
+        generate_teacher_demo_datasafety_relative(env, data_dir, teacher, count, True, logdir)  # see around 31
 
 
 if __name__ == '__main__':

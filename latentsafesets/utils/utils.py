@@ -95,6 +95,17 @@ def save_trajectory(trajectory, file, n):#file: data/SimplePointBot or data/Simp
     with open(os.path.join(file, "%d.json" % n), "w") as f:
         json.dump(traj_no_ims, f)#separate trajectory info from images
 
+def save_trajectory_relative(trajectory, file, n):#file: data/SimplePointBot or data/SimplePointBotConstraints
+    im_fields = ('obs', 'next_obs','obs_relative', 'next_obs_relative')
+    for field in im_fields:#obs, next_obs, .json do their jobs, respectively
+        if field in trajectory[0]:#a dictionary, trajectory [0] is the 0th/first step/frame
+            dat = np.array([frame[field] for frame in trajectory], dtype=np.uint8)#
+            #it is 100 pieces of 3-channel image of obs or next_obs
+            np.save(os.path.join(file, "%d_%s.npy" % (n, field)), dat)#save the images in .npy file
+    traj_no_ims = [{key: frame[key] for key in frame if key not in im_fields}
+                   for frame in trajectory]#trajectory contains 100 frames
+    with open(os.path.join(file, "%d.json" % n), "w") as f:
+        json.dump(traj_no_ims, f)#separate trajectory info from images
 
 def load_trajectories(num_traj, file):#data/simplepointbot
     log.info('Loading trajectories from %s' % file)#data/SimplePointBot
@@ -125,6 +136,34 @@ def load_trajectories(num_traj, file):#data/simplepointbot
 
     return trajectories#that is a sequence/buffer/pool of trajs including images
 
+def load_trajectories_relative(num_traj, file):#data/simplepointbot
+    log.info('Loading trajectories from %s' % file)#data/SimplePointBot
+
+    if not os.path.exists(file):
+        raise RuntimeError("Could not find directory %s." % file)
+    trajectories = []
+    iterator = range(num_traj) if num_traj <= 200 else trange(num_traj)
+    for i in iterator:#50
+        if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json
+            log.info('Could not find %d' % i)
+            continue
+        im_fields = ('obs', 'next_obs','obs_relative', 'next_obs_relative')#('obs', 'next_obs')
+        with open(os.path.join(file, '%d.json' % i), 'r') as f:#read the json file!
+            trajectory = json.load(f)#1 piece traj info without 2 images 100 time steps
+        im_dat = {}#image_data
+
+        for field in im_fields:
+            f = os.path.join(file, "%d_%s.npy" % (i, field))#obs and next_obs
+            if os.path.exists(file):
+                dat = np.load(f)
+                im_dat[field] = dat.astype(np.uint8)#100 images of obs and next_obs
+
+        for j, frame in list(enumerate(trajectory)):#each frame in one trajectory
+            for key in im_dat:#from obs and next_obs
+                frame[key] = im_dat[key][j]#the frame is the jth frame in 1 traj
+        trajectories.append(trajectory)#now you recover the full trajectory info with images
+
+    return trajectories#that is a sequence/buffer/pool of trajs including images
 
 def load_replay_buffer(params, encoder=None, first_only=False):#it doesn't have traj parameter!
     log.info('Loading data')
@@ -152,6 +191,32 @@ def load_replay_buffer(params, encoder=None, first_only=False):#it doesn't have 
     #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
     return replay_buffer
     #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
+
+def load_replay_buffer_relative(params, encoder=None, first_only=False):#it doesn't have traj parameter!
+    log.info('Loading data')
+    trajectories = []#SimplePointBot or SimplePointBotConstraints
+    for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe & obstacle
+        #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
+        real_dir = os.path.join('', 'data_relative',
+                                directory)  #
+        trajectories += load_trajectories_relative(num, file=real_dir)#now you have 50+50=100 pieces of trajs each containing 100 time steps
+        if first_only:
+            print('wahoo')
+            break
+
+    log.info('Populating replay buffer')#find correspondence in the cmd output
+
+    # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
+    random.shuffle(trajectories)
+    if encoder is not None:#replay buffer finally comes in!
+        replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'])#35000 for spb
+    else:
+        replay_buffer = ReplayBuffer(params['buffer_size'])
+
+    for trajectory in tqdm(trajectories):#trajectory is 1 traj having 100 steps
+        replay_buffer.store_transitions(trajectory)#22
+    #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
+    return replay_buffer
 
 def make_env(params, monitoring=False):
     from latentsafesets.envs import SimplePointBot, PushEnv, SimpleVideoSaver

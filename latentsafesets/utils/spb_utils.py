@@ -14,7 +14,8 @@ def evaluate_safe_set(s_set,
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            state = env._state_to_image((x, y)) / 255
+            #state = env._state_to_image((x, y)) / 255
+            state = env._state_to_image_relative((x, y)) / 255
             row_states.append(state)
         vals = s_set.safe_set_probability_np(np.array(row_states)).squeeze()
         if skip == 1:
@@ -41,7 +42,8 @@ def evaluate_value_func(value_func,
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            state = env._state_to_image((x, y)) / 255
+            #state = env._state_to_image((x, y)) / 255
+            state = env._state_to_image_relative((x, y)) / 255
             row_states.append(state)
         vals = value_func.get_value_np(np.array(row_states)).squeeze()
         if skip == 1:
@@ -68,7 +70,8 @@ def evaluate_constraint_func(constraint,
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            state = env._state_to_image((x, y)) / 255
+            #state = env._state_to_image((x, y)) / 255
+            state = env._state_to_image_relative((x, y)) / 255
             row_states.append(state)
         vals = constraint.prob(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
         if skip == 1:
@@ -403,6 +406,7 @@ def evaluate_cbfdotlatentunbiased_func(cbfdot,
         for x in range(0, spb.WINDOW_WIDTH, skip):
             old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
             old_stateimage = env._state_to_image((x, y)) / 255
+            #old_stateimage = env._state_to_image_relative((x, y)) / 255
             row_states.append(old_stateimage)
             #print('old_state',old_state)#tuple
 
@@ -484,7 +488,8 @@ def evaluate_cbfdotlatentunbiased13_func(cbfdot,
         row_statesu = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
             old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
-            old_stateimage = env._state_to_image((x, y)) / 255
+            #old_stateimage = env._state_to_image((x, y)) / 255
+            old_stateimage = env._state_to_image_relative((x, y)) / 255
             row_states.append(old_stateimage)
             if (old_state <= selfwall_coords[0][0]).all():  # old_state#check it!
                 reldistold = old_state - selfwall_coords[0][0]  # np.linalg.norm()

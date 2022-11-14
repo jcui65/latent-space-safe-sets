@@ -64,9 +64,10 @@ class SimplePointBot(Env, utils.EzPickle):
             #[((75+xmove,45+ymove),(100+xmove,105+ymove))]#the position and dimension of the wall[((75+xmove,55+ymove),(100+xmove,95+ymove))]#the position and dimension of the wall
         self.walls = [self._complex_obstacle(wall) for wall in walls]#140, the bound of the wall
         #it is a list of functions that depend on states
-        self.wall_coords = walls
+        self.wall_coords = walls#it is just a tuple, right?
         self._from_pixels = from_pixels
         self._image_cache = {}#it is a dictionary
+        self._image_cache_relative = {}  # it is a dictionary
 
     def step(self, a):#it returns#if using cbf dot estimator, then see the sepsafety function below
         a = self._process_action(a)#line 166, an action satisfying the constraint
@@ -166,6 +167,88 @@ class SimplePointBot(Env, utils.EzPickle):
 
         }
 
+    def stepsafety_relative(self, a):#it returns
+        a = self._process_action(a)#line 166, an action satisfying the constraint
+        old_state = self.state.copy()#2d state
+        center=(WINDOW_WIDTH/2,WINDOW_HEIGHT/2)
+        old_state_relative=center-old_state#old_state-center#
+        next_state = self._next_state(self.state, a)#still in the global coordinate#122, go to the next 2d state with noise
+        next_state_relative=center-next_state#next_state-center#
+        cur_reward = self.step_reward(self.state, a)#I think it is OK to keep it like this#130, the reward of the current state
+        self.state = next_state#move on to the next step
+        self._episode_steps += 1
+        constr = self.obstacle(next_state)#line 136 to check if next_state is obstacle
+        self.done = self._episode_steps >= self.horizon#just over time limit!
+        if self._from_pixels:
+            obs = self._state_to_image(self.state)#line 169#it is a 3-channel image
+            obs_relative = self._state_to_image_relative(self.state)  # line 169#it is a 3-channel image
+        else:
+            obs = self.state#it is a 2-d state
+            obs_relative = center-self.state#self.state#_relative#?  # it is a 2-d state
+        #find the nearest distance to the obstacle according to different regions
+        #I set 8 regions versue the central obstacle: upper left, upper middle, upper right, right middle, lower right, lower middle, lower left, left middle
+        if (old_state<=self.wall_coords[0][0]).all():#left upper#old_state#check it!
+            reldistold=old_state-self.wall_coords[0][0]#relative distance old#np.linalg.norm()
+        elif self.wall_coords[0][0][0]<=old_state[0]<=self.wall_coords[0][1][0] and old_state[1]<=self.wall_coords[0][0][1]:
+            reldistold = np.array([0,old_state[1] - self.wall_coords[0][0][1]])#middle up
+        elif old_state[0]>=self.wall_coords[0][1][0] and old_state[1]<=self.wall_coords[0][0][1]:
+            reldistold = old_state - (self.wall_coords[0][1][0],self.wall_coords[0][0][1])#upper right
+        elif old_state[0]>=self.wall_coords[0][1][0] and self.wall_coords[0][0][1]<=old_state[1]<=self.wall_coords[0][1][1]:
+            reldistold = np.array([old_state[0] - self.wall_coords[0][1][0],0])#right middle
+        elif (old_state>=self.wall_coords[0][1]).all():#old_state#lower right
+            reldistold = old_state - self.wall_coords[0][1]
+        elif self.wall_coords[0][0][0]<=old_state[0]<=self.wall_coords[0][1][0] and old_state[1]>=self.wall_coords[0][1][1]:
+            reldistold = np.array([0,old_state[1] - self.wall_coords[0][1][1]])#middle down/lower middle
+        elif old_state[0]<=self.wall_coords[0][0][0] and old_state[1]>=self.wall_coords[0][1][1]:
+            reldistold = (old_state - (self.wall_coords[0][0][0],self.wall_coords[0][1][1]))#lower left
+        elif old_state[0]<=self.wall_coords[0][0][0] and self.wall_coords[0][0][1]<=old_state[1]<=self.wall_coords[0][1][1]:
+            reldistold = np.array([old_state[0] - self.wall_coords[0][0][0],0])#middle left
+        else:
+            #print(old_state)#it can be [98.01472841 92.11425524]
+            reldistold=np.array([0,0])#9.9#
+        hvalueold = np.linalg.norm(reldistold) ** 2 - 15 ** 2#get the value of the h function
+
+        if (next_state <= self.wall_coords[0][0]).all():  # old_state#check it!
+            reldistnew = next_state - self.wall_coords[0][0]#relative distance new # np.linalg.norm()
+        elif self.wall_coords[0][0][0] <= next_state[0] <= self.wall_coords[0][1][0] and next_state[1] <= \
+                self.wall_coords[0][0][1]:
+            reldistnew = np.array([0, next_state[1] - self.wall_coords[0][0][1]])
+        elif next_state[0] >= self.wall_coords[0][1][0] and next_state[1] <= self.wall_coords[0][0][1]:
+            reldistnew = next_state - (self.wall_coords[0][1][0], self.wall_coords[0][0][1])
+        elif next_state[0] >= self.wall_coords[0][1][0] and self.wall_coords[0][0][1] <= next_state[1] <= \
+                self.wall_coords[0][1][1]:
+            reldistnew = np.array([next_state[0] - self.wall_coords[0][1][0], 0])
+        elif (next_state >= self.wall_coords[0][1]).all():  # old_state
+            reldistnew = next_state - self.wall_coords[0][1]
+        elif self.wall_coords[0][0][0] <= next_state[0] <= self.wall_coords[0][1][0] and next_state[1] >= \
+                self.wall_coords[0][1][1]:
+            reldistnew = np.array([0, next_state[1] - self.wall_coords[0][1][1]])
+        elif next_state[0] <= self.wall_coords[0][0][0] and next_state[1] >= self.wall_coords[0][1][1]:
+            reldistnew = (next_state - (self.wall_coords[0][0][0], self.wall_coords[0][1][1]))
+        elif next_state[0] <= self.wall_coords[0][0][0] and self.wall_coords[0][0][1] <= next_state[1] <= \
+                self.wall_coords[0][1][1]:
+            reldistnew = np.array([next_state[0] - self.wall_coords[0][0][0], 0])
+        else:
+            # print(old_state)#it can be [98.01472841 92.11425524]
+            reldistnew = np.array([0, 0])  # 9.9#
+        hvaluenew = np.linalg.norm(reldistnew) ** 2 - 15 ** 2
+        hvd=hvaluenew-hvalueold#hvd for h value difference
+        return obs, cur_reward, self.done, {
+            "constraint": constr,#it is also a dictionary!
+            "reward": cur_reward,
+            "state": old_state,
+            "next_state": next_state,
+            "state_relative": old_state_relative,
+            "next_state_relative": next_state_relative,
+            "action": a,#the current action!
+            "rdo":reldistold,#rdo for relative distance old#array now!
+            "rdn": reldistnew,#rdn for relative distance new#array now!
+            "hvo": hvalueold,#hvo for h value old
+            "hvn":hvaluenew,#hvn for h value new
+            "hvd":hvd#hvd for h value difference
+            },obs_relative
+
+    '''
     def reset(self, random_start=False):
         if random_start:
             self.state = np.random.random(2) * (WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -177,9 +260,29 @@ class SimplePointBot(Env, utils.EzPickle):
         self._episode_steps = 0
         if self._from_pixels:#then move to this case as Nik points out
             obs = self._state_to_image(self.state)#line 169
+            #obs_relative = self._state_to_image_relative(self.state)  # line 169
         else:#I start from this condition
             obs = self.state
+            #obs_relative=(90,75)-self.state
         return obs
+    '''
+
+    def reset(self, random_start=False):
+        if random_start:
+            self.state = np.random.random(2) * (WINDOW_WIDTH, WINDOW_HEIGHT)
+            if self.obstacle(self.state):
+                self.reset(True)
+        else:
+            self.state = self.start_pos + np.random.randn(2)#respawn around the start_pos
+        self.done = False#unless the starting point is within 3 meters of the goal point!
+        self._episode_steps = 0
+        if self._from_pixels:#then move to this case as Nik points out
+            obs = self._state_to_image(self.state)#line 169
+            obs_relative = self._state_to_image_relative(self.state)  # line 169
+        else:#I start from this condition
+            obs = self.state
+            obs_relative=np.array([WINDOW_WIDTH/2,WINDOW_HEIGHT/2])-self.state
+        return obs,obs_relative
 
     def render(self, mode='human'):
         return self._draw_state(self.state)#see line 103
@@ -204,6 +307,35 @@ class SimplePointBot(Env, utils.EzPickle):
         draw_circle(draw, np.array([centerx,centery]), radi, OBSTACLE_COLOR)#25#  # draw a circle at state with radius=10 in red!!!
         for wall in self.wall_coords:#draw an obstacle with blue with black outline width 1
             draw.rectangle(wall, fill=OBSTACLE_COLOR, outline=(0, 0, 0), width=1)
+
+        return np.array(im)#you have got the image in the form of numpy array!
+
+    def _draw_state_relative(self, state):#it returns the image in the form of 3-channel numpy array
+        BCKGRND_COLOR = (0, 0, 0)#black#why not green?
+        ACTOR_COLOR = (255, 0, 0)#red
+        OBSTACLE_COLOR = (0, 0, 255)#blue
+
+        def draw_circle(draw, center, radius, color):#draw is a few lines later!
+            lower_bound = tuple(np.subtract(center, radius))
+            upper_bound = tuple(np.add(center, radius))
+            draw.ellipse([lower_bound, upper_bound], fill=color)
+
+        im = Image.new("RGB", (WINDOW_WIDTH, WINDOW_HEIGHT), BCKGRND_COLOR)#draw the background
+        draw = ImageDraw.Draw(im)#on this blank cloth?
+
+        #draw_circle(draw, state, 10, ACTOR_COLOR)#draw a circle at state with radius=10 in red!!!
+        center=int(WINDOW_WIDTH/2), int(WINDOW_HEIGHT/2)
+        draw_circle(draw, center, 10, ACTOR_COLOR)  # draw a circle at state with radius=10 in red!!!
+        #centerx=88#115#118#110#change it or not?
+        #centery=75
+        #radi=0.001#19#20#15#14#
+        #draw_circle(draw, np.array([centerx,centery]), radi, OBSTACLE_COLOR)#25#  # draw a circle at state with radius=10 in red!!!
+        #print('self.wall_coords',self.wall_coords)
+        #print('state',state)
+        #wall_coords_relative=()#self.wall_coords
+        wall_coords_relative=[((self.wall_coords[0][0][0]+state[0],self.wall_coords[0][0][1]+state[1]),(self.wall_coords[0][1][0]+state[0],self.wall_coords[0][1][1]+state[1]))]#
+        for wall in wall_coords_relative:#draw an obstacle with blue with black outline width 1
+            draw.rectangle(wall, fill=OBSTACLE_COLOR, outline=(0, 0, 0), width=1)#hope it can draw using the relative coordinates now!
 
         return np.array(im)#you have got the image in the form of numpy array!
 
@@ -265,6 +397,19 @@ class SimplePointBot(Env, utils.EzPickle):
             image = image.transpose((2, 0, 1))#put the channels first!
             image = (resize(image, (3, 64, 64)) * 255).astype(np.uint8)
             self._image_cache[state] = image#key: state, value: image
+        return image#mainly to get the image
+
+    def _state_to_image_relative(self, state):#you get the observation of the state
+        def state_to_int_relative(state):
+            return int(WINDOW_WIDTH/2-state[0]), int(WINDOW_HEIGHT/2-state[1])#int(WINDOW_WIDTH/2), int(WINDOW_HEIGHT/2) is not appropriate!#where you are currently
+
+        state_relative = state_to_int_relative(state)#get the coordinate of this state
+        image = self._image_cache_relative.get(state_relative)#state is the key#seems none at this point???
+        if image is None:
+            image = self._draw_state_relative(state_relative)#see line 103#3 channel images
+            image = image.transpose((2, 0, 1))#put the channels first!
+            image = (resize(image, (3, 64, 64)) * 255).astype(np.uint8)
+            self._image_cache_relative[state_relative] = image#key: state, value: image
         return image#mainly to get the image
 
     def draw(self, trajectories=None, heatmap=None, plot_starts=False, board=True, file=None,

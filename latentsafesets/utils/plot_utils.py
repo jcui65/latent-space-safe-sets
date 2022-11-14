@@ -85,6 +85,43 @@ def make_movie(trajectory, file):
     clip.set_fps(10)
     clip.write_videofile(file, fps=10, codec=codec)
 
+def make_movie_relative(trajectory, file):
+    def float_to_int(im):
+        if np.max(im) <= 1:
+            im = im * 255
+            im = im.astype(int)
+        im = np.nan_to_num(im)
+        return im
+    ims = []
+    for frame in trajectory:
+        if type(frame) == dict:
+            frame = frame['obs_relative']#the goal is going towards the center robot?
+        if type(frame) == LazyFrames:
+            frame = frame[0]
+        if type(frame) == np.ndarray:
+            ims.append(float_to_int(frame.transpose((1, 2, 0))))
+            # print(float_to_int(frame.transpose((1, 2, 0))).shape)
+        else:
+            raise ValueError
+
+    def make_frame(t):
+        """Returns an image of the frame for time t."""
+        # ... create the frame with any library here ...
+        return ims[int(round(t*10))]
+
+    if 'gif' in file:
+        codec = 'gif'
+    elif 'mp4' in file:
+        codec = 'mpeg4'
+    else:
+        codec = None
+
+    duration = int(np.ceil(len(ims) / 10))
+    while len(ims) < duration * 10 + 1:
+        ims.append(ims[-1])
+    clip = VideoClip(make_frame, duration=duration)
+    clip.set_fps(10)
+    clip.write_videofile(file, fps=10, codec=codec)
 
 def visualize_value(obs, value_func, file, env=None):
     """

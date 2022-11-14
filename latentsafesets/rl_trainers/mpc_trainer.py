@@ -185,7 +185,8 @@ class CBFdotlatentplanaTrainer(Trainer):
 
         for i in range(self.params['cbfd_init_iters']):#10000
             out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
-            obs=out_dict['obs']
+            #obs=out_dict['obs']
+            obs = out_dict['obs_relative']
             #print('obs',obs)
             #print('obs.shape',obs.shape)
             #rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']#0 or 1
@@ -220,7 +221,8 @@ class CBFdotlatentplanaTrainer(Trainer):
             out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
             #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
             #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
-            obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
+            #obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
+            obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
             #print('rdo.shape',rdo.shape)#(256, 2)
             #print('action.shape',action.shape)#(256, 2)
             #rda = np.concatenate((rdo, action),axis=1)
@@ -258,7 +260,8 @@ class CBFdotlatentplanaTrainer(Trainer):
 
     def plotlatentunbiased(self, file, replay_buffer,coeff):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
-        next_obs = out_dict['next_obs']
+        #next_obs = out_dict['next_obs']
+        next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdotlatentunbiased(next_obs, self.cbfd,
                              file,

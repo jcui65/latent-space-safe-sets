@@ -152,6 +152,73 @@ class AbstractTeacher(ABC):
         #     t['values'] = V[i]
         return transitions
 
+    def generate_trajectorysafety_relative(self, noise_param=None, store_noisy=True):
+        """
+        The teacher initially tries to go northeast before going to the origin
+        """
+        self.reset()
+        transitions = []#AN EMPTY LIST
+        obs,obs_relative = self.env.reset(random_start=self.random_start)#still in global state#obs is a 3 channel image!#around line 85 in simple_point_bot.py#random_start is false by default
+        #print('obs_relative',obs_relative)
+        state = None# state = np.zeros((0, 0))
+        done = False
+        for i in range(self.horizon):
+            if state is None:
+                action = self.env.action_space.sample().astype(np.float64)#sample between -3 and 3
+            else:#I think the control is usually either -3 or +3
+                action = self._expert_control(state, i).astype(np.float64)
+            if self.noisy:
+                action_input = np.random.normal(action, self.noise_std)
+                action_input = np.clip(action_input, self.ac_low, self.ac_high)
+            else:
+                action_input = action
+
+            if store_noisy:
+                action = action_input#if it not noisy, then it is just the same
+            #import ipdb; ipdb.set_trace()
+            #next_obs, reward, done, info,next_obs_relaitve = self.env.stepsafety(action_input)#63 in simple_point_bot.py
+            next_obs, reward, done, info, next_obs_relative = self.env.stepsafety_relative(
+                action_input)  # 63 in simple_point_bot.py
+            transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
+                          'next_obs': next_obs, 'done': int(done),#this is a dictionary
+                          'constraint': int(info['constraint']), 'safe_set': 0,
+                          'on_policy': int(self.on_policy),
+                          'rdo': info['rdo'].tolist(),
+                          'rdn': info['rdn'].tolist(),
+                          'hvo': info['hvo'],
+                          'hvn': info['hvn'],
+                          'hvd': info['hvd'],
+                          'state':info['state'].tolist(),
+                          'next_state':info['next_state'].tolist(),
+                          'state_relative': info['state_relative'].tolist(),
+                          'next_state_relative': info['next_state_relative'].tolist(),
+                          'obs_relative':obs_relative,
+                          'next_obs_relative':next_obs_relative
+                          }#add key and value into it!
+            # print({k: v.dtype for k, v in transition.items() if 'obs' in k})
+            transitions.append(transition)#a list of dictionaries!
+            state = info['next_state']
+            obs = next_obs#this step is really important!
+            obs_relative = next_obs_relative
+
+            if done:#it is just a time count rather than a sign of success or not!
+                break
+
+        transitions[-1]['done'] = 1
+
+        rtg = 0#reward to goal?
+        ss = 0
+        for frame in reversed(transitions):
+            if frame['reward'] >= 0:
+                ss = 1
+            #along the way of the trajectroy, the trajectory is safe
+            frame['safe_set'] = ss#is this dynamic programming?
+            frame['rtg'] = rtg#the reward to goal at each frame!#I think this is good
+            #add a key value pair to the trajectory(key='rtg', value=rtg
+            rtg = rtg + frame['reward']
+
+        return transitions
+
     def _expert_control(self, state, i):
         raise NotImplementedError("Override in subclass")
 
