@@ -31,7 +31,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             ptu.TORCH_DEVICE)
         #print(self.net)#input size 4, output size 1#the network that uses the tanh activation
         lr = params['cbfd_lr']
-        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr,weight_decay=0.0001)#0.001)#)#0.1)#0.01)#1.0)#
+        self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr)#,weight_decay=0.0001)#0.001)#0.1)#0.01)#1.0)#
 
     def forward(self, obs, already_embedded=False):
         """
