@@ -93,7 +93,7 @@ def add_ss_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--safe_set_ignore', action='store_true')
     parser.add_argument('--safe_set_update_iters', type=int, default=512)
-    parser.add_argument('--safe_set_checkpoint', type=str, default=None)#'outputs/2022-07-15/17-41-16/initial_train/ss.pth')#'outputs/2022-09-17/21-54-24/update_99/ss.pth')#'outputs/2022-08-07/01-56-19/update_3/ss.pth')#'outputs/2022-08-07/01-36-19/update_4/ss.pth')#'outputs/2022-08-07/01-09-48/update_5/ss.pth')#
+    parser.add_argument('--safe_set_checkpoint', type=str, default='outputs/2022-11-19/10-32-29/initial_train/ss.pth')#None)#'outputs/2022-07-15/17-41-16/initial_train/ss.pth')#'outputs/2022-09-17/21-54-24/update_99/ss.pth')#'outputs/2022-08-07/01-56-19/update_3/ss.pth')#'outputs/2022-08-07/01-36-19/update_4/ss.pth')#'outputs/2022-08-07/01-09-48/update_5/ss.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/ss.pth')#'outputs/2022-07-20/14-46-50/update_16/ss.pth')#
     # #'outputs/2022-07-15/17-41-16/initial_train/ss.pth')#None)#'outputs/2022-07-18/22-58-04/initial_train/ss.pth')#
     # #'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/ss.pth')#
@@ -117,7 +117,7 @@ def add_dyn_args(parser):
     parser.add_argument('--dyn_init_iters', type=int, default=10000,
                         help='Initial training iterations')
     parser.add_argument('--dyn_update_iters', type=int, default=512)
-    parser.add_argument('--dyn_checkpoint', type=str, default=None)#'outputs/2022-07-15/17-41-16/initial_train/dyn.pth')#'outputs/2022-08-07/01-56-19/update_3/dyn.pth')#'outputs/2022-08-07/01-36-19/update_4/dyn.pth')#'outputs/2022-08-07/01-09-48/update_5/dyn.pth')#
+    parser.add_argument('--dyn_checkpoint', type=str, default='outputs/2022-11-19/10-32-29/initial_train/dyn.pth')#None)#'outputs/2022-07-15/17-41-16/initial_train/dyn.pth')#'outputs/2022-08-07/01-56-19/update_3/dyn.pth')#'outputs/2022-08-07/01-36-19/update_4/dyn.pth')#'outputs/2022-08-07/01-09-48/update_5/dyn.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/dyn.pth')#'outputs/2022-07-20/14-46-50/update_16/dyn.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/dyn.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/dyn.pth')#
 
@@ -141,7 +141,7 @@ def add_val_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--val_reduction', type=str, default='mean')
     parser.add_argument('--val_update_iters', type=int, default=2000)
-    parser.add_argument('--val_checkpoint', type=str, default=None)#'outputs/2022-07-15/17-41-16/initial_train/val.pth')#'outputs/2022-09-17/21-54-24/update_99/val.pth')#'outputs/2022-08-07/01-56-19/update_3/val.pth')#'outputs/2022-08-07/01-36-19/update_4/val.pth')#'outputs/2022-08-07/01-09-48/update_5/val.pth')#
+    parser.add_argument('--val_checkpoint', type=str, default='outputs/2022-11-19/10-32-29/initial_train/val.pth')#None)#'outputs/2022-07-15/17-41-16/initial_train/val.pth')#'outputs/2022-09-17/21-54-24/update_99/val.pth')#'outputs/2022-08-07/01-56-19/update_3/val.pth')#'outputs/2022-08-07/01-36-19/update_4/val.pth')#'outputs/2022-08-07/01-09-48/update_5/val.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/val.pth')#'outputs/2022-07-20/14-46-50/update_16/val.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/val.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/val.pth')#
 
@@ -159,7 +159,7 @@ def add_constr_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--constr_ignore', action='store_true')
     parser.add_argument('--constr_update_iters', type=int, default=512)
-    parser.add_argument('--constr_checkpoint', type=str, default=None)#'outputs/2022-07-15/17-41-16/initial_train/constr.pth')#'outputs/2022-08-07/01-56-19/update_3/constr.pth')#'outputs/2022-08-07/01-36-19/update_4/constr.pth')#'outputs/2022-08-07/01-09-48/update_5/constr.pth')#
+    parser.add_argument('--constr_checkpoint', type=str, default='outputs/2022-11-19/10-32-29/initial_train/constr.pth')#None)#'outputs/2022-07-15/17-41-16/initial_train/constr.pth')#'outputs/2022-08-07/01-56-19/update_3/constr.pth')#'outputs/2022-08-07/01-36-19/update_4/constr.pth')#'outputs/2022-08-07/01-09-48/update_5/constr.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/constr.pth')#'outputs/2022-07-20/14-46-50/update_16/constr.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/constr.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/constr.pth')#
 
@@ -176,7 +176,7 @@ def add_gi_args(parser):
     parser.add_argument('--gi_init_iters', type=int, default=10000,
                         help='Initial training iterations')
     parser.add_argument('--gi_update_iters', type=int, default=512)
-    parser.add_argument('--gi_checkpoint', type=str, default=None)#'outputs/2022-07-15/17-41-16/initial_train/gi.pth')#'outputs/2022-08-07/01-56-19/update_3/gi.pth')#'outputs/2022-08-07/01-36-19/update_4/gi.pth')#'outputs/2022-08-07/01-09-48/update_5/gi.pth')#
+    parser.add_argument('--gi_checkpoint', type=str, default='outputs/2022-11-19/10-32-29/initial_train/gi.pth')#None)#'outputs/2022-07-15/17-41-16/initial_train/gi.pth')#'outputs/2022-08-07/01-56-19/update_3/gi.pth')#'outputs/2022-08-07/01-36-19/update_4/gi.pth')#'outputs/2022-08-07/01-09-48/update_5/gi.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/gi.pth')#'outputs/2022-07-20/14-46-50/update_16/gi.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/gi.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/gi.pth')#
 
@@ -191,7 +191,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_batch_size', type=int, default=256)
     parser.add_argument('--cbfd_thresh', type=float, default=0.2,
                         help='Threshold for an obs to be considered in violation of cbf dots')
-    parser.add_argument('--cbfd_init_iters', type=int, default=640000,#320000,#10000,#200000,#2000,#10000,#30000,#160000,#100000,#20000,#1000,#80000,#40000,#
+    parser.add_argument('--cbfd_init_iters', type=int, default=20000,#40000,#80000,#640000,#320000,#10000,#200000,#2000,#10000,#30000,#160000,#100000,#1000,#
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)

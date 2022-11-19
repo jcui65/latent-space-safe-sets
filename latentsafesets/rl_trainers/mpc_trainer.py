@@ -183,6 +183,7 @@ class CBFdotlatentplanaTrainer(Trainer):
 
         log.info('Beginning cbfdot initial optimization')
 
+        self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
         for i in range(self.params['cbfd_init_iters']):#10000
             out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
             #obs=out_dict['obs']
@@ -205,7 +206,8 @@ class CBFdotlatentplanaTrainer(Trainer):
             if i % self.params['plot_freq'] == 0:
                 log.info('Creating cbfdot function heatmap')
                 self.loss_plotter.plot()
-                self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer)
+                #self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer)
+                self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer)
                 self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,coeff=1/3)  # a few lines later
                 self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-14.pdf" % i), replay_buffer,
                                         coeff=1 / 4)  # a few lines later
@@ -237,15 +239,19 @@ class CBFdotlatentplanaTrainer(Trainer):
         log.info('Creating cbf dot function heatmap')
         self.loss_plotter.plot()
         self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)
-        self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
+        #self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
+        #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased.pdf" ), replay_buffer, coeff=1)
         #self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
-        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased13.pdf"), replay_buffer,coeff=1/3)  # a few lines later
-        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased14.pdf"), replay_buffer,
+        self.plotlatent(os.path.join(update_dir, "cbfdlatent.pdf"), replay_buffer)
+        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-13.pdf"), replay_buffer,coeff=1/3)  # a few lines later
+        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer,
                                 coeff=1 / 4)  # a few lines later
+        #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
 
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
-        next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
+        #next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
+        next_obs = out_dict['next_obs_relative']  # rdo = out_dict['rdo']
         pu.visualize_cbfdot(next_obs, self.cbfd,
                              file,
                              env=self.env)
@@ -258,6 +264,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                              file,
                              env=self.env)
 
+
     def plotlatentunbiased(self, file, replay_buffer,coeff):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
         #next_obs = out_dict['next_obs']
@@ -266,6 +273,24 @@ class CBFdotlatentplanaTrainer(Trainer):
         pu.visualize_cbfdotlatentunbiased(next_obs, self.cbfd,
                              file,
                              env=self.env,coeff=coeff)
+
+    def plotlatentgroundtruth(self, file, replay_buffer):
+        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        #next_obs = out_dict['next_obs']
+        next_obs = out_dict['next_obs_relative']
+        #rdo = out_dict['rdo']
+        pu.visualize_cbfdotlatentgroundtruth(next_obs, self.cbfd,
+                             file,
+                             env=self.env)
+
+    def plotlatent(self, file, replay_buffer):
+        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        #next_obs = out_dict['next_obs']
+        next_obs = out_dict['next_obs_relative']
+        #rdo = out_dict['rdo']
+        pu.visualize_cbfdotlatent(next_obs, self.cbfd,
+                             file,
+                             env=self.env)
 
 class MPCTrainer(Trainer):
 
