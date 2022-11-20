@@ -315,7 +315,7 @@ def evaluate_cbfdotlatent_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 50
+    lux = 75#50#
     luy = 55
     width = 25#20#
     height = 40#50#

@@ -21,7 +21,7 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)
-    parser.add_argument('--num_updates', type=int, default=200)#250)#500)#1500)#75)#150)#50)##25)#45)#40)#35)#5)#20)#15)#10)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=10)#25)#200)#250)#500)#1500)#75)#150)#50)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
 
     add_controller_args(parser)
@@ -191,7 +191,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_batch_size', type=int, default=256)
     parser.add_argument('--cbfd_thresh', type=float, default=0.2,
                         help='Threshold for an obs to be considered in violation of cbf dots')
-    parser.add_argument('--cbfd_init_iters', type=int, default=20000,#40000,#80000,#640000,#320000,#10000,#200000,#2000,#10000,#30000,#160000,#100000,#1000,#
+    parser.add_argument('--cbfd_init_iters', type=int, default=10000,#20000,#40000,#80000,#640000,#320000,#200000,#2000,#10000,#30000,#160000,#100000,#1000,#
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
