@@ -71,7 +71,7 @@ class VAEEncoder(nn.Module):
         log_std = log_std.view(*batch_dims, -1)
         return mu, log_std
 
-    def encode(self, x):
+    def encode(self, x):#maybe I need to slightly modify this part when turning to plan B
         ptu.torchify(x)
         mu, log_std = self(x)#it is the forward function
         std = log_std.mul(0.5).exp_()

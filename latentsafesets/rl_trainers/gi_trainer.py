@@ -26,8 +26,8 @@ class GoalIndicatorTrainer(Trainer):
 
         for i in range(self.params['gi_init_iters']):#10000
             out_dict = replay_buffer.sample(self.params['gi_batch_size'])#256#get 1 step
-            #next_obs, rew = out_dict['next_obs'], out_dict['reward']#0/goal or -1/not goal
-            next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
+            next_obs, rew = out_dict['next_obs'], out_dict['reward']#0/goal or -1/not goal
+            #next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
 
             loss, info = self.gi.update(next_obs, rew, already_embedded=True)
             self.loss_plotter.add_data(info)
@@ -49,8 +49,8 @@ class GoalIndicatorTrainer(Trainer):
 
         for _ in trange(self.params['gi_update_iters']):
             out_dict = replay_buffer.sample(self.params['gi_batch_size'])
-            #next_obs, rew = out_dict['next_obs'], out_dict['reward']
-            next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
+            next_obs, rew = out_dict['next_obs'], out_dict['reward']
+            #next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
 
             loss, info = self.gi.update(next_obs, rew, already_embedded=True)
             self.loss_plotter.add_data(info)
@@ -62,12 +62,12 @@ class GoalIndicatorTrainer(Trainer):
 
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['constr_batch_size'])
-        #next_obs = out_dict['next_obs']
-        next_obs = out_dict['next_obs_relative']
+        next_obs = out_dict['next_obs']
+        #next_obs = out_dict['next_obs_relative']
         pu.visualize_onezero(next_obs, self.gi,
                              file,
                              env=self.env)
-
+    '''
     def initial_train_relative(self, replay_buffer, update_dir):
         if self.gi.trained:
             self.plot(os.path.join(update_dir, "gi_start.pdf"), replay_buffer)
@@ -117,3 +117,4 @@ class GoalIndicatorTrainer(Trainer):
         pu.visualize_onezero(next_obs_relative, self.gi,
                              file,
                              env=self.env)
+    '''

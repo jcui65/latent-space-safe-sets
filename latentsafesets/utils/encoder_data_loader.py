@@ -23,15 +23,15 @@ class EncoderDataLoader:
             transforms.RandomResizedCrop(64, scale=(0.8, 1.0)),
         ])
 
-    def sample(self, batch_size):
+    def sample(self, batch_size):#plan A
         idxs = np.random.randint(self.n_images, size=batch_size)
         ims = []
         if self.frame_stack == 1:
-            #template = os.path.join(self.data_dir, '%d.png')#sample an image in data_images/spb
-            template = os.path.join(self.data_dir, 'relative_%d.png')  # sample an image in data_images/spb
+            template = os.path.join(self.data_dir, '%d.png')#sample an image in data_images/spb#global coordinate
+            #template = os.path.join(self.data_dir, 'relative_%d.png')  # sample an image in data_images/spb#ego
         else:
-            #template = os.path.join(self.data_dir, '%d_%d.png')
-            template = os.path.join(self.data_dir, 'relative_%d_%d.png')
+            template = os.path.join(self.data_dir, '%d_%d.png')
+            #template = os.path.join(self.data_dir, 'relative_%d_%d.png')
         for idx in idxs:
             if self.frame_stack == 1:
                 im = Image.open(template % idx)
@@ -45,4 +45,35 @@ class EncoderDataLoader:
                 ims.append(stack)
         return ims
 
+    def sample_cbf(self, batch_size,trajectories):#plan B
+        idxs = np.random.randint(self.n_images, size=batch_size)
+        ims = []
+        dists=[]
+        if self.frame_stack == 1:
+            template = os.path.join(self.data_dir, '%d.png')#sample an image in data_images/spb
+            #template = os.path.join(self.data_dir, 'relative_%d.png')  # sample an image in data_images/spb
+        else:
+            template = os.path.join(self.data_dir, '%d_%d.png')
+            #template = os.path.join(self.data_dir, 'relative_%d_%d.png')
+        for idx in idxs:
+            if self.frame_stack == 1:
+                im = Image.open(template % idx)
+                im = self.transform(im)
+                ims.append(im)
+                seq=idx//100
+                fra=idx%100
+                traj=trajectories[seq]#the seqth trajectory (length 100)
+                frame=traj[fra]#the frath frame
+                hvo=frame['hvo']#hvo or hvn?# I think it is hvo
+                hvo13=np.cbrt(hvo)
+                #dists.append(frame['hvn'])
+                dists.append(hvo13)
+            else:
+                stack = []
+                for i in range(self.frame_stack):
+                    im = Image.open(template % (idx, i))
+                    stack.append(im)
+                ims.append(stack)
+                #add the distance if needed
+        return ims,dists
 

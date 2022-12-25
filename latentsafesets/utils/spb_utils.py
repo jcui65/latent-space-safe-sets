@@ -98,8 +98,8 @@ def evaluate_cbfdot_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#50#
-    luy = 55
+    lux = 75#105#50#
+    luy = 55#40#
     width = 25#20#
     height = 40#50#
     walls = [((lux + xmove, luy + ymove), (lux + width + xmove, luy + height + ymove))] #[((75, 55), (100, 95))] #the position and dimension of the wall
@@ -315,8 +315,8 @@ def evaluate_cbfdotlatent_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#50#
-    luy = 55
+    lux = 75#105#50#
+    luy = 55#40#
     width = 25#20#
     height = 40#50#
     walls = [((lux + xmove, luy + ymove), (lux + width + xmove, luy + height + ymove))] #[((75, 55), (100, 95))] #the position and dimension of the wall
@@ -392,8 +392,8 @@ def evaluate_cbfdotlatentunbiased_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#50
-    luy = 55
+    lux = 75#105#50#
+    luy = 55#40#
     width = 25#20#
     height = 40#50#
     walls = [((lux + xmove, luy + ymove), (lux + width + xmove, luy + height + ymove))] #[((75, 55), (100, 95))] #the position and dimension of the wall
@@ -475,8 +475,8 @@ def evaluate_cbfdotlatentgroundtruth_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#50
-    luy = 55
+    lux = 75#105#50#
+    luy = 55#40#
     width = 25#20#
     height = 40#50#
     walls = [((lux + xmove, luy + ymove), (lux + width + xmove, luy + height + ymove))] #[((75, 55), (100, 95))] #the position and dimension of the wall
@@ -558,8 +558,8 @@ def evaluate_cbfdotlatentunbiased13_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#50
-    luy = 55
+    lux = 75#105#50#
+    luy = 55#40#
     width = 25#20#
     height = 40#50#
     walls = [((lux + xmove, luy + ymove), (lux + width + xmove, luy + height + ymove))] #[((75, 55), (100, 95))] #the position and dimension of the wall
@@ -602,6 +602,8 @@ def evaluate_cbfdotlatentunbiased13_func(cbfdot,
         #vals = cbfdot.cbfdots(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
         #vals = cbfdot.cbfdots(np.array(row_states),already_embedded = True).squeeze()  # it is like calling forward of const_estimator!
         vals = cbfdot.cbfdots(np.array(row_states)).squeeze() #latent and latent plan a are the same in this case # it is like calling forward of const_estimator!
+        #vals = cbfdot.cbfdots_planb(np.array(row_states)).squeeze()  #
+        #vals = (vals) ** 3 #this is for plan b only!!! not for plan a!!! # -valsu#print('valsnew', vals)
         #print('vals',vals)
         valsu=np.array(row_statesu).squeeze()#print('valsu', valsu)
         vals=vals-valsu#print('valsnew', vals)
@@ -635,8 +637,8 @@ def evaluate_cbfdotlatentbiased_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#50
-    luy = 55
+    lux = 75#105#50#
+    luy = 55#40#
     width = 25#20#
     height = 40#50#
     walls = [((lux + xmove, luy + ymove), (lux + width + xmove, luy + height + ymove))] #[((75, 55), (100, 95))] #the position and dimension of the wall
@@ -679,9 +681,10 @@ def evaluate_cbfdotlatentbiased_func(cbfdot,
         #vals = cbfdot.cbfdots(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
         #vals = cbfdot.cbfdots(np.array(row_states),already_embedded = True).squeeze()  # it is like calling forward of const_estimator!
         vals = cbfdot.cbfdots(np.array(row_states)).squeeze() #latent and latent plan a are the same in this case # it is like calling forward of const_estimator!
+        #vals = cbfdot.cbfdots_planb(np.array(row_states)).squeeze()  #
         #print('vals',vals)
         #valsu=np.array(row_statesu).squeeze()#print('valsu', valsu)
-        vals=vals#-valsu#print('valsnew', vals)
+        #vals=(vals)**3#only applies to plan b!!! not for plan a!!!#-valsu#print('valsnew', vals)
         #print('vals1',vals)
         #valsmask=np.where(vals<=0,-1,1)
         #vals=(np.abs(vals))**(coeff)#np.power(vals,1/3,dtype=complex)

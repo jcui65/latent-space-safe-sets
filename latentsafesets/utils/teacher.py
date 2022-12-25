@@ -179,14 +179,14 @@ class AbstractTeacher(ABC):
             #next_obs, reward, done, info,next_obs_relaitve = self.env.stepsafety(action_input)#63 in simple_point_bot.py
             next_obs, reward, done, info, next_obs_relative = self.env.stepsafety_relative(
                 action_input)  # 63 in simple_point_bot.py
-            transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
+            transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),#that obs should correspond to hvo
                           'next_obs': next_obs, 'done': int(done),#this is a dictionary
                           'constraint': int(info['constraint']), 'safe_set': 0,
                           'on_policy': int(self.on_policy),
                           'rdo': info['rdo'].tolist(),
                           'rdn': info['rdn'].tolist(),
-                          'hvo': info['hvo'],
-                          'hvn': info['hvn'],
+                          'hvo': info['hvo'],#obs here
+                          'hvn': info['hvn'],#next_obs here
                           'hvd': info['hvd'],
                           'state':info['state'].tolist(),
                           'next_state':info['next_state'].tolist(),

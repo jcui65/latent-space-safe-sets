@@ -56,8 +56,8 @@ class SimplePointBot(Env, utils.EzPickle):
         if walls is None:
             xmove = 0  #-25#30#
             ymove=0#-45#-40#-35#-33#-30#-25#-30#
-            lux=75#50#
-            luy=55
+            lux=75#105#100#50#
+            luy=55#40#
             width=25#20#
             height=40#50#
             walls = [((lux+xmove,luy+ymove),(lux+width+xmove,luy+height+ymove))]#
@@ -74,20 +74,20 @@ class SimplePointBot(Env, utils.EzPickle):
         old_state = self.state.copy()#2d state
         next_state = self._next_state(self.state, a)#122, go to the next 2d state with noise
         cur_reward = self.step_reward(self.state, a)#130, the reward of the current state
-        self.state = next_state#move on to the next step
+        self.state = next_state#move on to the next step#literally next_state#
         self._episode_steps += 1
         constr = self.obstacle(next_state)#line 136 to check if next_state is obstacle
         self.done = self._episode_steps >= self.horizon#just over time limit!
 
         if self._from_pixels:
-            obs = self._state_to_image(self.state)#line 169#it is a 3-channel image
+            obs = self._state_to_image(self.state)#line 169#it is a 3-channel image#literally next_state#
         else:
-            obs = self.state#it is a 2-d state
-        return obs, cur_reward, self.done, {
+            obs = self.state#it is a 2-d state#literally next_state#
+        return obs, cur_reward, self.done, {#literally next_state#
             "constraint": constr,#it is also a dictionary!
             "reward": cur_reward,
-            "state": old_state,
-            "next_state": next_state,
+            "state": old_state,#literally old_state#
+            "next_state": next_state,#literally next_state#
             "action": a#the current action!
         }
 
@@ -153,16 +153,16 @@ class SimplePointBot(Env, utils.EzPickle):
             reldistnew = np.array([0, 0])  # 9.9#
         hvaluenew = np.linalg.norm(reldistnew) ** 2 - 15 ** 2
         hvd=hvaluenew-hvalueold#hvd for h value difference
-        return obs, cur_reward, self.done, {
+        return obs, cur_reward, self.done, {#corresponding to the new state#need hvaluenew
             "constraint": constr,#it is also a dictionary!
             "reward": cur_reward,
-            "state": old_state,
-            "next_state": next_state,
+            "state": old_state,#need hvalueold
+            "next_state": next_state,#need hvaluenew
             "action": a,#the current action!
             "rdo":reldistold,#rdo for relative distance old#array now!
             "rdn": reldistnew,#rdn for relative distance new#array now!
-            "hvo": hvalueold,#hvo for h value old
-            "hvn":hvaluenew,#hvn for h value new
+            "hvo": hvalueold,#hvo for h value old#corresponding to the old state
+            "hvn":hvaluenew,#hvn for h value new#corresponding to the new state
             "hvd":hvd#hvd for h value difference
 
         }
@@ -304,7 +304,7 @@ class SimplePointBot(Env, utils.EzPickle):
         centerx=88#115#118#110
         centery=75
         radi=0.001#19#20#15#14#
-        draw_circle(draw, np.array([centerx,centery]), radi, OBSTACLE_COLOR)#25#  # draw a circle at state with radius=10 in red!!!
+        #draw_circle(draw, np.array([centerx,centery]), radi, OBSTACLE_COLOR)#25#  # draw a circle at state with radius=10 in red!!!
         for wall in self.wall_coords:#draw an obstacle with blue with black outline width 1
             draw.rectangle(wall, fill=OBSTACLE_COLOR, outline=(0, 0, 0), width=1)
 

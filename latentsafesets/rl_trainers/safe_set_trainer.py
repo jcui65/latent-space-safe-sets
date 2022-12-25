@@ -59,16 +59,16 @@ class SafeSetTrainer(Trainer):
         if self.ss_type == 'ex2':
             out_dict = replay_buffer.sample(self.batch_size, self.ensemble)
             out_dict_pos = replay_buffer.sample_positive(self.batch_size, 'safe_set', self.ensemble)
-            #obs = out_dict['obs']
-            #obs_pos = out_dict_pos['obs']
-            obs = out_dict['obs_relative']
-            obs_pos = out_dict_pos['obs_relative']
+            obs = out_dict['obs']
+            obs_pos = out_dict_pos['obs']
+            #obs = out_dict['obs_relative']
+            #obs_pos = out_dict_pos['obs_relative']
 
             loss, info = self.safe_set.update(obs, obs_pos, already_embedded=True)
         elif self.ss_type == 'rnd':
             out_dict = replay_buffer.sample_positive(self.batch_size, 'safe_set', self.ensemble)
-            #obs = out_dict['obs']
-            obs = out_dict['obs_relative']
+            obs = out_dict['obs']
+            #obs = out_dict['obs_relative']
 
             loss, info = self.safe_set.update(obs, already_embedded=True)
         else:
@@ -79,6 +79,6 @@ class SafeSetTrainer(Trainer):
 
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['safe_set_batch_size'])
-        #obs = out_dict['obs']
-        obs = out_dict['obs_relative']
+        obs = out_dict['obs']
+        #obs = out_dict['obs_relative']
         pu.visualize_safe_set(obs, self.safe_set, file, env=self.env)

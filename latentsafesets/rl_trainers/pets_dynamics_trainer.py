@@ -34,8 +34,8 @@ class PETSDynamicsTrainer(Trainer):
             #print('obs.shape', obs.shape)#(5, 256, 32)#
             #print('next_obs.shape', next_obs.shape)#(5, 256, 32)#
             #print('act1.shape', act.shape)#(5, 256, 2)#
-            obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict[
-                'action']  # get values of those indices
+            #obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict[
+                #'action']  # get values of those indices
             #print('obs_relative.shape',obs.shape) #now (5, 256, 32)##(5, 256, 3, 64, 64)#
             #print('next_obs_relative.shape', next_obs.shape)#now (5, 256, 32)#
             #print('act2.shape',act.shape)#(5, 256, 2)#
@@ -63,8 +63,8 @@ class PETSDynamicsTrainer(Trainer):
         for _ in trange(self.params['dyn_update_iters']):#512
             out_dict = replay_buffer.sample(self.params['dyn_batch_size'],
                                             ensemble=self.ensemble)
-            #obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']
-            obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['action']
+            obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']
+            #obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['action']
 
             loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
             self.loss_plotter.add_data(info)#the update is just the dynamics update
@@ -77,7 +77,7 @@ class PETSDynamicsTrainer(Trainer):
     def visualize(self, file, replay_buffer):
         out_dict = replay_buffer.sample_chunk(8, 10)
 
-        #obs = out_dict['obs']
-        obs = out_dict['obs_relative']
+        obs = out_dict['obs']
+        #obs = out_dict['obs_relative']
         act = out_dict['action']
         pu.visualize_dynamics(obs, act, self.dynamics, self.dynamics.encoder, file)

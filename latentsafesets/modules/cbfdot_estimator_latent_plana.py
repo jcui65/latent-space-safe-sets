@@ -68,6 +68,30 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         probs = logits#torch.sigmoid(logits)#
         return ptu.to_numpy(probs)
 
+    def cbfdots_planb(self, obs, already_embedded=False):#the forward function for numpy input#this is used in plotting
+        obs = ptu.torchify(obs)
+        #embedding = self.encoder.encode(obs).detach()  # workaround#currently I am in the state space
+        #print('embedding.shape',embedding.shape)# torch.Size([180, 32])
+        #device = embedding.device
+        ##device = obs.device
+        ##zero2=torch.zeros((embedding.shape[0],2)).to(device)
+        ##zero2 = torch.zeros((obs.shape[0], 2)).to(device)
+        ##action=zero2
+        ##ea0=torch.concat((embedding,zero2),1)
+        #logits = self(ea0,action, already_embedded=True)
+        #logits = self(obs,already_embedded)#self(obs, action)#
+        #probs = logits#torch.sigmoid(logits)#
+        if not already_embedded:
+            embedding = self.encoder.encode(obs).detach()#workaround#currently I am in the state space
+        else:
+            embedding = obs
+        #print('embedding', embedding)
+        #print('embedding.shape', embedding.shape)#torch.Size([180, 32])
+        cbfvalues=embedding[:,-1]
+        #print('cbfvalues', cbfvalues)
+        #print('cbfvalues.shape',cbfvalues.shape)#torch.Size([32])
+        return ptu.to_numpy(cbfvalues)
+
     def update(self, next_obs, constr, already_embedded=False):#the training process
         self.trained = True
         next_obs = ptu.torchify(next_obs)#input
