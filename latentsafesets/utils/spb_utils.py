@@ -14,8 +14,8 @@ def evaluate_safe_set(s_set,
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            #state = env._state_to_image((x, y)) / 255
-            state = env._state_to_image_relative((x, y)) / 255
+            state = env._state_to_image((x, y)) / 255##this is for global coordinates!
+            state = env._state_to_image_relative((x, y)) / 255##this is for ego coordinates!
             row_states.append(state)
         vals = s_set.safe_set_probability_np(np.array(row_states)).squeeze()
         if skip == 1:
@@ -42,8 +42,8 @@ def evaluate_value_func(value_func,
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            #state = env._state_to_image((x, y)) / 255
-            state = env._state_to_image_relative((x, y)) / 255
+            state = env._state_to_image((x, y)) / 255#this is for global coordinates!
+            state = env._state_to_image_relative((x, y)) / 255#this is for ego coordinates!
             row_states.append(state)
         vals = value_func.get_value_np(np.array(row_states)).squeeze()
         if skip == 1:
@@ -70,8 +70,8 @@ def evaluate_constraint_func(constraint,
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
-            #state = env._state_to_image((x, y)) / 255
-            state = env._state_to_image_relative((x, y)) / 255
+            state = env._state_to_image((x, y)) / 255##this is for global coordinates!
+            state = env._state_to_image_relative((x, y)) / 255##this is for ego coordinates!
             row_states.append(state)
         vals = constraint.prob(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
         if skip == 1:
@@ -111,7 +111,7 @@ def evaluate_cbfdot_func(cbfdot,
         row_statesc = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
             #old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
-            old_state = env._state_to_image((x, y)) / 255
+            old_state = env._state_to_image((x, y)) / 255##this is for global coordinates!
             row_states.append(old_state)
             #print('old_state',old_state)#tuple
 
@@ -311,7 +311,7 @@ def evaluate_cbfdotlatent_func(cbfdot,
                              show=False,
                              skip=1,
                              action=(0,0)):#(1,1)):#2):#
-    data = np.zeros((spb.WINDOW_HEIGHT, spb.WINDOW_WIDTH))
+    data = np.zeros((spb.WINDOW_HEIGHT, spb.WINDOW_WIDTH))#this is for plan a that takes latent state and then get cbf values
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
@@ -328,36 +328,10 @@ def evaluate_cbfdotlatent_func(cbfdot,
         row_statesc = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
             #old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
-            old_state = env._state_to_image((x, y)) / 255
+            old_state = env._state_to_image((x, y)) / 255#can only be used for global coordinates
             row_states.append(old_state)
             #print('old_state',old_state)#tuple
-            '''
-            #print('selfwall_coords[0][0]',selfwall_coords[0][0])#tuple
-            #print('(old_state <= selfwall_coords[0][0])',(old_state <= selfwall_coords[0][0]))
-            if (old_state <= selfwall_coords[0][0]).all():  # old_state#check it!
-                reldistold = old_state - selfwall_coords[0][0]  # np.linalg.norm()
-            elif selfwall_coords[0][0][0] <= old_state[0] <= selfwall_coords[0][1][0] and old_state[1] <= \
-                    selfwall_coords[0][0][1]:
-                reldistold = np.array([0, old_state[1] - selfwall_coords[0][0][1]])
-            elif old_state[0] >= selfwall_coords[0][1][0] and old_state[1] <= selfwall_coords[0][0][1]:
-                reldistold = old_state - (selfwall_coords[0][1][0], selfwall_coords[0][0][1])
-            elif old_state[0] >= selfwall_coords[0][1][0] and selfwall_coords[0][0][1] <= old_state[1] <= \
-                    selfwall_coords[0][1][1]:
-                reldistold = np.array([old_state[0] - selfwall_coords[0][1][0], 0])
-            elif (old_state >= selfwall_coords[0][1]).all():  # old_state
-                reldistold = old_state - selfwall_coords[0][1]
-            elif selfwall_coords[0][0][0] <= old_state[0] <= selfwall_coords[0][1][0] and old_state[1] >= \
-                    selfwall_coords[0][1][1]:
-                reldistold = np.array([0, old_state[1] - selfwall_coords[0][1][1]])
-            elif old_state[0] <= selfwall_coords[0][0][0] and old_state[1] >= selfwall_coords[0][1][1]:
-                reldistold = (old_state - (selfwall_coords[0][0][0], selfwall_coords[0][1][1]))
-            elif old_state[0] <= selfwall_coords[0][0][0] and selfwall_coords[0][0][1] <= old_state[1] <= \
-                    selfwall_coords[0][1][1]:
-                reldistold = np.array([old_state[0] - selfwall_coords[0][0][0], 0])
-            else:
-                # print(old_state)#it can be [98.01472841 92.11425524]
-                reldistold = np.array([0, 0])  # 9.9#
-            '''
+
             #rda=np.concatenate((reldistold,action))#thanks it is one-by-one
             #row_states.append(rda)
             #print('obs.shape',obs.shape)
@@ -406,7 +380,7 @@ def evaluate_cbfdotlatentunbiased_func(cbfdot,
         for x in range(0, spb.WINDOW_WIDTH, skip):
             old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
             old_stateimage = env._state_to_image((x, y)) / 255
-            #old_stateimage = env._state_to_image_relative((x, y)) / 255
+            old_stateimage = env._state_to_image_relative((x, y)) / 255
             row_states.append(old_stateimage)
             #print('old_state',old_state)#tuple
 
@@ -571,8 +545,8 @@ def evaluate_cbfdotlatentunbiased13_func(cbfdot,
         row_statesu = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
             old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
-            #old_stateimage = env._state_to_image((x, y)) / 255
-            old_stateimage = env._state_to_image_relative((x, y)) / 255
+            old_stateimage = env._state_to_image((x, y)) / 255#, this is for using the global coordinate
+            old_stateimage = env._state_to_image_relative((x, y)) / 255#, this is for using the ego coordinate
             row_states.append(old_stateimage)
             if (old_state <= selfwall_coords[0][0]).all():  # old_state#check it!
                 reldistold = old_state - selfwall_coords[0][0]  # np.linalg.norm()
@@ -647,36 +621,12 @@ def evaluate_cbfdotlatentbiased_func(cbfdot,
     selfwall_coords = np.array(walls)
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
-        row_statesu = []
+        #row_statesu = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
             old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
-            #old_stateimage = env._state_to_image((x, y)) / 255
-            old_stateimage = env._state_to_image_relative((x, y)) / 255
+            old_stateimage = env._state_to_image((x, y)) / 255#, this is for using the global coordinate
+            old_stateimage = env._state_to_image_relative((x, y)) / 255#, this is for using the ego coordinate
             row_states.append(old_stateimage)
-            if (old_state <= selfwall_coords[0][0]).all():  # old_state#check it!
-                reldistold = old_state - selfwall_coords[0][0]  # np.linalg.norm()
-            elif selfwall_coords[0][0][0] <= old_state[0] <= selfwall_coords[0][1][0] and old_state[1] <= \
-                    selfwall_coords[0][0][1]:
-                reldistold = np.array([0, old_state[1] - selfwall_coords[0][0][1]])
-            elif old_state[0] >= selfwall_coords[0][1][0] and old_state[1] <= selfwall_coords[0][0][1]:
-                reldistold = old_state - (selfwall_coords[0][1][0], selfwall_coords[0][0][1])
-            elif old_state[0] >= selfwall_coords[0][1][0] and selfwall_coords[0][0][1] <= old_state[1] <= \
-                    selfwall_coords[0][1][1]:
-                reldistold = np.array([old_state[0] - selfwall_coords[0][1][0], 0])
-            elif (old_state >= selfwall_coords[0][1]).all():  # old_state
-                reldistold = old_state - selfwall_coords[0][1]
-            elif selfwall_coords[0][0][0] <= old_state[0] <= selfwall_coords[0][1][0] and old_state[1] >= \
-                    selfwall_coords[0][1][1]:
-                reldistold = np.array([0, old_state[1] - selfwall_coords[0][1][1]])
-            elif old_state[0] <= selfwall_coords[0][0][0] and old_state[1] >= selfwall_coords[0][1][1]:
-                reldistold = (old_state - (selfwall_coords[0][0][0], selfwall_coords[0][1][1]))
-            elif old_state[0] <= selfwall_coords[0][0][0] and selfwall_coords[0][0][1] <= old_state[1] <= \
-                    selfwall_coords[0][1][1]:
-                reldistold = np.array([old_state[0] - selfwall_coords[0][0][0], 0])
-            else:
-                # print(old_state)#it can be [98.01472841 92.11425524]
-                reldistold = np.array([0, 0])  # 9.9#
-            row_statesu.append(reldistold[0]**2+reldistold[1]**2-15**2)
 
         #vals = cbfdot.cbfdots(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
         #vals = cbfdot.cbfdots(np.array(row_states),already_embedded = True).squeeze()  # it is like calling forward of const_estimator!

@@ -31,15 +31,15 @@ class ValueTrainer(Trainer):
             if i < self.params['val_init_iters']:#the first 10000 iterations
                 out_dict = replay_buffer.sample_positive(self.batch_size, 'on_policy', self.n_models)
                 obs, rtg = out_dict['obs'], out_dict['rtg']
-                #obs, rtg = out_dict['obs_relative'], out_dict['rtg']
+                obs, rtg = out_dict['obs_relative'], out_dict['rtg']
 
                 loss, info = self.value.update_init(obs, rtg, already_embedded=True)
             else:
                 out_dict = replay_buffer.sample_positive(self.batch_size, 'on_policy', self.n_models)
                 obs, next_obs, rew, done = out_dict['obs'], out_dict['next_obs'], \
                                            out_dict['reward'], out_dict['done']
-                #obs, next_obs, rew, done = out_dict['obs_relative'], out_dict['next_obs_relative'], \
-                                           #out_dict['reward'], out_dict['done']
+                obs, next_obs, rew, done = out_dict['obs_relative'], out_dict['next_obs_relative'], \
+                                           out_dict['reward'], out_dict['done']
 
                 loss, info = self.value.update(obs, rew, next_obs, done, already_embedded=True)
             self.loss_plotter.add_data(info)
@@ -62,8 +62,8 @@ class ValueTrainer(Trainer):
             out_dict = replay_buffer.sample_positive(self.batch_size, 'on_policy', self.n_models)
             obs, next_obs, rew, done = out_dict['obs'], out_dict['next_obs'], out_dict['reward'], \
                                        out_dict['done']
-            #obs, next_obs, rew, done = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['reward'], \
-                                       #out_dict['done']
+            obs, next_obs, rew, done = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['reward'], \
+                                       out_dict['done']
 
             loss, info = self.value.update(obs, rew, next_obs, done, already_embedded=True)
             self.loss_plotter.add_data(info)
@@ -75,6 +75,6 @@ class ValueTrainer(Trainer):
 
     def plot(self, file, replay_buffer):
         obs = replay_buffer.sample(30)['obs']
-        #obs = replay_buffer.sample(30)['obs_relative']
+        obs = replay_buffer.sample(30)['obs_relative']
         pu.visualize_value(obs, self.value, file=file,
                            env=self.env)

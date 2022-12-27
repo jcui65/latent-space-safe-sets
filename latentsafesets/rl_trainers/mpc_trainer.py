@@ -208,6 +208,8 @@ class CBFdotlatentplanaTrainer(Trainer):
                 self.loss_plotter.plot()
                 #self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer)
                 self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer)
+                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,
+                                        coeff=1)  # a few lines later
                 self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,coeff=1/3)  # a few lines later
                 self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-14.pdf" % i), replay_buffer,
                                         coeff=1 / 4)  # a few lines later
@@ -238,14 +240,16 @@ class CBFdotlatentplanaTrainer(Trainer):
 
         log.info('Creating cbf dot function heatmap')
         self.loss_plotter.plot()
-        self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)
+        self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)#this is using plan a
         #self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
         #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased.pdf" ), replay_buffer, coeff=1)
         #self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
         self.plotlatent(os.path.join(update_dir, "cbfdlatent.pdf"), replay_buffer)
+        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-11.pdf"), replay_buffer,
+                                coeff=1)  # a few lines later
         self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-13.pdf"), replay_buffer,coeff=1/3)  # a few lines later
         self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer,
-                                coeff=1 / 9)  # a few lines later
+                                coeff=1 / 4)  # a few lines later
         #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
 
     def plot(self, file, replay_buffer):
@@ -259,7 +263,7 @@ class CBFdotlatentplanaTrainer(Trainer):
     def plotconly(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
         next_obs = out_dict['next_obs']
-        #rdo = out_dict['rdo']
+        rdo = out_dict['rdo']
         pu.visualize_cbfdotconly(next_obs, self.cbfd,
                              file,
                              env=self.env)
