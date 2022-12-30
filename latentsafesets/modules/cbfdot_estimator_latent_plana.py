@@ -4,7 +4,7 @@ from .interfaces import EncodedModule
 
 import torch
 import torch.nn as nn
-from torch.autograd.functional import hessian
+from torch.autograd.functional import jacobian,hessian
 from torch.nn.utils import _stateless
 
 class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning very similar to gi or constraint estimator
@@ -52,6 +52,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         #ea=torch.concat((embedding,action),-1)
         log_probs = self.net(embedding)#self.net(ea)#self.net(embedding)#why 3 kinds of sizes?
         return log_probs
+
 
     def cbfdots(self, obs, already_embedded=False):#the forward function for numpy input#this is used in plotting
         obs = ptu.torchify(obs)
@@ -110,6 +111,25 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         #print('logits',logits)
         targets = constr#label
         loss1 = self.loss_func(logits, targets)
+        #print('next_obs.shape',next_obs.shape)
+        selfforwardtrue=lambda nextobs: self(nextobs, True)
+        #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+        jno=jacobian(selfforwardtrue,next_obs,create_graph=True)#jno means jacobian next_obs
+        #print('jno.shape',jno.shape)#torch.Size([256, 1, 256, 32])
+        #hno=torch.zeros((next_obs.shape[0],next_obs.shape[1],next_obs.shape[1]))
+        #for i in range(next_obs.shape[0]):
+            #hnoi=hessian(selfforwardtrue, next_obs[i], create_graph=True) #it is zero!
+            #print('hnoi',hnoi)
+            #print('hnoi.shape',hnoi.shape)
+            #hno[i]=hnoi
+        #jno=hessian(selfforwardtrue, next_obs, create_graph=True)  # jno means jacobian next_obs
+        #print('jno',jno)
+        jnon=torch.norm(jno)#jnon means  norm of jacobian next_obs
+        #jnon=torch.norm(hno)
+        #print('jnon',jnon)
+        epsilon=1e-6#1e-5#1e-3#1e-4#1e-2#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1e-6#
+        loss2=epsilon*jnon
+        print('loss2',loss2.item())#the main point is on the global coordinate's case
         #external_grad = torch.ones_like(loss1)
         #loss1.backward(gradient=external_grad)
         #logits.mean().backward(retain_graph=True)#(torch.ones_like(loss1))#
@@ -131,7 +151,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             #loss2=0
         #else:
             #loss2=0.01*(torch.norm(gv).item()-epsilon)
-        return loss1#+loss2#
+        return loss1+loss2#
 
     def step(self):
         """
