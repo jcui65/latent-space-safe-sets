@@ -1,5 +1,5 @@
 import latentsafesets.utils.pytorch_utils as ptu
-from latentsafesets.model import GenericNet, GenericNetcbf
+from latentsafesets.model import GenericNet, GenericNetcbf, GenericNetcbfelu
 from .interfaces import EncodedModule
 
 import torch
@@ -27,7 +27,9 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         self.trained = False
         #self.net = GenericNet(self.d_latent, 1, params['cbfd_n_hidden'], params['cbfd_hidden_size']).to(ptu.TORCH_DEVICE)#the network that uses relu activation
         #self.net = GenericNetcbf(self.d_obs, 1, params['cbfd_n_hidden'],params['cbfd_hidden_size']).to(ptu.TORCH_DEVICE)
-        self.net = GenericNetcbf(self.d_latent, 1, params['cbfd_n_hidden'], params['cbfd_hidden_size']).to(
+        #self.net = GenericNetcbf(self.d_latent, 1, params['cbfd_n_hidden'], params['cbfd_hidden_size']).to(
+            #ptu.TORCH_DEVICE)
+        self.net = GenericNetcbfelu(self.d_latent, 1, params['cbfd_n_hidden'], params['cbfd_hidden_size']).to(
             ptu.TORCH_DEVICE)
         #print(self.net)#input size 4, output size 1#the network that uses the tanh activation
         lr = params['cbfd_lr']
@@ -112,30 +114,32 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         targets = constr#label
         loss1 = self.loss_func(logits, targets)
         #print('next_obs.shape',next_obs.shape)
-        selfforwardtrue=lambda nextobs: self(nextobs, True)
+        #selfforwardtrue=lambda nextobs: self(nextobs, True)
         #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
-        jno=jacobian(selfforwardtrue,next_obs,create_graph=True)#jno means jacobian next_obs
+        #jno=jacobian(selfforwardtrue,next_obs,create_graph=True)#jno means jacobian next_obs
         #print('jno.shape',jno.shape)#torch.Size([256, 1, 256, 32])
-        #hno=torch.zeros((next_obs.shape[0],next_obs.shape[1],next_obs.shape[1]))
-        #for i in range(next_obs.shape[0]):
-            #hnoi=hessian(selfforwardtrue, next_obs[i], create_graph=True) #it is zero!
+        '''
+        hno=torch.zeros((next_obs.shape[0],next_obs.shape[1],next_obs.shape[1]))#hno means hessian next observation
+        for i in range(next_obs.shape[0]):
+            hnoi=hessian(selfforwardtrue, next_obs[i], create_graph=True) #it is zero!
             #print('hnoi',hnoi)
-            #print('hnoi.shape',hnoi.shape)
-            #hno[i]=hnoi
+            #print('hnoi.shape',hnoi.shape)#(32,32)
+            hno[i]=hnoi
+            '''
         #jno=hessian(selfforwardtrue, next_obs, create_graph=True)  # jno means jacobian next_obs
         #print('jno',jno)
-        jnon=torch.norm(jno)#jnon means  norm of jacobian next_obs
+        #jnon=torch.norm(jno)#jnon means  norm of jacobian next_obs
         #jnon=torch.norm(hno)
         #print('jnon',jnon)
-        epsilon=1e-6#1e-5#1e-3#1e-4#1e-2#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1e-6#
-        loss2=epsilon*jnon
-        print('loss2',loss2.item())#the main point is on the global coordinate's case
+        #epsilon=1e-6#1e-5#1e-4#1#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1e-3#1e-2#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1e-6#
+        #loss2=epsilon*jnon
+        #print('loss2',loss2.item())#the main point is on the global coordinate's case
         #external_grad = torch.ones_like(loss1)
         #loss1.backward(gradient=external_grad)
         #logits.mean().backward(retain_graph=True)#(torch.ones_like(loss1))#
         #gv=next_obs.grad
         #print('gv',gv)
-        #epsilon=250#200#
+        #epsilon=250#200#   
         #print('torch.norm(gv).item()',torch.norm(gv).item())
         #model = self.net #CBFdotEstimatorlatentplana(encoder, params).to(ptu.TORCH_DEVICE)#model = torch.nn.Linear(2, 2)#
         #inp = torch.rand(1, 2)
@@ -151,7 +155,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             #loss2=0
         #else:
             #loss2=0.01*(torch.norm(gv).item()-epsilon)
-        return loss1+loss2#
+        return loss1#+loss2#
 
     def step(self):
         """
