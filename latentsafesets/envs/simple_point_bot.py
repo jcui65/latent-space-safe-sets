@@ -207,6 +207,7 @@ class SimplePointBot(Env, utils.EzPickle):
             #print(old_state)#it can be [98.01472841 92.11425524]
             reldistold=np.array([0,0])#9.9#
         hvalueold = np.linalg.norm(reldistold) ** 2 - 15 ** 2#get the value of the h function
+        #hvalueold = np.linalg.norm(reldistold) ** 2 - 5 ** 2#get the value of the h function
 
         if (next_state <= self.wall_coords[0][0]).all():  # old_state#check it!
             reldistnew = next_state - self.wall_coords[0][0]#relative distance new # np.linalg.norm()
@@ -232,6 +233,7 @@ class SimplePointBot(Env, utils.EzPickle):
             # print(old_state)#it can be [98.01472841 92.11425524]
             reldistnew = np.array([0, 0])  # 9.9#
         hvaluenew = np.linalg.norm(reldistnew) ** 2 - 15 ** 2
+        #hvaluenew = np.linalg.norm(reldistnew) ** 2 - 5 ** 2
         hvd=hvaluenew-hvalueold#hvd for h value difference
         return obs, cur_reward, self.done, {
             "constraint": constr,#it is also a dictionary!

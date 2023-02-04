@@ -38,5 +38,5 @@ if __name__ == '__main__':#no use of replay buffer
     loss_plotter = LossPlotter(logdir)
 
     trainer = VAETrainer(params, encoder, loss_plotter)
-    #trainer.initial_train(encoder_data_loader, logdir, force_train=True)
-    trainer.initial_train_cbf(encoder_data_loader, logdir, force_train=True)
+    trainer.initial_train(encoder_data_loader, logdir, force_train=True)
+    #trainer.initial_train_cbf(encoder_data_loader, logdir, force_train=True)

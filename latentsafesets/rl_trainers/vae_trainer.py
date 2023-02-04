@@ -49,7 +49,7 @@ class VAETrainer(Trainer):
 
         self.vae.save(os.path.join(update_dir, 'vae.pth'))#that is the real last one!
 
-    def initial_train_cbf(self, enc_data_loader, update_dir, force_train=False):
+    def initial_train_cbf(self, enc_data_loader, update_dir, force_train=False):#plan B!
         if self.vae.trained and not force_train:
             return
 
@@ -69,7 +69,7 @@ class VAETrainer(Trainer):
 
         for i in range(self.params['enc_init_iters']):#100k default
             #obs,dist = enc_data_loader.sample(self.params['enc_batch_size'])#256#256 images!
-            obs, dist = enc_data_loader.sample_cbf(self.params['enc_batch_size'],demo_trajectories)  # 256#256 images!
+            obs, dist = enc_data_loader.sample_cbf(self.params['enc_batch_size'],demo_trajectories)  # 256#256 images!#plan B!
             loss, info = self.vae.update_cbf(obs,dist)
             self.loss_plotter.add_data(info)
 

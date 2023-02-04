@@ -1499,7 +1499,8 @@ class CEMSafeSetPolicy(Policy):
                     safe_set_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
                 goal_preds = self.goal_indicator(predictions, already_embedded=True)#the prob of being goal at those states#Do I add the CBF term here?(20,1000,5)
                 goal_states = torch.sum(torch.mean(goal_preds, dim=0) > self.goal_thresh, dim=1)#sum over planning horizon#f_G in the paper(1000,1)
-                values = values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
+                #values = values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
+                values = 10*values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
                 values = values.squeeze()#all those violators, assign them with big cost of -1e5
             itr += 1#CEM Evolution method
         # Return the best action
@@ -2441,10 +2442,10 @@ class CEMSafeSetPolicy(Policy):
                     (rd8h.reshape(rd8h.shape[0], rd8h.shape[1], 1), rd8v.reshape(rd8v.shape[0], rd8v.shape[1], 1)),
                     dim=2)  # dim: (1000,5,2)
                 rdns = torch.norm(rd8s, dim=2)  # rdn for relative distance norm
-                rdnvs = rdns < 15  # rdnv for rdn violator
+                rdnvs = rdns < 5#15  # rdnv for rdn violator
                 rdnvis = torch.sum(rdnvs, dim=1)  # rdn violator indices# print('rdnvi', rdnvi)
                 rdnvis = rdnvis.reshape(rdnvis.shape[0], 1)
-                rdnvcs = rdns < 10  # rdnv for rdn violator critical
+                rdnvcs = rdns < 1e-8#10  # rdnv for rdn violator critical
                 rdnvcis = torch.sum(rdnvcs, dim=1)  # rdn violator critical indices# print('rdnvci', rdnvci)
                 rdnvcis = rdnvcis.reshape(rdnvis.shape[0], 1)# print(rdn.shape)#torch.Size([1000, 5])
 

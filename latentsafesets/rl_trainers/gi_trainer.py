@@ -27,7 +27,7 @@ class GoalIndicatorTrainer(Trainer):
         for i in range(self.params['gi_init_iters']):#10000
             out_dict = replay_buffer.sample(self.params['gi_batch_size'])#256#get 1 step
             next_obs, rew = out_dict['next_obs'], out_dict['reward']#0/goal or -1/not goal
-            #next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
+            next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
 
             loss, info = self.gi.update(next_obs, rew, already_embedded=True)
             self.loss_plotter.add_data(info)
@@ -50,7 +50,7 @@ class GoalIndicatorTrainer(Trainer):
         for _ in trange(self.params['gi_update_iters']):
             out_dict = replay_buffer.sample(self.params['gi_batch_size'])
             next_obs, rew = out_dict['next_obs'], out_dict['reward']
-            #next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
+            next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
 
             loss, info = self.gi.update(next_obs, rew, already_embedded=True)
             self.loss_plotter.add_data(info)
@@ -63,58 +63,7 @@ class GoalIndicatorTrainer(Trainer):
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['constr_batch_size'])
         next_obs = out_dict['next_obs']
-        #next_obs = out_dict['next_obs_relative']
+        next_obs = out_dict['next_obs_relative']
         pu.visualize_onezero(next_obs, self.gi,
                              file,
                              env=self.env)
-    '''
-    def initial_train_relative(self, replay_buffer, update_dir):
-        if self.gi.trained:
-            self.plot(os.path.join(update_dir, "gi_start.pdf"), replay_buffer)
-            return
-
-        log.info('Beginning goal indicator initial optimization')
-
-        for i in range(self.params['gi_init_iters']):#10000
-            out_dict = replay_buffer.sample(self.params['gi_batch_size'])#256#get 1 step
-            #next_obs, rew = out_dict['next_obs'], out_dict['reward']#0/goal or -1/not goal
-            next_obs_relative, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
-
-            loss, info = self.gi.update(next_obs_relative, rew, already_embedded=True)
-            self.loss_plotter.add_data(info)
-
-            if i % self.params['log_freq'] == 0:
-                self.loss_plotter.print(i)
-            if i % self.params['plot_freq'] == 0:
-                log.info('Creating goal indicator function heatmap')
-                self.loss_plotter.plot()
-                self.plot_relative(os.path.join(update_dir, "gi%d.pdf" % i), replay_buffer)
-            if i % self.params['checkpoint_freq'] == 0 and i > 0:
-                self.gi.save(os.path.join(update_dir, 'gi_%d.pth' % i))
-
-        # spbu.evaluate_constraint_func(self.gi, file=os.path.join(update_dir, "gi_init.pdf"))
-        self.gi.save(os.path.join(update_dir, 'gi.pth'))
-
-    def update_relative(self, replay_buffer, update_dir):
-        log.info('Beginning goal indicator update optimization')
-
-        for _ in trange(self.params['gi_update_iters']):
-            out_dict = replay_buffer.sample(self.params['gi_batch_size'])
-            #next_obs, rew = out_dict['next_obs'], out_dict['reward']
-            next_obs_relative, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
-
-            loss, info = self.gi.update(next_obs_relative, rew, already_embedded=True)
-            self.loss_plotter.add_data(info)
-
-        log.info('Creating goal indicator function heatmap')
-        self.loss_plotter.plot()
-        self.plot_relative(os.path.join(update_dir, "gi.pdf"), replay_buffer)
-        self.gi.save(os.path.join(update_dir, 'gi.pth'))
-
-    def plot_relative(self, file, replay_buffer):
-        out_dict = replay_buffer.sample(self.params['constr_batch_size'])
-        next_obs_relative = out_dict['next_obs_relative']
-        pu.visualize_onezero(next_obs_relative, self.gi,
-                             file,
-                             env=self.env)
-    '''

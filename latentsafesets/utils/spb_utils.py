@@ -410,6 +410,7 @@ def evaluate_cbfdotlatentunbiased_func(cbfdot,
                 # print(old_state)#it can be [98.01472841 92.11425524]
                 reldistold = np.array([0, 0])  # 9.9#
             row_statesu.append(reldistold[0]**2+reldistold[1]**2-15**2)
+            #row_statesu.append(reldistold[0]**2+reldistold[1]**2-5**2)
             #rda=np.concatenate((reldistold,action))#thanks it is one-by-one
             #row_states.append(rda)
             #print('obs.shape',obs.shape)
@@ -493,6 +494,7 @@ def evaluate_cbfdotlatentgroundtruth_func(cbfdot,
                 # print(old_state)#it can be [98.01472841 92.11425524]
                 reldistold = np.array([0, 0])  # 9.9#
             row_statesu.append(reldistold[0]**2+reldistold[1]**2-15**2)
+            #row_statesu.append(reldistold[0]**2+reldistold[1]**2-5**2)
             #rda=np.concatenate((reldistold,action))#thanks it is one-by-one
             #row_states.append(rda)
             #print('obs.shape',obs.shape)
@@ -572,6 +574,7 @@ def evaluate_cbfdotlatentunbiased13_func(cbfdot,
                 # print(old_state)#it can be [98.01472841 92.11425524]
                 reldistold = np.array([0, 0])  # 9.9#
             row_statesu.append(reldistold[0]**2+reldistold[1]**2-15**2)
+            #row_statesu.append(reldistold[0]**2+reldistold[1]**2-5**2)
 
         #vals = cbfdot.cbfdots(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
         #vals = cbfdot.cbfdots(np.array(row_states),already_embedded = True).squeeze()  # it is like calling forward of const_estimator!
