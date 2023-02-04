@@ -1500,7 +1500,8 @@ class CEMSafeSetPolicy(Policy):
                 goal_preds = self.goal_indicator(predictions, already_embedded=True)#the prob of being goal at those states#Do I add the CBF term here?(20,1000,5)
                 goal_states = torch.sum(torch.mean(goal_preds, dim=0) > self.goal_thresh, dim=1)#sum over planning horizon#f_G in the paper(1000,1)
                 #values = values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
-                values = 10*values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
+                #values = 10*values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
+                values = 100*values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
                 values = values.squeeze()#all those violators, assign them with big cost of -1e5
             itr += 1#CEM Evolution method
         # Return the best action
