@@ -27,7 +27,7 @@ class ConstraintTrainer(Trainer):
         for i in range(self.params['constr_init_iters']):#10000
             out_dict = replay_buffer.sample(self.params['constr_batch_size'])#256
             next_obs, constr = out_dict['next_obs'], out_dict['constraint']#0 or 1
-            next_obs, constr = out_dict['next_obs_relative'], out_dict['constraint']  # 0 or 1
+            #next_obs, constr = out_dict['next_obs_relative'], out_dict['constraint']  # 0 or 1
 
             loss, info = self.constr.update(next_obs, constr, already_embedded=True)
             self.loss_plotter.add_data(info)#self.constr.update, not self.update!
@@ -49,7 +49,7 @@ class ConstraintTrainer(Trainer):
         for _ in trange(self.params['constr_update_iters']):
             out_dict = replay_buffer.sample(self.params['constr_batch_size'])
             next_obs, constr = out_dict['next_obs'], out_dict['constraint']
-            next_obs, constr = out_dict['next_obs_relative'], out_dict['constraint']
+            #next_obs, constr = out_dict['next_obs_relative'], out_dict['constraint']
 
             loss, info = self.constr.update(next_obs, constr, already_embedded=True)
             self.loss_plotter.add_data(info)
@@ -62,7 +62,7 @@ class ConstraintTrainer(Trainer):
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['constr_batch_size'])
         next_obs = out_dict['next_obs']
-        next_obs = out_dict['next_obs_relative']
+        #next_obs = out_dict['next_obs_relative']
         pu.visualize_onezero(next_obs, self.constr,
                              file,
                              env=self.env)

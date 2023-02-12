@@ -129,7 +129,7 @@ class EncodedReplayBuffer:
     def __len__(self):
         return self._len
 
-class EncodedReplayBuffer_expensive:
+class EncodedReplayBuffer_expensive2:
     """
     This replay buffer uses numpy to efficiently store arbitrary data. Keys can be whatever,
     but once you push data to the buffer new data must all have the same keys (to keep parallel
@@ -145,8 +145,9 @@ class EncodedReplayBuffer_expensive:
         self.data = {}#finally it becomes a dict where each key's value have size number of values
         self._index = 0
         self._len = 0
-        #self.im_keys = ('obs', 'next_obs')
+        self.im_keys1 = ('obs', 'next_obs')
         self.im_keys = ('obs', 'next_obs','obs_relative','next_obs_relative')
+        self.im_keys2 = ('obs_relative','next_obs_relative')
 
     def store_transitions(self, transitions):#transitions is 1 traj having 100 steps
         """
@@ -169,10 +170,17 @@ class EncodedReplayBuffer_expensive:
             data = self.data.get(key, None)#.get() is to get the value of a key
 
             new_data = np.array(transition[key])#it seems already converts value list to array
-            if key in self.im_keys:
+            if key in self.im_keys1:
                 im = np.array(transition[key])#seems to be the image?
                 im = ptu.torchify(im)
-                new_data_mean, new_data_log_std = self.encoder(im[None] / 255)
+                new_data_mean, new_data_log_std = self.encoder(im[None] / 255)#get the latent states corresponding to the image
+                new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
+                new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()
+                new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()
+            elif key in self.im_keys2:
+                im = np.array(transition[key])#seems to be the image?
+                im = ptu.torchify(im)
+                new_data_mean, new_data_log_std = self.encoder2(im[None] / 255)#get the latent states corresponding to the image
                 new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
                 new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()
                 new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()

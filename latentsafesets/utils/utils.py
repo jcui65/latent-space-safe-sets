@@ -14,7 +14,7 @@ from datetime import datetime
 import random
 from tqdm import tqdm, trange
 
-from latentsafesets.utils.replay_buffer_encoded import EncodedReplayBuffer
+from latentsafesets.utils.replay_buffer_encoded import EncodedReplayBuffer, EncodedReplayBuffer_expensive2
 from latentsafesets.utils.replay_buffer import ReplayBuffer
 from gym.wrappers import FrameStack
 
@@ -221,7 +221,7 @@ def load_replay_buffer_relative(params, encoder=None, first_only=False):#it does
     #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
     return replay_buffer
 
-def load_replay_buffer_relative_expensive(params, encoder=None, encoder2=None, first_only=False):#it doesn't have traj parameter!
+def load_replay_buffer_relative_expensive2(params, encoder=None, encoder2=None, first_only=False):#it doesn't have traj parameter!
     log.info('Loading data')
     trajectories = []#SimplePointBot or SimplePointBotConstraints
     for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe & obstacle
@@ -238,7 +238,8 @@ def load_replay_buffer_relative_expensive(params, encoder=None, encoder2=None, f
     # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
     random.shuffle(trajectories)
     if encoder is not None:#replay buffer finally comes in!
-        replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'])#35000 for spb
+        #replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'])#35000 for spb
+        replay_buffer = EncodedReplayBuffer_expensive2(encoder,encoder2, params['buffer_size'])#35000 for spb
         #replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'])  # 35000 for spb
     else:
         replay_buffer = ReplayBuffer(params['buffer_size'])
@@ -458,6 +459,83 @@ def make_modulessafetyexpensive(params, ss=False, val=False, dyn=False,
 
     return modules
 
+def make_modulessafetyexpensive2(params, ss=False, val=False, dyn=False,
+                 gi=False, constr=False,cbfd=False, dyn2=False):
+    from latentsafesets.modules import VanillaVAE, ValueEnsemble, \
+        ValueFunction, PETSDynamics, GoalIndicator, ConstraintEstimator, BCSafeSet, \
+        BellmanSafeSet, CBFdotEstimatorlatentplana, VanillaVAE2, PETSDynamics2#CBFdotEstimatorlatent
+    import latentsafesets.utils.pytorch_utils as ptu
+
+    modules = {}
+
+    encoder = VanillaVAE(params)#initialize/instantiate the VAE
+    encoder2 = VanillaVAE2(params)  # initialize/instantiate the VAE
+    if params['enc_checkpoint']:
+        encoder.load(params['enc_checkpoint'])#load the parameters of the VAE at specfic checkpoints!
+        print(params['enc_checkpoint'])
+    modules['enc'] = encoder
+
+    if ss:
+        safe_set_type = params['safe_set_type']
+        if safe_set_type == 'bc':
+            safe_set = BCSafeSet(encoder, params)#initialize/instantiate the safe set
+        elif safe_set_type == 'bellman':
+            safe_set = BellmanSafeSet(encoder, params)
+        else:
+            raise NotImplementedError
+        if params['safe_set_checkpoint']:#if we are gonna train it separately!
+            safe_set.load(params['safe_set_checkpoint'])
+        modules['ss'] = safe_set
+
+    if val:
+        if params['val_ensemble']:#what are the difference
+            value_func = ValueEnsemble(encoder, params).to(ptu.TORCH_DEVICE)
+        else:
+            value_func = ValueFunction(encoder, params).to(ptu.TORCH_DEVICE)
+        if params['val_checkpoint']:
+            value_func.load(params['val_checkpoint'])
+        modules['val'] = value_func
+
+    if dyn:
+        dynamics = PETSDynamics(encoder, params)
+        if params['dyn_checkpoint']:
+            dynamics.load(params['dyn_checkpoint'])
+        modules['dyn'] = dynamics
+
+    if gi:
+        goal_indicator = GoalIndicator(encoder, params).to(ptu.TORCH_DEVICE)
+        if params['gi_checkpoint']:
+            goal_indicator.load(params['gi_checkpoint'])
+        modules['gi'] = goal_indicator
+
+    if constr:
+        constraint = ConstraintEstimator(encoder, params).to(ptu.TORCH_DEVICE)
+        if params['constr_checkpoint']:
+            constraint.load(params['constr_checkpoint'])
+        modules['constr'] = constraint
+
+    if params['enc_checkpoint2']:
+        print(params['enc_checkpoint2'])
+        encoder2.load(params['enc_checkpoint2'])#load the parameters of the VAE at specfic checkpoints!
+    modules['enc2'] = encoder2
+
+    if cbfd:
+        #cbfdot = CBFdotEstimatorlatent(encoder, params).to(ptu.TORCH_DEVICE)
+        cbfdot = CBFdotEstimatorlatentplana(encoder2, params).to(ptu.TORCH_DEVICE)
+        if params['cbfd_checkpoint']:
+            print(params['cbfd_checkpoint'])
+            cbfdot.load(params['cbfd_checkpoint'])
+        modules['cbfd'] = cbfdot
+        #print(modules['cbfd'])
+
+    if dyn2:
+        dynamics2 = PETSDynamics2(encoder2, params)#verified
+        if params['dyn_checkpoint2']:
+            print(params['dyn_checkpoint2'])
+            dynamics2.load(params['dyn_checkpoint2'])
+        modules['dyn2'] = dynamics2
+
+    return modules
 
 class RunningMeanStd(nn.Module):
     # https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Parallel_algorithm

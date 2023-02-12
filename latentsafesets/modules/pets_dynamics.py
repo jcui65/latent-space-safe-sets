@@ -244,3 +244,139 @@ class ProbabilisticDynamicsModel(nn.Module):
             return delta_normalized * self.delta_std + self.delta_mean
         else:
             return delta_normalized
+
+class PETSDynamics2(nn.Module, EncodedModule):
+    """
+    Implementation of PETS dynamics in a latent space
+    """
+
+    def __init__(self, encoder, params: dict):
+        super(PETSDynamics2, self).__init__()
+        EncodedModule.__init__(self, encoder)
+
+        self.d_obs = params['d_obs']#(3, 64, 64)
+        self.d_latent = params['d_latent']#32
+        self.d_act = params['d_act']#2
+
+        self.plot_freq = params['plot_freq']#500
+        self.checkpoint_freq = params['checkpoint_freq']#2000
+        self.normalize_delta = params['dyn_normalize_delta']#False, but what is it?#Now I know that it is for predicting delta s/z rather than s/z
+        self.n_particles = params['n_particles']#20
+        self.trained = False
+
+        # Dynamics args
+        self.n_models = params['dyn_n_models']#5#it is the B in the original paper!
+        size = params['dyn_size']#128 units as seen in the paper
+        n_layers = params['dyn_n_layers']#3 thus there are 3-1=2 hidden layers
+        self.models = nn.ModuleList([#see line 146 for definition
+            ProbabilisticDynamicsModel(self.d_latent, self.d_act, size=size, n_layers=n_layers)
+                .to(ptu.TORCH_DEVICE)
+            for _ in range(self.n_models)#don't forget this line!
+        ])#now we have 5 models!
+        self.delta_rms = utils.RunningMeanStd(shape=(self.d_latent,))
+
+        self.logdir = params['logdir']#'outputs/2022-07-18/19-38-58'
+
+        self.learning_rate = params['dyn_lr']#0.001 as seen in the paper
+        self.param_list = []
+        for model in self.models:
+            self.param_list += list(model.parameters())
+        self.optimizer = optim.Adam(self.param_list, lr=self.learning_rate)
+
+    def update(self, obs, next_obs, act, already_embedded=False):
+        """
+        Updates pets dynamics
+        :param obs: shape (ensemble, batch, *d_obs or d_latent)
+        :param next_obs: shape (ensemble, batch, *d_obs or d_latent)
+        :param act: shape (ensemble, batch, d_act)
+        :param already_embedded: Whether or not obs already embedded
+        """
+        self.trained = True
+        obs = ptu.torchify(obs)
+        next_obs = ptu.torchify(next_obs)
+        act = ptu.torchify(act)
+
+        if not already_embedded:
+            emb = self.encoder.encode(obs)
+            next_emb = self.encoder.encode(next_obs)
+        else:
+            emb = obs
+            next_emb = next_obs
+
+        if self.normalize_delta:
+            delta = next_emb - emb
+            self.delta_rms.update(delta.detach())
+            for model in self.models:
+                model.update_statistics(self.delta_rms.mean.detach(),
+                                        torch.sqrt(self.delta_rms.var).detach())
+
+        loss = 0
+        for i, model in list(enumerate(self.models)):#there are 5 of them
+            # Mini samples so the models are not identical
+            emb_batch = emb[i]
+            next_emb_batch = next_emb[i]
+            delta_emb = next_emb_batch - emb_batch
+            act_batch = act[i]
+
+            loss_batch = model.loss(emb_batch, delta_emb, act_batch)
+            loss = loss + loss_batch / self.n_models
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.step()
+
+        return loss.item(), {'dyn2': loss.item()}
+
+    def predict(self, obs, act_seq, already_embedded=False):
+        """
+        Given the current obs, predict sequences of observations for each action sequence
+        in act_seq for each model in self.dynamics_models#(there are altogether 20 or 5 models, right?)
+
+        This corresponds to the TS-1 in the PETS paper#ref 43 in the LS3 paper!#choose different models every time
+        :param obs: Tensor, dimension (d_latent) if already embedded or (*d_obs)
+        :param act_seq: Tensor, dimension (num_candidates, planning_hor, d_act)#here it is (1000,5,2)
+        :param already_embedded: Whether or not obs is already embedded in the latent space
+        :return: Final obs prediction, dimension (n_particles, num_candidates, planning_hor, d_latent)
+        """#(20,1000,5,32)
+        if already_embedded:
+            emb = obs
+        else:
+            emb = self.encoder.encode(obs).detach()
+
+        (num_candidates, plan_hor, d_act) = act_seq.shape#(1000,5,2)
+
+        predicted_emb = torch.zeros((self.n_particles, num_candidates, plan_hor, self.d_latent))\
+            .to(ptu.TORCH_DEVICE)#GPU
+        running_emb = emb.repeat((num_candidates * self.n_particles, 1))#20000!(20000,32)
+        for t in range(plan_hor):#H=5
+            act = act_seq[:, t, :]#shape (1000,2)
+            #print('t',t,'act',act)#when t=0 act=nan! the problem is from outside!
+            act_tiled = act.repeat((self.n_particles, 1))#([20000,32])?
+            model_ind = np.random.randint(0, self.n_models)#5
+            model = self.models[model_ind]#randomly choose models?#it is TS-1
+            #print('running_emb.shape',running_emb.shape)#torch.Size([20000, 32])
+            #print('act_tiled.shape',act_tiled.shape)#torch.Size([20000, 2])
+            next_emb = model.get_next_emb(running_emb, act_tiled)#propogate
+            #print('next_emb.shape', next_emb.shape)#torch.Size([20000, 32])
+            predicted_emb[:, :, t, :] = next_emb.reshape((self.n_particles, num_candidates, self.d_latent))
+            #predicted_emb should have shape (20,1000,5,32)
+            running_emb = next_emb#next time step!
+        return predicted_emb
+
+    def step(self):
+        self.optimizer.step()
+
+    def save(self, file):
+        torch.save(self.state_dict(), file)
+
+    def load(self, file):
+        from latentsafesets.utils.pytorch_utils import TORCH_DEVICE
+        self.load_state_dict(torch.load(file, map_location=TORCH_DEVICE))
+        self.trained = True
+
+        for model in self.models:
+            model.update_statistics(self.delta_rms.mean.detach(),
+                                    torch.sqrt(self.delta_rms.var).detach())
+
+        for g in self.optimizer.param_groups:
+            g['lr'] = self.learning_rate

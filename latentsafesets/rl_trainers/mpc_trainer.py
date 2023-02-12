@@ -1,4 +1,4 @@
-from latentsafesets.rl_trainers import VAETrainer, SafeSetTrainer, Trainer, ValueTrainer, ConstraintTrainer, GoalIndicatorTrainer, PETSDynamicsTrainer#, CBFdotTrainer
+from latentsafesets.rl_trainers import VAETrainer, SafeSetTrainer, Trainer, ValueTrainer, ConstraintTrainer, GoalIndicatorTrainer, PETSDynamicsTrainer, PETSDynamicsTrainer2#, CBFdotTrainer
 
 from latentsafesets.utils import LossPlotter, EncoderDataLoader
 
@@ -188,7 +188,7 @@ class CBFdotlatentplanaTrainer(Trainer):
         for i in range(self.params['cbfd_init_iters']):#10000
             out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
             obs=out_dict['obs']
-            obs = out_dict['obs_relative']
+            #obs = out_dict['obs_relative']
             #print('obs',obs)
             #print('obs.shape',obs.shape)
             #rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']#0 or 1
@@ -227,7 +227,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
             #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
             obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
-            obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
+            #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
             #print('rdo.shape',rdo.shape)#(256, 2)
             #print('action.shape',action.shape)#(256, 2)
             #rda = np.concatenate((rdo, action),axis=1)
@@ -256,7 +256,7 @@ class CBFdotlatentplanaTrainer(Trainer):
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
         next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
-        next_obs = out_dict['next_obs_relative']  # rdo = out_dict['rdo']
+        #next_obs = out_dict['next_obs_relative']  # rdo = out_dict['rdo']
         pu.visualize_cbfdot(next_obs, self.cbfd,
                              file,
                              env=self.env)
@@ -273,7 +273,7 @@ class CBFdotlatentplanaTrainer(Trainer):
     def plotlatentunbiased(self, file, replay_buffer,coeff):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
         next_obs = out_dict['next_obs']
-        next_obs = out_dict['next_obs_relative']
+        #next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdotlatentunbiased(next_obs, self.cbfd,
                              file,
@@ -291,7 +291,7 @@ class CBFdotlatentplanaTrainer(Trainer):
     def plotlatent(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
         next_obs = out_dict['next_obs']
-        next_obs = out_dict['next_obs_relative']
+        #next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdotlatent(next_obs, self.cbfd,
                              file,
@@ -319,7 +319,9 @@ class MPCTrainer(Trainer):
         self.trainers.append(GoalIndicatorTrainer(env, params, modules['gi'], loss_plotter))
         #self.trainers.append(CBFdotTrainer(env, params, modules['cbfd'], loss_plotter))
         #self.trainers.append(CBFdotlatentTrainer(env, params, modules['cbfd'], loss_plotter))
+        #self.trainers.append(VAETrainer(params, modules['enc2'], loss_plotter))
         self.trainers.append(CBFdotlatentplanaTrainer(env, params, modules['cbfd'], loss_plotter))
+        #self.trainers.append(PETSDynamicsTrainer2(params, modules['dyn2'], loss_plotter))
 
     def initial_train(self, replay_buffer):#by default the replay buffer is the encoded version
         update_dir = os.path.join(self.logdir, 'initial_train')#create that folder!
