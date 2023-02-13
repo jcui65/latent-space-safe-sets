@@ -36,9 +36,9 @@ if __name__ == '__main__':
     # Setting up encoder, around line 172 in utils, get all the parts equipped!
 
     #modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
-    modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
+    #modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
     #modules = utils.make_modulessafetyexpensive(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)#forever banned!
-    #modules = utils.make_modulessafetyexpensive2(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True,dyn2=True)#forever banned!
+    modules = utils.make_modulessafetyexpensive2(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True,dyn2=True)#forever banned!
     #the result is to set up the encoder, etc.
     encoder = modules['enc']#it is a value in a dictionary, uh?
     safe_set = modules['ss']
@@ -47,8 +47,8 @@ if __name__ == '__main__':
     constraint_function = modules['constr']
     goal_indicator = modules['gi']
     cbfdot_function = modules['cbfd']
-    #encoder2 = modules['enc2']  # it is a value in a dictionary, uh?
-    #dynamics_model2 = modules['dyn2']
+    encoder2 = modules['enc2']  # it is a value in a dictionary, uh?
+    dynamics_model2 = modules['dyn2']
     # Populate replay buffer
     #the following is loading replay buffer, rather than loading trajectories
     #replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
@@ -60,12 +60,12 @@ if __name__ == '__main__':
     trainer.initial_train(replay_buffer)#initialize all the parts!
 
     log.info("Creating policy")
-    policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                              constraint_function, goal_indicator, cbfdot_function, params)
+    #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
+                              #constraint_function, goal_indicator, cbfdot_function, params)
     #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
                               #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
-    #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
-                              #constraint_function, goal_indicator, cbfdot_function, encoder2,dynamics_model2, params)
+    policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
+                              constraint_function, goal_indicator, cbfdot_function, encoder2,dynamics_model2, params)
     num_updates = params['num_updates']#default 25
     traj_per_update = params['traj_per_update']#default 10
 
@@ -110,8 +110,8 @@ if __name__ == '__main__':
                                                                             #fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarecircle(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
-                action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                        fn, tn, tpc, fpc, fnc, tnc)
+                #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
+                                                                                        #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -122,8 +122,8 @@ if __name__ == '__main__':
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive(obs / 255, env.state, tp,
                                                                                              #fp,#forever banned! forever obsolete
                                                                                              #fn, tn, tpc, fpc, fnc, tnc)
-                #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive2(obs / 255, env.state, tp,
-                                                                                             #fp,fn, tn, tpc, fpc, fnc, tnc,obs_relative/255)
+                action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive2(obs / 255, env.state, tp,
+                                                                                             fp,fn, tn, tpc, fpc, fnc, tnc,obs_relative/255)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanb(obs_relative / 255, env.state, tp,
                                                                                              #fp,
                                                                                              #fn, tn,

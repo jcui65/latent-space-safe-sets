@@ -29,21 +29,21 @@ class CEMSafeSetPolicy(Policy):
                  constraint_function: ConstraintEstimator,
                  goal_indicator: GoalIndicator,
                  cbfdot_function: CBFdotEstimatorlatentplana,#CBFdotEstimator,
-                 #encoder2: VanillaVAE2,
-                 #dynamics_model2: PETSDynamics2,#,#
+                 encoder2: VanillaVAE2,
+                 dynamics_model2: PETSDynamics2,#,#
                  params):
         log.info("setting up safe set and dynamics model")
 
         self.env = env
         self.encoder = encoder
-        #self.encoder2 = encoder2
+        self.encoder2 = encoder2
         self.safe_set = safe_set#safe set estimator
         self.dynamics_model = dynamics_model
         self.value_function = value_function
         self.constraint_function = constraint_function
         self.goal_indicator = goal_indicator
         self.cbfdot_function = cbfdot_function
-        #self.dynamics_model2 = dynamics_model2
+        self.dynamics_model2 = dynamics_model2
         self.logdir = params['logdir']
 
         self.d_act = params['d_act']#2

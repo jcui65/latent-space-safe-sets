@@ -15,7 +15,7 @@ def evaluate_safe_set(s_set,
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
             state = env._state_to_image((x, y)) / 255##this is for global coordinates!
-            state = env._state_to_image_relative((x, y)) / 255##this is for ego coordinates!
+            #state = env._state_to_image_relative((x, y)) / 255##this is for ego coordinates!
             row_states.append(state)
         vals = s_set.safe_set_probability_np(np.array(row_states)).squeeze()
         if skip == 1:
@@ -43,7 +43,7 @@ def evaluate_value_func(value_func,
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
             state = env._state_to_image((x, y)) / 255#this is for global coordinates!
-            state = env._state_to_image_relative((x, y)) / 255#this is for ego coordinates!
+            #state = env._state_to_image_relative((x, y)) / 255#this is for ego coordinates!
             row_states.append(state)
         vals = value_func.get_value_np(np.array(row_states)).squeeze()
         if skip == 1:
@@ -71,7 +71,7 @@ def evaluate_constraint_func(constraint,
         row_states = []
         for x in range(0, spb.WINDOW_WIDTH, skip):
             state = env._state_to_image((x, y)) / 255##this is for global coordinates!
-            state = env._state_to_image_relative((x, y)) / 255##this is for ego coordinates!
+            #state = env._state_to_image_relative((x, y)) / 255##this is for ego coordinates!
             row_states.append(state)
         vals = constraint.prob(np.array(row_states)).squeeze()#it is like calling forward of const_estimator!
         if skip == 1:
