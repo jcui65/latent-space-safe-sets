@@ -98,7 +98,7 @@ def evaluate_cbfdot_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#105#50#
+    lux = 50#75#105#
     luy = 55#40#
     width = 25#20#
     height = 40#50#
@@ -315,7 +315,7 @@ def evaluate_cbfdotlatent_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#105#50#
+    lux = 50#75#105#
     luy = 55#40#
     width = 25#20#
     height = 40#50#
@@ -366,7 +366,7 @@ def evaluate_cbfdotlatentunbiased_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#105#50#
+    lux = 50#75#105#
     luy = 55#40#
     width = 25#20#
     height = 40#50#
@@ -450,7 +450,7 @@ def evaluate_cbfdotlatentgroundtruth_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#105#50#
+    lux = 50#75#105#
     luy = 55#40#
     width = 25#20#
     height = 40#50#
@@ -534,7 +534,7 @@ def evaluate_cbfdotlatentunbiased13_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#105#50#
+    lux = 50#75#105#
     luy = 55#40#
     width = 25#20#
     height = 40#50#
@@ -614,7 +614,7 @@ def evaluate_cbfdotlatentbiased_func(cbfdot,
     #if walls is None:
     xmove = 0  # -25#30#
     ymove = 0  #-45#-40#-35#-33#-30#-25#
-    lux = 75#105#50#
+    lux = 50#75#105#
     luy = 55#40#
     width = 25#20#
     height = 40#50#

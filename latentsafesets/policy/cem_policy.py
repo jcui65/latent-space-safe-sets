@@ -1860,7 +1860,7 @@ class CEMSafeSetPolicy(Policy):
                 #the square part
                 xmove=0#-25#30#
                 ymove=0#-45#-40#-35#-33#-30#-25#
-                lux = 75#50#105#
+                lux = 50#75#105#
                 luy = 55#40#
                 width = 25#20#
                 height = 40# 50#
