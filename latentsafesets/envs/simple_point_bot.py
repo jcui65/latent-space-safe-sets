@@ -56,7 +56,7 @@ class SimplePointBot(Env, utils.EzPickle):
         if walls is None:
             xmove = 0  #-25#30#
             ymove=0#-45#-40#-35#-33#-30#-25#-30#
-            lux=75#105#100#50#
+            lux=75#50#105#100#
             luy=55#40#
             width=25#20#
             height=40#50#
