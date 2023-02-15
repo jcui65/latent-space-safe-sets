@@ -52,9 +52,9 @@ if __name__ == '__main__':
     # Populate replay buffer
     #the following is loading replay buffer, rather than loading trajectories
     #replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
-    #replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
+    replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
     #replay_buffer2 = utils.load_replay_buffer_relative(params, encoder2)  # around line 123 in utils.py
-    replay_buffer = utils.load_replay_buffer_relative_expensive2(params, encoder, encoder2)  # around line 123 in utils.py
+    #replay_buffer = utils.load_replay_buffer_relative_expensive2(params, encoder, encoder2)  # around line 123 in utils.py
     trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
 
     trainer.initial_train(replay_buffer)#initialize all the parts!
@@ -110,8 +110,8 @@ if __name__ == '__main__':
                                                                             #fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarecircle(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
-                #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                        #fn, tn, tpc, fpc, fnc, tnc)
+                action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
+                                                                                        fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -122,8 +122,8 @@ if __name__ == '__main__':
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive(obs / 255, env.state, tp,
                                                                                              #fp,#forever banned! forever obsolete
                                                                                              #fn, tn, tpc, fpc, fnc, tnc)
-                action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive2(obs / 255, env.state, tp,
-                                                                                             fp,fn, tn, tpc, fpc, fnc, tnc,obs_relative/255)
+                #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive2(obs / 255, env.state, tp,
+                                                                                             #fp,fn, tn, tpc, fpc, fnc, tnc,obs_relative/255)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanb(obs_relative / 255, env.state, tp,
                                                                                              #fp,
                                                                                              #fn, tn,
