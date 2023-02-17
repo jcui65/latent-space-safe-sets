@@ -56,7 +56,7 @@ class SimplePointBot(Env, utils.EzPickle):
         if walls is None:
             xmove = 0  #-25#30#
             ymove=0#-45#-40#-35#-33#-30#-25#-30#
-            lux=50#75#105#100#
+            lux=75#50#105#100#
             luy=55#40#
             width=25#20#
             height=40#50#
@@ -206,8 +206,9 @@ class SimplePointBot(Env, utils.EzPickle):
         else:
             #print(old_state)#it can be [98.01472841 92.11425524]
             reldistold=np.array([0,0])#9.9#
-        hvalueold = np.linalg.norm(reldistold) ** 2 - 15 ** 2#get the value of the h function
+        #hvalueold = np.linalg.norm(reldistold) ** 2 - 15 ** 2#get the value of the h function
         #hvalueold = np.linalg.norm(reldistold) ** 2 - 5 ** 2#get the value of the h function
+        hvalueold = np.linalg.norm(reldistold) ** 2 - 6 ** 2#get the value of the h function
 
         if (next_state <= self.wall_coords[0][0]).all():  # old_state#check it!
             reldistnew = next_state - self.wall_coords[0][0]#relative distance new # np.linalg.norm()
@@ -232,8 +233,9 @@ class SimplePointBot(Env, utils.EzPickle):
         else:
             # print(old_state)#it can be [98.01472841 92.11425524]
             reldistnew = np.array([0, 0])  # 9.9#
-        hvaluenew = np.linalg.norm(reldistnew) ** 2 - 15 ** 2
+        #hvaluenew = np.linalg.norm(reldistnew) ** 2 - 15 ** 2
         #hvaluenew = np.linalg.norm(reldistnew) ** 2 - 5 ** 2
+        hvaluenew = np.linalg.norm(reldistnew) ** 2 - 6 ** 2
         hvd=hvaluenew-hvalueold#hvd for h value difference
         return obs, cur_reward, self.done, {
             "constraint": constr,#it is also a dictionary!

@@ -29,21 +29,21 @@ class CEMSafeSetPolicy(Policy):
                  constraint_function: ConstraintEstimator,
                  goal_indicator: GoalIndicator,
                  cbfdot_function: CBFdotEstimatorlatentplana,#CBFdotEstimator,
-                 encoder2: VanillaVAE2,
-                 dynamics_model2: PETSDynamics2,#,#
+                 #encoder2: VanillaVAE2,
+                 #dynamics_model2: PETSDynamics2,#,#
                  params):
         log.info("setting up safe set and dynamics model")
 
         self.env = env
         self.encoder = encoder
-        self.encoder2 = encoder2
+        #self.encoder2 = encoder2
         self.safe_set = safe_set#safe set estimator
         self.dynamics_model = dynamics_model
         self.value_function = value_function
         self.constraint_function = constraint_function
         self.goal_indicator = goal_indicator
         self.cbfdot_function = cbfdot_function
-        self.dynamics_model2 = dynamics_model2
+        #self.dynamics_model2 = dynamics_model2
         self.logdir = params['logdir']
 
         self.d_act = params['d_act']#2
@@ -1380,7 +1380,7 @@ class CEMSafeSetPolicy(Policy):
                     (rd8h.reshape(rd8h.shape[0], rd8h.shape[1], 1), rd8v.reshape(rd8v.shape[0], rd8v.shape[1], 1)),
                     dim=2)  # dim: (1000,5,2)
                 rdns = torch.norm(rd8s, dim=2)  # rdn for relative distance norm
-                rdnvs = rdns < 5#15  # rdnv for rdn violator
+                rdnvs = rdns < 6#5#15  # rdnv for rdn violator
                 rdnvis = torch.sum(rdnvs, dim=1)  # rdn violator indices# print('rdnvi', rdnvi)
                 rdnvis = rdnvis.reshape(rdnvis.shape[0], 1)
                 rdnvcs = rdns < 1e-8#10  # rdnv for rdn violator critical

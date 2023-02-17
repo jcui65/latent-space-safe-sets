@@ -319,9 +319,9 @@ class MPCTrainer(Trainer):
         self.trainers.append(GoalIndicatorTrainer(env, params, modules['gi'], loss_plotter))
         #self.trainers.append(CBFdotTrainer(env, params, modules['cbfd'], loss_plotter))
         #self.trainers.append(CBFdotlatentTrainer(env, params, modules['cbfd'], loss_plotter))
-        self.trainers.append(VAETrainer(params, modules['enc2'], loss_plotter))
+        #self.trainers.append(VAETrainer(params, modules['enc2'], loss_plotter))
         self.trainers.append(CBFdotlatentplanaTrainer(env, params, modules['cbfd'], loss_plotter))
-        self.trainers.append(PETSDynamicsTrainer2(params, modules['dyn2'], loss_plotter))
+        #self.trainers.append(PETSDynamicsTrainer2(params, modules['dyn2'], loss_plotter))
 
     def initial_train(self, replay_buffer):#by default the replay buffer is the encoded version
         update_dir = os.path.join(self.logdir, 'initial_train')#create that folder!

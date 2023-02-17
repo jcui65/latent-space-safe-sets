@@ -43,7 +43,7 @@ class VAETrainer(Trainer):
                 self.loss_plotter.plot()
                 self.plot_vae(obs, update_dir, i=i)
                 states=np.random.randint(32, size=2)
-                self.plot_vaetransform(obs,states, update_dir, i=i)
+                #self.plot_vaetransform(obs,states, update_dir, i=i)
             if i % self.params['checkpoint_freq'] == 0 and i > 0:#2000
                 self.vae.save(os.path.join(update_dir, 'vae_%d.pth' % i))
 
