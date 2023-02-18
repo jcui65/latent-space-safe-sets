@@ -48,7 +48,7 @@ class AbstractTeacher(ABC):
                 action = self._expert_control(state, i).astype(np.float64)
             if self.noisy:
                 action_input = np.random.normal(action, self.noise_std)
-                action_input = np.clip(action_input, self.ac_low, self.ac_high)
+                action_input = np.clip(action_input, self.ac_low + 1e-6, self.ac_high - 1e-6)
             else:
                 action_input = action
 

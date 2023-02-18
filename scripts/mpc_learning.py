@@ -35,8 +35,8 @@ if __name__ == '__main__':
     #The result is to have env=SimplePointBot in spb
     # Setting up encoder, around line 172 in utils, get all the parts equipped!
 
-    #modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
-    modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
+    modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
+    #modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
     #modules = utils.make_modulessafetyexpensive(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)#forever banned!
     #modules = utils.make_modulessafetyexpensive2(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True,dyn2=True)#forever banned!
     #the result is to set up the encoder, etc.
@@ -46,13 +46,13 @@ if __name__ == '__main__':
     value_func = modules['val']
     constraint_function = modules['constr']
     goal_indicator = modules['gi']
-    cbfdot_function = modules['cbfd']
+    #cbfdot_function = modules['cbfd']
     #encoder2 = modules['enc2']  # it is a value in a dictionary, uh?
     #dynamics_model2 = modules['dyn2']
     # Populate replay buffer
     #the following is loading replay buffer, rather than loading trajectories
-    #replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
-    replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
+    replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
+    #replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
     #replay_buffer2 = utils.load_replay_buffer_relative(params, encoder2)  # around line 123 in utils.py
     #replay_buffer = utils.load_replay_buffer_relative_expensive2(params, encoder, encoder2)  # around line 123 in utils.py
     trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
@@ -61,7 +61,9 @@ if __name__ == '__main__':
 
     log.info("Creating policy")
     policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                              constraint_function, goal_indicator, cbfdot_function, params)
+                              constraint_function, goal_indicator, params)
+    #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
+                              #constraint_function, goal_indicator, cbfdot_function, params)
     #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
                               #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
     #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
@@ -76,7 +78,7 @@ if __name__ == '__main__':
     constr_viols = []
     task_succ = []
     n_episodes = 0
-    tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
+    #tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
     for i in range(num_updates):#default 25 in spb
         update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
         os.makedirs(update_dir)#mkdir!
@@ -87,15 +89,15 @@ if __name__ == '__main__':
             log.info("Collecting trajectory %d for update %d" % (j, i))
             transitions = []
 
-            #obs = np.array(env.reset())#the obs seems to be the observation as image rather than obstacle
-            obs,obs_relative = np.array(env.reset()) #can I do this? # the obs seems to be the observation as image rather than obstacle
+            obs = np.array(env.reset())#the obs seems to be the observation as image rather than obstacle
+            #obs,obs_relative = np.array(env.reset()) #can I do this? # the obs seems to be the observation as image rather than obstacle
             policy.reset()#self.mean, self.std = None, None
             done = False
 
             # Maintain ground truth info for plotting purposes
             #movie_traj = [{'obs': obs.reshape((-1, 3, 64, 64))[0]}]#a dict
             movie_traj = [{'obs': obs.reshape((-1, 3, 64, 64))[0]}]  # a dict
-            movie_traj_relative = [{'obs_relative': obs_relative.reshape((-1, 3, 64, 64))[0]}]  # a dict
+            #movie_traj_relative = [{'obs_relative': obs_relative.reshape((-1, 3, 64, 64))[0]}]  # a dict
             traj_rews = []#rews: rewards
             constr_viol = False
             succ = False
@@ -103,15 +105,15 @@ if __name__ == '__main__':
             for k in trange(params['horizon']):#default 100 in spb#This is MPC
                 #print('obs.shape',obs.shape)(3,64,64)
                 #print('env.state',env.state)#env.state [35.44344669 54.30340498]
-                #action = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
+                action = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
                 #storch=ptu.torchify(env.state)#state torch
                 #action,tp,fp,fn,tn,tpc,fpc,fnc,tnc = policy.actcbfd(obs/255,env.state,tp,fp,fn,tn,tpc,fpc,fnc,tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdcircle(obs / 255, env.state, tp, fp, fn, tn, tpc,
                                                                             #fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarecircle(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
-                action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                        fn, tn, tpc, fpc, fnc, tnc)
+                #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
+                                                                                        #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -129,21 +131,21 @@ if __name__ == '__main__':
                                                                                              #fn, tn,
                                                                                              #tpc, fpc, fnc, tnc)
                 # the CEM (candidates, elites, etc.) is in here
-                #next_obs, reward, done, info = env.step(action)#saRSa
+                next_obs, reward, done, info = env.step(action)#saRSa
                 #next_obs, reward, done, info = env.stepsafety(action)  # 63 in simple_point_bot.py
                 #next_obs = np.array(next_obs)#to make this image a numpy array
-                next_obs, reward, done, info,next_obs_relative = env.stepsafety_relative(action)  # 63 in simple_point_bot.py
+                #next_obs, reward, done, info,next_obs_relative = env.stepsafety_relative(action)  # 63 in simple_point_bot.py
                 next_obs = np.array(next_obs) #relative or not? # to make this image a numpy array
-                next_obs_relative = np.array(next_obs_relative)  # relative or not? # to make this image a numpy array
+                #next_obs_relative = np.array(next_obs_relative)  # relative or not? # to make this image a numpy array
                 movie_traj.append({'obs': next_obs.reshape((-1, 3, 64, 64))[0]})  # add this image
-                movie_traj_relative.append({'obs_relative': next_obs_relative.reshape((-1, 3, 64, 64))[0]}) #relative or not # add this image
+                #movie_traj_relative.append({'obs_relative': next_obs_relative.reshape((-1, 3, 64, 64))[0]}) #relative or not # add this image
                 traj_rews.append(reward)
 
                 constr = info['constraint']#its use is seen a few lines later
 
-                #transition = {'obs': obs, 'action': action, 'reward': reward,#sARSa
-                              #'next_obs': next_obs, 'done': done,
-                              #'constraint': constr, 'safe_set': 0, 'on_policy': 1}
+                transition = {'obs': obs, 'action': action, 'reward': reward,#sARSa
+                              'next_obs': next_obs, 'done': done,
+                              'constraint': constr, 'safe_set': 0, 'on_policy': 1}
                 '''
                 transition = {'obs': obs, 'action': action, 'reward': reward,
                               'next_obs': next_obs, 'done': done,  # this is a dictionary
@@ -157,7 +159,7 @@ if __name__ == '__main__':
                               'state': info['state'].tolist(),
                               'next_state': info['next_state'].tolist()
                               }  # add key and value into it!
-                '''
+                
                 transition = {'obs': obs, 'action': action, 'reward': reward,
                               'next_obs': next_obs, 'done': done,  # this is a dictionary
                               'constraint': constr, 'safe_set': 0,
@@ -174,10 +176,10 @@ if __name__ == '__main__':
                               'obs_relative': obs_relative,
                               'next_obs_relative': next_obs_relative
                               }  # add key and value into it!
-
+                '''
                 transitions.append(transition)
                 obs = next_obs#don't forget this step!
-                obs_relative = next_obs_relative  # don't forget this step!
+                #obs_relative = next_obs_relative  # don't forget this step!
                 constr_viol = constr_viol or info['constraint']#a way to update constr_viol
                 succ = succ or reward == 0#as said in the paper, reward=0 means success!
 
@@ -192,7 +194,7 @@ if __name__ == '__main__':
             task_succ.append(succ)
             #save the result in the gift form!
             pu.make_movie(movie_traj, file=os.path.join(update_dir, 'trajectory%d.gif' % j))
-            pu.make_movie_relative(movie_traj_relative, file=os.path.join(update_dir, 'trajectory%d_relative.gif' % j))
+            #pu.make_movie_relative(movie_traj_relative, file=os.path.join(update_dir, 'trajectory%d_relative.gif' % j))
 
             log.info('    Cost: %d' % traj_reward)#see it in the terminal!
             #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))

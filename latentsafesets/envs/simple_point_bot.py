@@ -252,7 +252,7 @@ class SimplePointBot(Env, utils.EzPickle):
             "hvd":hvd#hvd for h value difference
             },obs_relative
 
-    '''
+    
     def reset(self, random_start=False):
         if random_start:
             self.state = np.random.random(2) * (WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -269,8 +269,8 @@ class SimplePointBot(Env, utils.EzPickle):
             obs = self.state
             #obs_relative=(90,75)-self.state
         return obs
+    
     '''
-
     def reset(self, random_start=False):
         if random_start:
             self.state = np.random.random(2) * (WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -287,7 +287,7 @@ class SimplePointBot(Env, utils.EzPickle):
             obs = self.state
             obs_relative=np.array([WINDOW_WIDTH/2,WINDOW_HEIGHT/2])-self.state
         return obs,obs_relative
-
+    '''
     def render(self, mode='human'):
         return self._draw_state(self.state)#see line 103
 

@@ -28,7 +28,7 @@ class CEMSafeSetPolicy(Policy):
                  dynamics_model: PETSDynamics,
                  constraint_function: ConstraintEstimator,
                  goal_indicator: GoalIndicator,
-                 cbfdot_function: CBFdotEstimatorlatentplana,#CBFdotEstimator,
+                 #cbfdot_function: CBFdotEstimatorlatentplana,#CBFdotEstimator,
                  #encoder2: VanillaVAE2,
                  #dynamics_model2: PETSDynamics2,#,#
                  params):
@@ -42,7 +42,7 @@ class CEMSafeSetPolicy(Policy):
         self.value_function = value_function
         self.constraint_function = constraint_function
         self.goal_indicator = goal_indicator
-        self.cbfdot_function = cbfdot_function
+        #self.cbfdot_function = cbfdot_function
         #self.dynamics_model2 = dynamics_model2
         self.logdir = params['logdir']
 
@@ -64,8 +64,8 @@ class CEMSafeSetPolicy(Policy):
 
         self.constraint_thresh = params['constr_thresh']#0.2
         self.goal_thresh = params['gi_thresh']#0.5
-        self.ignore_safe_set = True#params['safe_set_ignore']#False, for ablation study!#changed to true after using cbf dot
-        self.ignore_constraints = True#params['constr_ignore']#false
+        self.ignore_safe_set = False#True#params['safe_set_ignore']#False, for ablation study!#changed to true after using cbf dot
+        self.ignore_constraints = False#True#params['constr_ignore']#false
         self.ignore_cbfdots = params['cbfd_ignore']  #True#True# false
         self.n_particles=params['n_particles']
 
