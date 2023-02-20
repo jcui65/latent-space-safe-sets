@@ -21,7 +21,7 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)
-    parser.add_argument('--num_updates', type=int, default=200)#2)#100)#250)#25)#50)#150)#10)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=200)#100)#2)#250)#25)#50)#150)#10)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
 
     add_controller_args(parser)
@@ -70,8 +70,8 @@ def add_encoder_args(parser):
                         help='How many states to sample for each embedding update')
     parser.add_argument('--enc_init_iters', type=int, default=100000,
                         help='Initial training iterations')
-    parser.add_argument('--enc_checkpoint', type=str, default='outputs/2022-07-18/19-38-58/vae.pth',#'outputs/2022-07-13/17-24-59/vae.pth',#'outputs/2023-02-16/21-43-17/vae.pth',#global#'outputs/2023-02-16/21-42-26/vae.pth',#relative#None,#'outputs/2023-02-04/15-01-49/vae.pth',#'outputs/2022-11-13/15-19-54/vae.pth',#planaego#'outputs/2023-01-30/01-25-33/vae.pth',#new 5
-                        #'outputs/2022-11-21/01-35-45/vae.pth',#plan b relative var 1#'outputs/2022-11-27/08-55-19/vae.pth',#None,#'outputs/2022-11-23/10-53-55/vae.pth',#plan b relative var 0.01#'outputs/2022-11-25/01-29-50/vae.pth',#plan b global coordinates, var=0.01#'outputs/2022-11-25/19-17-37/vae.pth',#plan b global coordinates, var=1#
+    parser.add_argument('--enc_checkpoint', type=str, default='outputs/2023-02-18/19-47-57/1/vae.pth',#'outputs/2023-02-18/19-47-57/1/vae_72000.pth',#None,#'outputs/2022-07-18/19-38-58/vae.pth',#'outputs/2022-07-13/17-24-59/vae.pth',#'outputs/2023-02-16/21-43-17/vae.pth',#global#'outputs/2023-02-16/21-42-26/vae.pth',#relative#None,#'outputs/2023-02-04/15-01-49/vae.pth',#'outputs/2022-11-13/15-19-54/vae.pth',#planaego#'outputs/2023-01-30/01-25-33/vae.pth',#new 5
+                        #'outputs/2022-11-21/01-35-45/vae.pth',#plan b relative var 1#'outputs/2022-11-27/08-55-19/vae.pth',#'outputs/2022-11-23/10-53-55/vae.pth',#plan b relative var 0.01#'outputs/2022-11-25/01-29-50/vae.pth',#plan b global coordinates, var=0.01#'outputs/2022-11-25/19-17-37/vae.pth',#plan b global coordinates, var=1#
                         # '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',#
                         #'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',#
                         help='File to load a CEM model from')#

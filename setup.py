@@ -18,6 +18,6 @@ setup(
         'Pillow',
         'torchvision',
         'tensorflow==1.15.0',
-        'mujoco-py',
+        #'mujoco-py',
     ]
 )

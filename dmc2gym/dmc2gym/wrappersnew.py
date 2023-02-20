@@ -1,12 +1,10 @@
 from gym import core, spaces
 from dm_control import suite
-#from ../../dm_control.dm_control import suite
-#from dm_control.dm_control import suite
 from dm_env import specs
 import numpy as np
 
 
-def _spec_to_box(spec):
+def _spec_to_box(spec, dtype):
     def extract_min_max(s):
         assert s.dtype == np.float64 or s.dtype == np.float32
         dim = np.int(np.prod(s.shape))
@@ -22,10 +20,10 @@ def _spec_to_box(spec):
         mn, mx = extract_min_max(s)
         mins.append(mn)
         maxs.append(mx)
-    low = np.concatenate(mins, axis=0)
-    high = np.concatenate(maxs, axis=0)
+    low = np.concatenate(mins, axis=0).astype(dtype)
+    high = np.concatenate(maxs, axis=0).astype(dtype)
     assert low.shape == high.shape
-    return spaces.Box(low, high, dtype=np.float32)
+    return spaces.Box(low, high, dtype=dtype)
 
 
 def _flatten_obs(obs):
@@ -58,9 +56,8 @@ class DMCWrapper(core.Env):
         self._camera_id = camera_id
         self._frame_skip = frame_skip
         self._channels_first = channels_first
-        self._frozen = False
-        self._n_steps = 0
         self.horizon = 100
+
 
         # create task
         self._env = suite.load(
@@ -72,7 +69,7 @@ class DMCWrapper(core.Env):
         )
 
         # true and normalized action spaces
-        self._true_action_space = _spec_to_box([self._env.action_spec()])
+        self._true_action_space = _spec_to_box([self._env.action_spec()], np.float32)
         self._norm_action_space = spaces.Box(
             low=-1.0,
             high=1.0,
@@ -88,11 +85,13 @@ class DMCWrapper(core.Env):
             )
         else:
             self._observation_space = _spec_to_box(
-                self._env.observation_spec().values()
+                self._env.observation_spec().values(),
+                np.float64
             )
             
         self._state_space = _spec_to_box(
-                self._env.observation_spec().values()
+            self._env.observation_spec().values(),
+            np.float64
         )
         
         self.current_state = None
@@ -116,16 +115,8 @@ class DMCWrapper(core.Env):
             obs = _flatten_obs(time_step.observation)
         return obs
 
-    def get_image_obs(self):
-        return self.render(
-                height=self._height,
-                width=self._width,
-                camera_id=self._camera_id
-            ).copy()
-
     def _convert_action(self, action):
         action = action.astype(np.float64)
-        action = action / 2
         true_delta = self._true_action_space.high - self._true_action_space.low
         norm_delta = self._norm_action_space.high - self._norm_action_space.low
         action = (action - self._norm_action_space.low) / norm_delta
@@ -145,6 +136,10 @@ class DMCWrapper(core.Env):
     def action_space(self):
         return self._norm_action_space
 
+    @property
+    def reward_range(self):
+        return 0, self._frame_skip
+
     def seed(self, seed):
         self._true_action_space.seed(seed)
         self._norm_action_space.seed(seed)
@@ -154,11 +149,8 @@ class DMCWrapper(core.Env):
         assert self._norm_action_space.contains(action)
         action = self._convert_action(action)
         assert self._true_action_space.contains(action)
-        reward = -1 * self._frame_skip#print('running this customized version!')
-        old_observation = _flatten_obs(self._env._task.get_observation(self._env.physics))
-        old_constraint = self._env._task.get_constraint(self._env.physics)
-        if self._frozen:
-            action = np.zeros_like(action)
+        reward = 0
+        extra = {'internal_state': self._env.physics.get_state().copy()}
 
         for _ in range(self._frame_skip):
             time_step = self._env.step(action)
@@ -168,38 +160,13 @@ class DMCWrapper(core.Env):
                 break
         obs = self._get_obs(time_step)
         self.current_state = _flatten_obs(time_step.observation)
-        observation = _flatten_obs(self._env._task.get_observation(self._env.physics))
-        constraint = self._env._task.get_constraint(self._env.physics)
-        if constraint:
-            self._frozen = True
-        # reward -= constraint * 100
-        self._n_steps += 1
-        # print(self._n_steps)
-        done = self._n_steps >= 100
-
-        # TODO: [redacted name :)] update this because these envs are force controlled
-        if constraint and not old_constraint:
-            constraint_cost = np.linalg.norm(action)
-        else:
-            constraint_cost = 0
-
-        extra = {'internal_state': self._env.physics.get_state().copy(),
-                 'discount': time_step.discount,
-                 'constraint': constraint,
-                 'constraint_cost': constraint_cost,
-                 'reward': reward,
-                 'state': old_observation,
-                 'next_state': observation,
-                 'action': action}
-
+        extra['discount'] = time_step.discount
         return obs, reward, done, extra
 
-    def reset(self, **kwargs):
+    def reset(self):
         time_step = self._env.reset()
         self.current_state = _flatten_obs(time_step.observation)
         obs = self._get_obs(time_step)
-        self._frozen = False
-        self._n_steps = 0
         return obs
 
     def render(self, mode='rgb_array', height=None, width=None, camera_id=0):

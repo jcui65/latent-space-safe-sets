@@ -55,6 +55,14 @@ class AbstractTeacher(ABC):
             if store_noisy:
                 action = action_input#if it not noisy, then it is just the same
             #import ipdb; ipdb.set_trace()
+            #print('action',action)
+            #print('action_input',action_input)
+            #print('actiond',action.dtype)#float64, not np.float64!
+            #print('action_inputs',action_input.shape)
+            action_input=np.float32(action_input)#has to be like this?
+            #action=np.float32(action)#has to be like this? maybe it takes float 64, but not takes float 32 as the float
+            #print('actiond2',action.dtype)#float64, not np.float64!
+            #print('action_inputs2',action_input.shape)
             next_obs, reward, done, info = self.env.step(action_input)#about 63 in simple_point_bot.py
             transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
                           'next_obs': next_obs, 'done': int(done),#this is a dictionary
@@ -280,7 +288,7 @@ class ReacherTeacher(AbstractTeacher):
 
         angle = state[:2]
         act = goal - angle
-        act = np.clip(act, -1, 1)
+        act = np.clip(act, -1+1e-6, 1-1e-6)#np.clip(act, -1, 1)# + 1e-6
         return act
 
 
