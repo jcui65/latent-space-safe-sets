@@ -70,10 +70,10 @@ def add_encoder_args(parser):
                         help='How many states to sample for each embedding update')
     parser.add_argument('--enc_init_iters', type=int, default=100000,
                         help='Initial training iterations')
-    parser.add_argument('--enc_checkpoint', type=str, default='outputs/2023-02-16/21-43-17/vae.pth',#global#'outputs/2023-02-16/21-42-26/vae.pth',#relative#None,#'outputs/2022-07-13/17-24-59/vae.pth',#'outputs/2023-02-04/15-01-49/vae.pth',#'outputs/2022-11-13/15-19-54/vae.pth',#planaego#'outputs/2023-01-30/01-25-33/vae.pth',#new 5
+    parser.add_argument('--enc_checkpoint', type=str, default='outputs/2022-07-18/19-38-58/vae.pth',#sequential pushing#'outputs/2023-02-16/21-43-17/vae.pth',#global#'outputs/2023-02-16/21-42-26/vae.pth',#relative#None,#'outputs/2022-07-13/17-24-59/vae.pth',#'outputs/2023-02-04/15-01-49/vae.pth',#'outputs/2022-11-13/15-19-54/vae.pth',#planaego#'outputs/2023-01-30/01-25-33/vae.pth',#new 5
                         #'outputs/2022-11-21/01-35-45/vae.pth',#plan b relative var 1#'outputs/2022-11-27/08-55-19/vae.pth',#None,#'outputs/2022-11-23/10-53-55/vae.pth',#plan b relative var 0.01#'outputs/2022-11-25/01-29-50/vae.pth',#plan b global coordinates, var=0.01#'outputs/2022-11-25/19-17-37/vae.pth',#plan b global coordinates, var=1#
                         # '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',#
-                        #'outputs/2022-07-18/19-38-58/vae.pth',#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',#
+                        #'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',#
                         help='File to load a CEM model from')#
     parser.add_argument('--enc_data_aug', action='store_true')
     parser.add_argument('--enc_checkpoint2', type=str, default=None,#'outputs/2022-07-13/17-24-59/vae.pth',#'outputs/2022-11-13/15-19-54/vae.pth',#it is using ego coordinates#'outputs/2022-07-13/17-24-59/vae.pth',#it is using global coordinates#
