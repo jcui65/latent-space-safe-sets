@@ -1863,7 +1863,7 @@ class CEMSafeSetPolicy(Policy):
                 all_values[nans] = -1e5
                 values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
                 storch=ptu.torchify(state)#state torch
-                se=storch+action_samples#se means state estimated#shape(1000,5,2)#se1=stateevolve
+                se=storch+action_samples#se means state estimated#shape(1000,5,2)#se1=stateevolve#because it is the single integrator dynamics!
                 #the square part
                 xmove=0#-25#30#
                 ymove=0#-45#-40#-35#-33#-30#-25#
@@ -2068,27 +2068,48 @@ class CEMSafeSetPolicy(Policy):
         #h=self.cbfdot_function
         #gamma=act_cbfd_thresh
         #con = lambda a: (h(fdyn.predict(emb, a.reshape(1,1,2), already_embedded=True),already_embedded=True)+(gamma-1)*h(emb,already_embedded=True)).cpu()##x[0] - np.sin(x[1])
+        log.info('state x:%f, state y:%f' % (state[0], state[1]))
         def cons_f(a,emb,gamma):#should a in cuda or cpu?
             fdyn = self.dynamics_model
             h = self.cbfdot_function
             gamma = gamma#self.cbfd_thresh
+            #print('gamma',gamma)#it is the desired gamma
+            #print('action',a)#[0.16410656 2.4000001 ]
+            log.info('action x before cbf-qp:%f, action y before cbf qp:%f' % (a[0], a[1]))
             ar=ptu.torchify(a.reshape(1,1,self.d_act))#now to the cuda device
             ztp1=fdyn.predict(emb, ar, already_embedded=True)#in cuda device
-            cbfdc=h(ztp1, already_embedded=True)+(gamma-1)*h(emb,already_embedded=True)#in cuda device
+            htp1=h(ztp1, already_embedded=True)
+            #print('htp1',htp1.cpu().detach().numpy())
+            #print('htp1.shape',htp1.shape)#torch.Size([20, 1, 1, 1])
+            htp1m=torch.min(htp1)
+            #print('htp1m',htp1m.cpu().detach().numpy())
+            #print('htp1m.shape',htp1m.shape)#torch.Size([])
+            ht=h(emb,already_embedded=True)#it has size(1,1)
+            #print('ht',ht.cpu().detach().numpy())#[[1977.4646]]
+            cbfdc=htp1m+(gamma-1)*ht#in cuda device
+            #print('cbfdc',cbfdc.cpu().detach().numpy())
             cbfdc=cbfdc.cpu().detach().numpy()#hope to be back to cpu
+            #print('cbfdc',cbfdc)#its shape should be torch.Size([1, 1])
             cbfdcr=cbfdc.reshape(-1)#reshape to scalar
+            #print('cbfdcr',cbfdcr)#its shape should be torch.Size([1])
+            #print('min(cbfdc)',min(cbfdc[0,0,0]))#[[[866.2893]]]
+            htp1mc=htp1m.cpu().detach().numpy()
+            htc=ht.cpu().detach().numpy()
+            #print('htp1mc',htp1mc)
+            #print('htc',htc)
+            log.info('htp1:%f, ht:%f,min(cbfdcr):,%f' % (htp1mc,htc ,min(cbfdcr)))
             return cbfdcr#x[0] ** 2 + x[1] ** 2 + x[2]
 
-        nlc = scipy.optimize.NonlinearConstraint(lambda a: cons_f(a, emb, act_cbfd_thresh), 0, np.inf)#
+        nlc = scipy.optimize.NonlinearConstraint(lambda a: cons_f(a, emb, act_cbfd_thresh), 0, np.inf,jac='3-point')#
         actioncpu=action.cpu().detach().numpy()#in cpu
-        x0=actioncpu#in cpu
+        x0=actioncpu #0.8*actioncpu #in cpu
         lbx=self.env.action_space.low[0]
         hbx = self.env.action_space.high[0]
         lby = self.env.action_space.low[1]
         hby = self.env.action_space.high[1]
         bnds = ((lbx, hbx), (lby, hby))
         fun = lambda act: (act[0] - actioncpu[0]) ** 2 + (act[1] - actioncpu[1]) ** 2#in cpu
-        res=scipy.optimize.minimize(fun,x0,bounds=bnds,constraints=[nlc])
+        res=scipy.optimize.minimize(fun,x0,bounds=bnds,jac='3-point',constraints=[nlc])
         actioncbfqp=res.x
         #print('actioncbfqp',actioncbfqp)
         log.info('action x after cbf-qp:%f, action y after cbf qp:%f' % (actioncbfqp[0], actioncbfqp[1]))
