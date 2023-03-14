@@ -2075,13 +2075,18 @@ class CEMSafeSetPolicy(Policy):
             gamma = gamma#self.cbfd_thresh
             #print('gamma',gamma)#it is the desired gamma
             #print('action',a)#[0.16410656 2.4000001 ]
-            log.info('action x before cbf-qp:%f, action y before cbf qp:%f' % (a[0], a[1]))
+            #log.info('action x before cbf-qp:%f, action y before cbf qp:%f' % (a[0], a[1]))
             ar=ptu.torchify(a.reshape(1,1,self.d_act))#now to the cuda device
             ztp1=fdyn.predict(emb, ar, already_embedded=True)#in cuda device
-            htp1=h(ztp1, already_embedded=True)
+            #print('ztp1',ztp1)
+            #print('ztp1.shape',ztp1.shape)#20,1,1,32
+            ztp1m=torch.mean(ztp1,dim=0)
+            #print('ztp1m',ztp1m)
+            #print('ztp1m.shape',ztp1m.shape)#1,1,32
+            htp1mean=h(ztp1m, already_embedded=True)#htp1=h(ztp1, already_embedded=True)#
             #print('htp1',htp1.cpu().detach().numpy())
             #print('htp1.shape',htp1.shape)#torch.Size([20, 1, 1, 1])
-            htp1m=torch.min(htp1)
+            htp1m=htp1mean#torch.min(htp1)
             #print('htp1m',htp1m.cpu().detach().numpy())
             #print('htp1m.shape',htp1m.shape)#torch.Size([])
             ht=h(emb,already_embedded=True)#it has size(1,1)
@@ -2091,16 +2096,21 @@ class CEMSafeSetPolicy(Policy):
             cbfdc=cbfdc.cpu().detach().numpy()#hope to be back to cpu
             #print('cbfdc',cbfdc)#its shape should be torch.Size([1, 1])
             cbfdcr=cbfdc.reshape(-1)#reshape to scalar
-            #print('cbfdcr',cbfdcr)#its shape should be torch.Size([1])
+            #print('cbfdcr.shape',cbfdcr.shape)#its shape should be torch.Size([1])#print('cbfdcr',cbfdcr)#its shape should be torch.Size([1])
             #print('min(cbfdc)',min(cbfdc[0,0,0]))#[[[866.2893]]]
-            htp1mc=htp1m.cpu().detach().numpy()
+            ztp1mc=ztp1m.cpu().detach().numpy()
+            ztp1mc=ztp1mc.reshape(-1)
+            #print('ztp1mc.shape',ztp1mc.shape)#32
+            htp1mc=htp1m.cpu().detach().numpy()#shape 1,1,1
+            htp1mc=htp1mc.reshape(-1)
+            #print('htp1mc.shape',htp1mc.shape)#1,1,32
             htc=ht.cpu().detach().numpy()
             #print('htp1mc',htp1mc)
             #print('htc',htc)
-            log.info('htp1:%f, ht:%f,min(cbfdcr):,%f' % (htp1mc,htc ,min(cbfdcr)))
+            log.info('ax before qp:%f, ay before qp:%f, ztp1m[0]:%f,htp1:%f, ht:%f,cbfdcr:%f' % (a[0], a[1],ztp1mc[0],htp1mc,htc ,cbfdcr))
             return cbfdcr#x[0] ** 2 + x[1] ** 2 + x[2]
 
-        nlc = scipy.optimize.NonlinearConstraint(lambda a: cons_f(a, emb, act_cbfd_thresh), 0, np.inf,jac='3-point')#
+        nlc = scipy.optimize.NonlinearConstraint(lambda a: cons_f(a, emb, act_cbfd_thresh), 0, np.inf,jac='cs')#,jac='3-point')#
         actioncpu=action.cpu().detach().numpy()#in cpu
         x0=actioncpu #0.8*actioncpu #in cpu
         lbx=self.env.action_space.low[0]
@@ -2109,7 +2119,8 @@ class CEMSafeSetPolicy(Policy):
         hby = self.env.action_space.high[1]
         bnds = ((lbx, hbx), (lby, hby))
         fun = lambda act: (act[0] - actioncpu[0]) ** 2 + (act[1] - actioncpu[1]) ** 2#in cpu
-        res=scipy.optimize.minimize(fun,x0,bounds=bnds,jac='3-point',constraints=[nlc])
+        #res=scipy.optimize.minimize(fun,x0,bounds=bnds,jac='3-point',constraints=[nlc])#jac='cs',constraints=[nlc])#
+        res=scipy.optimize.minimize(fun,x0,method='trust-constr',bounds=bnds,jac='3-point',constraints=[nlc])#
         actioncbfqp=res.x
         #print('actioncbfqp',actioncbfqp)
         log.info('action x after cbf-qp:%f, action y after cbf qp:%f' % (actioncbfqp[0], actioncbfqp[1]))
