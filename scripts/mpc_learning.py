@@ -131,7 +131,7 @@ if __name__ == '__main__':
                                                                                              #fn, tn,
                                                                                              #tpc, fpc, fnc, tnc)
                 # the CEM (candidates, elites, etc.) is in here
-                next_obs, reward, done, info = env.step(action)#saRSa
+                next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
                 #next_obs, reward, done, info = env.stepsafety(action)  # 63 in simple_point_bot.py
                 #next_obs = np.array(next_obs)#to make this image a numpy array
                 #next_obs, reward, done, info,next_obs_relative = env.stepsafety_relative(action)  # 63 in simple_point_bot.py

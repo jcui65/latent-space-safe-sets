@@ -8,7 +8,7 @@ def make(
         seed=1,
         visualize_reward=True,
         from_pixels=False,
-        height=64,
+        height=64,#will pass this 64 in to cover the 84
         width=64,
         camera_id=0,
         frame_skip=1,

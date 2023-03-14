@@ -257,7 +257,7 @@ def make_env(params, monitoring=False):
     elif env_name == 'reacher':
         import dmc2gym
 
-        env = dmc2gym.make(domain_name='reacher', task_name='hard', seed=params['seed'],
+        env = dmc2gym.make(domain_name='reacher', task_name='hard', seed=params['seed'],#it is choosing the hard option
                            from_pixels=True, visualize_reward=False, channels_first=True)
     elif env_name == 'push':
         env = PushEnv()

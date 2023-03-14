@@ -10,7 +10,7 @@ def _spec_to_box(spec):
     def extract_min_max(s):
         assert s.dtype == np.float64 or s.dtype == np.float32
         dim = np.int(np.prod(s.shape))
-        if type(s) == specs.Array:
+        if type(s) == specs.Array:#it seems that the reacher environment doesn't have action constraint
             bound = np.inf * np.ones(dim, dtype=np.float32)
             return -bound, bound
         elif type(s) == specs.BoundedArray:
@@ -33,7 +33,7 @@ def _flatten_obs(obs):
     for v in obs.values():
         flat = np.array([v]) if np.isscalar(v) else v.ravel()
         obs_pieces.append(flat)
-    return np.concatenate(obs_pieces, axis=0)
+    return np.concatenate(obs_pieces, axis=0)#those values from those keys
 
 
 class DMCWrapper(core.Env):
@@ -64,7 +64,7 @@ class DMCWrapper(core.Env):
 
         # create task
         self._env = suite.load(
-            domain_name=domain_name,
+            domain_name=domain_name,#for example, if I want to load reach, then this domain_name will be reacher
             task_name=task_name,
             task_kwargs=task_kwargs,
             visualize_reward=visualize_reward,
@@ -72,7 +72,7 @@ class DMCWrapper(core.Env):
         )
 
         # true and normalized action spaces
-        self._true_action_space = _spec_to_box([self._env.action_spec()])
+        self._true_action_space = _spec_to_box([self._env.action_spec()])#see control.Environment
         self._norm_action_space = spaces.Box(
             low=-1.0,
             high=1.0,
@@ -105,11 +105,11 @@ class DMCWrapper(core.Env):
 
     def _get_obs(self, time_step):
         if self._from_pixels:
-            obs = self.render(
+            obs = self.render(#render an image
                 height=self._height,
                 width=self._width,
                 camera_id=self._camera_id
-            )
+            )#get the pictures!
             if self._channels_first:
                 obs = obs.transpose(2, 0, 1).copy()
         else:
@@ -155,13 +155,13 @@ class DMCWrapper(core.Env):
         action = self._convert_action(action)
         assert self._true_action_space.contains(action)
         reward = -1 * self._frame_skip#print('running this customized version!')
-        old_observation = _flatten_obs(self._env._task.get_observation(self._env.physics))
-        old_constraint = self._env._task.get_constraint(self._env.physics)
+        old_observation = _flatten_obs(self._env._task.get_observation(self._env.physics))#what does it contain?#4 rows, 2 columns
+        old_constraint = self._env._task.get_constraint(self._env.physics)#I assume the constraint is got from the customized reacher.py
         if self._frozen:
             action = np.zeros_like(action)
 
         for _ in range(self._frame_skip):
-            time_step = self._env.step(action)
+            time_step = self._env.step(action)#propogate
             reward += time_step.reward or 0
             done = time_step.last()
             if done:
@@ -183,16 +183,82 @@ class DMCWrapper(core.Env):
         else:
             constraint_cost = 0
 
-        extra = {'internal_state': self._env.physics.get_state().copy(),
-                 'discount': time_step.discount,
+        extra = {'internal_state': self._env.physics.get_state().copy(),#it seems that you can freely add key-value pairs in extra!
+                 'discount': time_step.discount,#not show up in spb!
                  'constraint': constraint,
                  'constraint_cost': constraint_cost,
                  'reward': reward,
-                 'state': old_observation,
+                 'state': old_observation,#it containts the 2 dimensional vector to the center of the obstacle as its 3rd/2nd row!
                  'next_state': observation,
                  'action': action}
 
-        return obs, reward, done, extra
+        return obs, reward, done, extra#that's how it originally works!
+
+    def stepsafety(self, action):
+            assert self._norm_action_space.contains(action)
+            action = self._convert_action(action)
+            assert self._true_action_space.contains(action)
+            reward = -1 * self._frame_skip#print('running this customized version!')
+            old_observation = _flatten_obs(self._env._task.get_observation(self._env.physics))#what does it contain?
+            old_constraint = self._env._task.get_constraint(self._env.physics)#I assume the constraint is got from the customized reacher.py
+            if self._frozen:
+                action = np.zeros_like(action)
+
+            for _ in range(self._frame_skip):
+                time_step = self._env.step(action)#propogate
+                reward += time_step.reward or 0
+                done = time_step.last()
+                if done:
+                    break
+            obs = self._get_obs(time_step)
+            self.current_state = _flatten_obs(time_step.observation)
+            observation = _flatten_obs(self._env._task.get_observation(self._env.physics))
+            constraint = self._env._task.get_constraint(self._env.physics)
+            if constraint:
+                self._frozen = True
+            # reward -= constraint * 100
+            self._n_steps += 1
+            # print(self._n_steps)
+            done = self._n_steps >= 100
+
+            # TODO: [redacted name :)] update this because these envs are force controlled
+            if constraint and not old_constraint:
+                constraint_cost = np.linalg.norm(action)
+            else:
+                constraint_cost = 0
+            oldtoobstacle=old_observation[2]
+            oldtoonorm=oldtoobstacle/np.linalg.norm(oldtoobstacle)
+            obstacleradius=0.05
+            relaxcoeff=1.5
+            oldtoboundary=obstacleradius*oldtoonorm
+            otbrelax=relaxcoeff*oldtoboundary#0.07
+            reldistold=oldtoobstacle#-oldltoboundary#otbrelax#it should be rel displacement old    
+            newtoobstacle=observation[2]
+            newtoonorm=newtoobstacle/np.linalg.norm(newtoobstacle)
+            newtoboundary=obstacleradius*newtoonorm
+            ntbrelax=relaxcoeff*newtoboundary#0.07
+            reldistnew=newtoobstacle#-newltoboundary#otbrelax#it should be rel displacement old   
+            hvalueold = np.linalg.norm(reldistold) ** 2 - np.linalg.norm(otbrelax) ** 2#np.linalg.norm(reldistold) ** 2 - 15 ** 2#get the value of the h function
+            hvaluenew = np.linalg.norm(reldistnew) ** 2 - np.linalg.norm(ntbrelax) ** 2#np.linalg.norm(reldistnew) ** 2 - 15 ** 2#
+            hvd=hvaluenew-hvalueold#hvd for h value difference
+
+            extra = {'internal_state': self._env.physics.get_state().copy(),#it seems that you can freely add key-value pairs in extra!
+                    'discount': time_step.discount,#not show up in spb!
+                    'constraint': constraint,
+                    'constraint_cost': constraint_cost,
+                    'reward': reward,
+                    'state': old_observation,#it containts the 2 dimensional vector to the center of the obstacle as its 3rd/2nd row!
+                    'next_state': observation,
+                    'action': action,
+                    "rdo":reldistold,#rdo for relative distance old#array now!
+                    "rdn": reldistnew,#rdn for relative distance new#array now!
+                    "hvo": hvalueold,#hvo for h value old#corresponding to the old state
+                    "hvn":hvaluenew,#hvn for h value new#corresponding to the new state
+                    "hvd":hvd#hvd for h value difference
+                    }
+
+            return obs, reward, done, extra#that's how it originally works!
+
 
     def reset(self, **kwargs):
         time_step = self._env.reset()
