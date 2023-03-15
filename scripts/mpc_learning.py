@@ -60,10 +60,10 @@ if __name__ == '__main__':
     trainer.initial_train(replay_buffer)#initialize all the parts!
 
     log.info("Creating policy")
-    policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                              constraint_function, goal_indicator, params)
     #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                              #constraint_function, goal_indicator, cbfdot_function, params)
+                              #constraint_function, goal_indicator, params)
+    policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
+                              constraint_function, goal_indicator, cbfdot_function, params)
     #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
                               #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
     #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
@@ -105,7 +105,7 @@ if __name__ == '__main__':
             for k in trange(params['horizon']):#default 100 in spb#This is MPC
                 #print('obs.shape',obs.shape)(3,64,64)
                 #print('env.state',env.state)#env.state [35.44344669 54.30340498]
-                action = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
+                #action = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
                 #storch=ptu.torchify(env.state)#state torch
                 #action,tp,fp,fn,tn,tpc,fpc,fnc,tnc = policy.actcbfd(obs/255,env.state,tp,fp,fn,tn,tpc,fpc,fnc,tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdcircle(obs / 255, env.state, tp, fp, fn, tn, tpc,
@@ -113,6 +113,8 @@ if __name__ == '__main__':
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarecircle(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
+                                                                                        #fn, tn, tpc, fpc, fnc, tnc)
+                action= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
