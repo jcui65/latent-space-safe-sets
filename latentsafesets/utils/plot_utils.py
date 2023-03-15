@@ -127,10 +127,10 @@ def visualize_value(obs, value_func, file, env=None):
     """
     Sorts the observations to show which ones have high value, which ones low
     """
-    if issubclass(type(env), SimplePointBot):
+    if issubclass(type(env), SimplePointBot):#spb
         spbu.evaluate_value_func(value_func, env, file=file, skip=2)
         return
-    values = value_func.forward_np(obs, already_embedded=True).squeeze()
+    values = value_func.forward_np(obs, already_embedded=True).squeeze()#not spb?
     obs = ptu.to_numpy(value_func.encoder.decode(ptu.torchify(obs)))
     sort_ind = np.argsort(values)
     low_ind = sort_ind[:5]
@@ -246,32 +246,58 @@ def visualize_onezero(obs, onezero, file, env=None):
     plt.close()
 
 
-def visualize_cbfdot(obs, onezero, file, env=None):
+def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, the network trained
     if issubclass(type(env), SimplePointBot):
         #print('entering this one!')
-        #spbu.evaluate_cbfdot_func(onezero, env, file=file, skip=1,action=(0,0))#61 in spb_utils
-        spbu.evaluate_cbfdotlatent_func(onezero, env, file=file, skip=1, action=(0, 0))  # 61 in spb_utils
-        #spbu.evaluate_cbfdotc_func(onezero, env, file=file, skip=1, action=(0, 0))  # 61 in spb_utils
+        #spbu.evaluate_cbfdot_func(cbfd, env, file=file, skip=1,action=(0,0))#61 in spb_utils
+        spbu.evaluate_cbfdotlatent_func(cbfd, env, file=file, skip=1, action=(0, 0))  # 61 in spb_utils#latent corresponds to plan a
+        #spbu.evaluate_cbfdotc_func(cbfd, env, file=file, skip=1, action=(0, 0))  # 61 in spb_utils
         return
+    
+    values = cbfd.cbfdots(obs, already_embedded=True).squeeze()#not spb?
+    obs = ptu.to_numpy(cbfd.encoder.decode(ptu.torchify(obs)))
+    sort_ind = np.argsort(values)
+    low_ind = sort_ind[:5]#the lowest five among 256
+    high_ind = sort_ind[-5:]#the highest five among 256
+    low_vals = values[low_ind]
+
+    if len(obs.shape) == 5:
+        obs = obs[:, 0]
+
+    low_obs = obs[low_ind]
+    high_vals = values[high_ind]
+    high_obs = obs[high_ind]
+
+    fig, axs = plt.subplots(2, 5)
+
+    for i in range(5):
+        axs[0][i].imshow(high_obs[i].squeeze().transpose((1, 2, 0)))
+        axs[0][i].set_title('%3.3f' % high_vals[i])
+        axs[0][i].set_axis_off()
+
+        axs[1][i].imshow(low_obs[i].squeeze().transpose((1, 2, 0)))
+        axs[1][i].set_title('%3.3f' % low_vals[i])
+        axs[1][i].set_axis_off()
+
+    plt.savefig(file)
+    plt.close()
+    
+    '''
     #print('entering the other one!')
-    ss = onezero.prob(obs, already_embedded=True).squeeze()
-    obs = ptu.to_numpy(onezero.encoder.decode(ptu.torchify(obs)))
+    ss = cbfd.prob(obs, already_embedded=True).squeeze()
+    obs = ptu.to_numpy(cbfd.encoder.decode(ptu.torchify(obs)))
     # print(ss)
     ss = ss > 0.8
     nonzeros = np.nonzero(ss)[0]
     zeros = np.nonzero(np.logical_not(ss))[0]
     # print(nonzeros, zeros)
-
     if len(nonzeros) > 0:
         nonzero_inds = nonzeros[np.random.randint(len(nonzeros), size=5)]
     if len(zeros) > 0:
         zero_inds = zeros[np.random.randint(len(zeros), size=5)]
-
     if len(obs.shape) == 5:
         obs = obs[:, 0]
-
     fig, axs = plt.subplots(2, 5)
-
     for i in range(5):
         if len(nonzeros) > 0:
             im = obs[nonzero_inds[i]].squeeze().transpose((1, 2, 0))
@@ -280,7 +306,6 @@ def visualize_cbfdot(obs, onezero, file, env=None):
         axs[0][i].imshow(im)
         axs[0][i].set_title('In')
         axs[0][i].set_axis_off()
-
         if len(zeros) > 0:
             im = obs[zero_inds[i]].squeeze().transpose((1, 2, 0))
         else:
@@ -288,9 +313,9 @@ def visualize_cbfdot(obs, onezero, file, env=None):
         axs[1][i].imshow(im)
         axs[1][i].set_title('Out')
         axs[1][i].set_axis_off()
-
     plt.savefig(file)
     plt.close()
+    '''
 
 def visualize_cbfdotconly(obs, onezero, file, env=None):
     if issubclass(type(env), SimplePointBot):
@@ -347,7 +372,7 @@ def visualize_cbfdotlatentunbiased(obs, onezero, file, env=None,coeff=1/3):
     #print(obs)
 
 def visualize_cbfdotlatentgroundtruth(obs, onezero, file, env=None):
-    if issubclass(type(env), SimplePointBot):
+    if issubclass(type(env), SimplePointBot):#only works for SPB
         #print('entering this one!')
         #spbu.evaluate_cbfdot_func(onezero, env, file=file, skip=1,action=(0,0))#61 in spb_utils
         #spbu.evaluate_cbfdotlatentunbiased_func(onezero, env, file=file, skip=1, action=(0, 0))  # 61 in spb_utils

@@ -38,7 +38,7 @@ class GenericNet(nn.Module):
 class VAEEncoder(nn.Module):
     def __init__(self, d_obs, d_latent=32, image_channels=3, h_dim=256):
         super(VAEEncoder, self).__init__()
-        self.d_obs = d_obs#(3, 64, 64)
+        self.d_obs = d_obs#(3, 3, 64, 64) in reacher, (3, 64, 64) in spb
         self.d_in = d_obs if len(d_obs) == 3 else (d_obs[0] * d_obs[1], d_obs[2], d_obs[3])
         self.out_dim = d_latent#32
         in_channels = image_channels if len(d_obs) == 3 else image_channels * d_obs[0]

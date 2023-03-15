@@ -19,7 +19,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         super(CBFdotEstimatorlatentplana, self).__init__()
         EncodedModule.__init__(self, encoder)
 
-        self.d_obs = params['d_obs']#(3,64,64)#dimension of observation
+        self.d_obs = params['d_obs']#(3,3,64,64) in reacher#(3,64,64) in spb and pushing#dimension of observation#
         self.d_latent = params['d_latent']#32#4#2+2#
         self.batch_size = params['cbfd_batch_size']#256
         self.targ_update_counter = 0
@@ -112,7 +112,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         logits = self(next_obs, already_embedded).squeeze()#.forward!#prediction
         #print('logits',logits)
         targets = constr#label
-        loss1 = self.loss_func(logits, targets)
+        loss1 =1000000*self.loss_func(logits, targets)#1000000 for reacher
         #print('next_obs.shape',next_obs.shape)
         #selfforwardtrue=lambda nextobs: self(nextobs, True)
         #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])

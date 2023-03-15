@@ -15,7 +15,7 @@ class VanillaVAE(nn.Module):
     def __init__(self, params):
         super(VanillaVAE, self).__init__()
 
-        self.d_obs = params['d_obs']#(3, 64, 64), input dimension
+        self.d_obs = params['d_obs']#(3, 3, 64, 64) in reacher#(3, 64, 64) in spb, input dimension
         self.d_latent = params['d_latent']#32
         self.kl_multiplier = params['enc_kl_multiplier']#1e-6, beta
         self.trained = False

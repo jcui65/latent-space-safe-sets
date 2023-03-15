@@ -21,7 +21,7 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)
-    parser.add_argument('--num_updates', type=int, default=200)#100)#2)#250)#25)#50)#150)#10)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=10)#200)#100)#2)#250)#25)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
 
     add_controller_args(parser)
@@ -97,7 +97,7 @@ def add_ss_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--safe_set_ignore', action='store_true')
     parser.add_argument('--safe_set_update_iters', type=int, default=512)
-    parser.add_argument('--safe_set_checkpoint', type=str, default=None)#'outputs/2023-02-17/19-02-06/initial_train/ss.pth')#'outputs/2022-12-26/11-14-08/initial_train/ss.pth')#'outputs/2022-12-26/22-29-25/initial_train/ss.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/ss.pth')#None)#'outputs/2022-12-26/11-14-08/initial_train/ss.pth')#'outputs/2022-11-21/11-01-14/initial_train/ss.pth')#'outputs/2022-11-19/10-32-29/initial_train/ss.pth')#'outputs/2022-07-15/17-41-16/initial_train/ss.pth')#'outputs/2022-09-17/21-54-24/update_99/ss.pth')#'outputs/2022-08-07/01-56-19/update_3/ss.pth')#'outputs/2022-08-07/01-36-19/update_4/ss.pth')#'outputs/2022-08-07/01-09-48/update_5/ss.pth')#
+    parser.add_argument('--safe_set_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/ss.pth')#None)#'outputs/2023-02-17/19-02-06/initial_train/ss.pth')#'outputs/2022-12-26/11-14-08/initial_train/ss.pth')#'outputs/2022-12-26/22-29-25/initial_train/ss.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/ss.pth')#None)#'outputs/2022-12-26/11-14-08/initial_train/ss.pth')#'outputs/2022-11-21/11-01-14/initial_train/ss.pth')#'outputs/2022-11-19/10-32-29/initial_train/ss.pth')#'outputs/2022-07-15/17-41-16/initial_train/ss.pth')#'outputs/2022-09-17/21-54-24/update_99/ss.pth')#'outputs/2022-08-07/01-56-19/update_3/ss.pth')#'outputs/2022-08-07/01-36-19/update_4/ss.pth')#'outputs/2022-08-07/01-09-48/update_5/ss.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/ss.pth')#'outputs/2022-07-20/14-46-50/update_16/ss.pth')#
     # #'outputs/2022-07-15/17-41-16/initial_train/ss.pth')#'outputs/2022-07-18/22-58-04/initial_train/ss.pth')#
     # #'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/ss.pth')#
@@ -121,7 +121,7 @@ def add_dyn_args(parser):
     parser.add_argument('--dyn_init_iters', type=int, default=10000,
                         help='Initial training iterations')
     parser.add_argument('--dyn_update_iters', type=int, default=512)
-    parser.add_argument('--dyn_checkpoint', type=str, default=None)#'outputs/2023-02-17/19-02-06/initial_train/dyn.pth')#'outputs/2022-12-26/11-14-08/initial_train/dyn.pth')#'outputs/2022-12-26/22-29-25/initial_train/dyn.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/dyn.pth')#'outputs/2022-12-26/11-14-08/initial_train/dyn.pth')#'outputs/2022-12-03/15-32-41/initial_train/dyn.pth')#'outputs/2022-11-21/11-01-14/initial_train/dyn.pth')#'outputs/2022-11-19/10-32-29/initial_train/dyn.pth')#'outputs/2022-07-15/17-41-16/initial_train/dyn.pth')#'outputs/2022-08-07/01-56-19/update_3/dyn.pth')#'outputs/2022-08-07/01-36-19/update_4/dyn.pth')#'outputs/2022-08-07/01-09-48/update_5/dyn.pth')#
+    parser.add_argument('--dyn_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/dyn.pth')#None)#'outputs/2023-02-17/19-02-06/initial_train/dyn.pth')#'outputs/2022-12-26/11-14-08/initial_train/dyn.pth')#'outputs/2022-12-26/22-29-25/initial_train/dyn.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/dyn.pth')#'outputs/2022-12-26/11-14-08/initial_train/dyn.pth')#'outputs/2022-12-03/15-32-41/initial_train/dyn.pth')#'outputs/2022-11-21/11-01-14/initial_train/dyn.pth')#'outputs/2022-11-19/10-32-29/initial_train/dyn.pth')#'outputs/2022-07-15/17-41-16/initial_train/dyn.pth')#'outputs/2022-08-07/01-56-19/update_3/dyn.pth')#'outputs/2022-08-07/01-36-19/update_4/dyn.pth')#'outputs/2022-08-07/01-09-48/update_5/dyn.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/dyn.pth')#'outputs/2022-07-20/14-46-50/update_16/dyn.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/dyn.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/dyn.pth')#
     parser.add_argument('--dyn_checkpoint2', type=str, default=None)#'outputs/2022-12-26/22-29-25/initial_train/dyn.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/dyn.pth')#'outputs/2022-12-26/11-14-08/initial_train/dyn.pth')#'outputs/2022-12-03/15-32-41/initial_train/dyn.pth')#'outputs/2022-11-21/11-01-14/initial_train/dyn.pth')#'outputs/2022-11-19/10-32-29/initial_train/dyn.pth')#'outputs/2022-07-15/17-41-16/initial_train/dyn.pth')#'outputs/2022-08-07/01-56-19/update_3/dyn.pth')#'outputs/2022-08-07/01-36-19/update_4/dyn.pth')#'outputs/2022-08-07/01-09-48/update_5/dyn.pth')#
@@ -146,7 +146,7 @@ def add_val_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--val_reduction', type=str, default='mean')
     parser.add_argument('--val_update_iters', type=int, default=2000)
-    parser.add_argument('--val_checkpoint', type=str, default=None)#'outputs/2023-02-17/19-02-06/initial_train/val.pth')#'outputs/2022-12-26/11-14-08/initial_train/val.pth')#'outputs/2022-12-26/22-29-25/initial_train/val.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/val.pth')#'outputs/2022-12-26/11-14-08/initial_train/val.pth')#'outputs/2022-11-14/11-34-20/update_199/val.pth')#'outputs/2022-11-21/11-01-14/initial_train/val.pth')#'outputs/2022-11-19/10-32-29/initial_train/val.pth')#'outputs/2022-07-15/17-41-16/initial_train/val.pth')#'outputs/2022-09-17/21-54-24/update_99/val.pth')#'outputs/2022-08-07/01-56-19/update_3/val.pth')#'outputs/2022-08-07/01-36-19/update_4/val.pth')#'outputs/2022-08-07/01-09-48/update_5/val.pth')#
+    parser.add_argument('--val_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/val.pth')#None)#'outputs/2023-02-17/19-02-06/initial_train/val.pth')#'outputs/2022-12-26/11-14-08/initial_train/val.pth')#'outputs/2022-12-26/22-29-25/initial_train/val.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/val.pth')#'outputs/2022-12-26/11-14-08/initial_train/val.pth')#'outputs/2022-11-14/11-34-20/update_199/val.pth')#'outputs/2022-11-21/11-01-14/initial_train/val.pth')#'outputs/2022-11-19/10-32-29/initial_train/val.pth')#'outputs/2022-07-15/17-41-16/initial_train/val.pth')#'outputs/2022-09-17/21-54-24/update_99/val.pth')#'outputs/2022-08-07/01-56-19/update_3/val.pth')#'outputs/2022-08-07/01-36-19/update_4/val.pth')#'outputs/2022-08-07/01-09-48/update_5/val.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/val.pth')#'outputs/2022-07-20/14-46-50/update_16/val.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/val.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/val.pth')#
 
@@ -164,7 +164,7 @@ def add_constr_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--constr_ignore', action='store_true')
     parser.add_argument('--constr_update_iters', type=int, default=512)
-    parser.add_argument('--constr_checkpoint', type=str, default=None)#'outputs/2023-02-17/19-02-06/initial_train/constr.pth')#'outputs/2022-12-26/11-14-08/initial_train/constr.pth')#'outputs/2022-12-26/22-29-25/initial_train/constr.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/constr.pth')#'outputs/2022-12-26/11-14-08/initial_train/constr.pth')#'outputs/2022-11-21/11-01-14/initial_train/constr.pth')#'outputs/2022-11-19/10-32-29/initial_train/constr.pth')#'outputs/2022-07-15/17-41-16/initial_train/constr.pth')#'outputs/2022-08-07/01-56-19/update_3/constr.pth')#'outputs/2022-08-07/01-36-19/update_4/constr.pth')#'outputs/2022-08-07/01-09-48/update_5/constr.pth')#
+    parser.add_argument('--constr_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/constr.pth')#None)#'outputs/2023-02-17/19-02-06/initial_train/constr.pth')#'outputs/2022-12-26/11-14-08/initial_train/constr.pth')#'outputs/2022-12-26/22-29-25/initial_train/constr.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/constr.pth')#'outputs/2022-12-26/11-14-08/initial_train/constr.pth')#'outputs/2022-11-21/11-01-14/initial_train/constr.pth')#'outputs/2022-11-19/10-32-29/initial_train/constr.pth')#'outputs/2022-07-15/17-41-16/initial_train/constr.pth')#'outputs/2022-08-07/01-56-19/update_3/constr.pth')#'outputs/2022-08-07/01-36-19/update_4/constr.pth')#'outputs/2022-08-07/01-09-48/update_5/constr.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/constr.pth')#'outputs/2022-07-20/14-46-50/update_16/constr.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/constr.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/constr.pth')#
 
@@ -181,7 +181,7 @@ def add_gi_args(parser):
     parser.add_argument('--gi_init_iters', type=int, default=10000,
                         help='Initial training iterations')
     parser.add_argument('--gi_update_iters', type=int, default=512)
-    parser.add_argument('--gi_checkpoint', type=str, default=None)#'outputs/2023-02-17/19-02-06/initial_train/gi.pth')#'outputs/2022-12-26/11-14-08/initial_train/gi.pth')#'outputs/2022-12-26/22-29-25/initial_train/gi.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/gi.pth')#'outputs/2022-12-26/11-14-08/initial_train/gi.pth')#'outputs/2022-11-14/11-34-20/update_199/gi.pth')#'outputs/2022-11-21/11-01-14/initial_train/gi.pth')#'outputs/2022-11-19/10-32-29/initial_train/gi.pth')#'outputs/2022-07-15/17-41-16/initial_train/gi.pth')#'outputs/2022-08-07/01-56-19/update_3/gi.pth')#'outputs/2022-08-07/01-36-19/update_4/gi.pth')#'outputs/2022-08-07/01-09-48/update_5/gi.pth')#
+    parser.add_argument('--gi_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/gi.pth')#None)#'outputs/2023-02-17/19-02-06/initial_train/gi.pth')#'outputs/2022-12-26/11-14-08/initial_train/gi.pth')#'outputs/2022-12-26/22-29-25/initial_train/gi.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/gi.pth')#'outputs/2022-12-26/11-14-08/initial_train/gi.pth')#'outputs/2022-11-14/11-34-20/update_199/gi.pth')#'outputs/2022-11-21/11-01-14/initial_train/gi.pth')#'outputs/2022-11-19/10-32-29/initial_train/gi.pth')#'outputs/2022-07-15/17-41-16/initial_train/gi.pth')#'outputs/2022-08-07/01-56-19/update_3/gi.pth')#'outputs/2022-08-07/01-36-19/update_4/gi.pth')#'outputs/2022-08-07/01-09-48/update_5/gi.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/gi.pth')#'outputs/2022-07-20/14-46-50/update_16/gi.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/gi.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/gi.pth')#
 
@@ -237,7 +237,7 @@ def add_env_options(params):
         params['data_counts'] = [
             50, 50, 100
         ]
-        params['frame_stack'] = 3
+        params['frame_stack'] = 3#the frame stack is handled by the VAE!!!
     elif params['env'] == 'push':
         params['buffer_size'] = 300000
         params['data_dirs'] = [

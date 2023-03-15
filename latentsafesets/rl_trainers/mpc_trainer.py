@@ -184,7 +184,7 @@ class CBFdotlatentplanaTrainer(Trainer):
 
         log.info('Beginning cbfdot initial optimization')
 
-        self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
+        self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)#if not spb, then don't plot
         for i in range(self.params['cbfd_init_iters']):#10000
             out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
             obs=out_dict['obs']
@@ -207,8 +207,8 @@ class CBFdotlatentplanaTrainer(Trainer):
             if i % self.params['plot_freq'] == 0:
                 log.info('Creating cbfdot function heatmap')
                 self.loss_plotter.plot()
-                #self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer)
-                self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer)
+                self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer)
+                self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer)#nothing is plotted if not spb
                 self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,
                                         coeff=1)  # a few lines later
                 self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,coeff=1/3)  # a few lines later
@@ -320,7 +320,7 @@ class MPCTrainer(Trainer):
         #self.trainers.append(CBFdotTrainer(env, params, modules['cbfd'], loss_plotter))
         #self.trainers.append(CBFdotlatentTrainer(env, params, modules['cbfd'], loss_plotter))
         #self.trainers.append(VAETrainer(params, modules['enc2'], loss_plotter))
-        #self.trainers.append(CBFdotlatentplanaTrainer(env, params, modules['cbfd'], loss_plotter))
+        self.trainers.append(CBFdotlatentplanaTrainer(env, params, modules['cbfd'], loss_plotter))
         #self.trainers.append(PETSDynamicsTrainer2(params, modules['dyn2'], loss_plotter))
 
     def initial_train(self, replay_buffer):#by default the replay buffer is the encoded version

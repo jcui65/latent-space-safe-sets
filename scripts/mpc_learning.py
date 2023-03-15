@@ -35,8 +35,8 @@ if __name__ == '__main__':
     #The result is to have env=SimplePointBot in spb
     # Setting up encoder, around line 172 in utils, get all the parts equipped!
 
-    modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
-    #modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
+    #modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
+    modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
     #modules = utils.make_modulessafetyexpensive(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)#forever banned!
     #modules = utils.make_modulessafetyexpensive2(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True,dyn2=True)#forever banned!
     #the result is to set up the encoder, etc.
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     value_func = modules['val']
     constraint_function = modules['constr']
     goal_indicator = modules['gi']
-    #cbfdot_function = modules['cbfd']
+    cbfdot_function = modules['cbfd']
     #encoder2 = modules['enc2']  # it is a value in a dictionary, uh?
     #dynamics_model2 = modules['dyn2']
     # Populate replay buffer
@@ -131,8 +131,8 @@ if __name__ == '__main__':
                                                                                              #fn, tn,
                                                                                              #tpc, fpc, fnc, tnc)
                 # the CEM (candidates, elites, etc.) is in here
-                next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
-                #next_obs, reward, done, info = env.stepsafety(action)  # 63 in simple_point_bot.py
+                #next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
+                next_obs, reward, done, info = env.step(action)#now it should be step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
                 #next_obs = np.array(next_obs)#to make this image a numpy array
                 #next_obs, reward, done, info,next_obs_relative = env.stepsafety_relative(action)  # 63 in simple_point_bot.py
                 next_obs = np.array(next_obs) #relative or not? # to make this image a numpy array
@@ -142,7 +142,7 @@ if __name__ == '__main__':
                 traj_rews.append(reward)
 
                 constr = info['constraint']#its use is seen a few lines later
-
+                '''
                 transition = {'obs': obs, 'action': action, 'reward': reward,#sARSa
                               'next_obs': next_obs, 'done': done,
                               'constraint': constr, 'safe_set': 0, 'on_policy': 1}
@@ -159,7 +159,7 @@ if __name__ == '__main__':
                               'state': info['state'].tolist(),
                               'next_state': info['next_state'].tolist()
                               }  # add key and value into it!
-                
+                '''
                 transition = {'obs': obs, 'action': action, 'reward': reward,
                               'next_obs': next_obs, 'done': done,  # this is a dictionary
                               'constraint': constr, 'safe_set': 0,

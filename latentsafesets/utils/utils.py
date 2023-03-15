@@ -87,6 +87,9 @@ def save_trajectory(trajectory, file, n):#file: data/SimplePointBot or data/Simp
     im_fields = ('obs', 'next_obs')
     for field in im_fields:#obs, next_obs, .json do their jobs, respectively
         if field in trajectory[0]:#a dictionary, trajectory [0] is the 0th/first step/frame
+            tr0=trajectory[0]
+            #print('trajectory',tr0)
+            #print('tr0[field]',tr0[field])
             dat = np.array([frame[field] for frame in trajectory], dtype=np.uint8)#
             #it is 100 pieces of 3-channel image of obs or next_obs
             np.save(os.path.join(file, "%d_%s.npy" % (n, field)), dat)#save the images in .npy file

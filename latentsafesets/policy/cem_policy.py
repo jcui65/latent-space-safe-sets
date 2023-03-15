@@ -47,7 +47,7 @@ class CEMSafeSetPolicy(Policy):
         self.logdir = params['logdir']
 
         self.d_act = params['d_act']#2
-        self.d_obs = params['d_obs']#dimension of observation (3,64,64)
+        self.d_obs = params['d_obs']#dimension of observation (3,64,64) for spb, (3,3,64,64) for reacher#
         self.d_latent = params['d_latent']#32
         self.ac_ub, self.ac_lb = env.action_space.high, env.action_space.low
         self.plan_hor = params['plan_hor']#H=5

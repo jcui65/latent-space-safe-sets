@@ -114,17 +114,19 @@ class AbstractTeacher(ABC):
             if self.noisy:
                 action_input = np.random.normal(action, self.noise_std)
                 action_input = np.clip(action_input, self.ac_low, self.ac_high)
+                #action_input = np.clip(action_input, self.ac_low + 1e-6, self.ac_high - 1e-6)
             else:
                 action_input = action
 
             if store_noisy:
                 action = action_input#if it not noisy, then it is just the same
             #import ipdb; ipdb.set_trace()
-            next_obs, reward, done, info = self.env.stepsafety(action_input)#63 in simple_point_bot.py
+            action_input=np.float32(action_input)#has to be like this?#this is important!
+            next_obs, reward, done, info = self.env.step(action_input)#self.env.stepsafety2(action_input)#self.env.stepsafety(action_input)#63 in simple_point_bot.py
             transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
                           'next_obs': next_obs, 'done': int(done),#this is a dictionary
                           'constraint': int(info['constraint']), 'safe_set': 0,
-                          'on_policy': int(self.on_policy),
+                          'on_policy': int(self.on_policy),##
                           'rdo': info['rdo'].tolist(),
                           'rdn': info['rdn'].tolist(),
                           'hvo': info['hvo'],
@@ -153,7 +155,7 @@ class AbstractTeacher(ABC):
             frame['rtg'] = rtg#the reward to goal at each frame!#I think this is good
             #add a key value pair to the trajectory(key='rtg', value=rtg
             rtg = rtg + frame['reward']
-
+        #print('transitions[obs]',transitions[0]['obs'])#it looks normal
         # assert done, "Did not reach the goal set on task completion."
         # V = self.env.values()
         # for i, t in enumerate(transitions):
