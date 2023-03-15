@@ -8,13 +8,16 @@ import latentsafesets.utils as utils
 import latentsafesets.utils.plot_utils as pu
 from latentsafesets.utils.arg_parser import parse_args
 from latentsafesets.rl_trainers import MPCTrainer
-#import latentsafesets.utils.pytorch_utils as ptu
+import latentsafesets.utils.pytorch_utils as ptu
 
 import os
 import logging
 from tqdm import trange#mainly for showing the progress bar
 import numpy as np
 import pprint
+
+from latentsafesets.modules import VanillaVAE, CBFdotEstimator,CBFdotEstimatorlatentplana
+
 #provides a capability to “pretty-print” arbitrary Python data structures in a form that can be used as input to the interpreter
 log = logging.getLogger("main")#some logging stuff
 
@@ -78,7 +81,8 @@ if __name__ == '__main__':
     constr_viols = []
     task_succ = []
     n_episodes = 0
-    #tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
+
+    tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
     for i in range(num_updates):#default 25 in spb
         update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
         os.makedirs(update_dir)#mkdir!
@@ -114,8 +118,9 @@ if __name__ == '__main__':
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
-                action= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
+                #action= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
+                action= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -144,6 +149,10 @@ if __name__ == '__main__':
                 traj_rews.append(reward)
 
                 constr = info['constraint']#its use is seen a few lines later
+                hvo=info['hvo']#
+                hvn=info['hvn']#
+                hvd=info['hvd']#,#hvd for h value difference
+                ns=info['next_state']
                 '''
                 transition = {'obs': obs, 'action': action, 'reward': reward,#sARSa
                               'next_obs': next_obs, 'done': done,
@@ -155,9 +164,9 @@ if __name__ == '__main__':
                               'on_policy': 1,
                               'rdo': info['rdo'].tolist(),#rdo for relative distance old
                               'rdn': info['rdn'].tolist(),#rdn for relative distance new
-                              'hvo': info['hvo'],#hvo for h value old
-                              'hvn': info['hvn'],#hvn for h value new
-                              'hvd': info['hvd'],#hvd for h value difference
+                              'hvo': hvo,#hvo for h value old
+                              'hvn': hvn,#hvn for h value new
+                              'hvd': hvd,
                               'state': info['state'].tolist(),
                               'next_state': info['next_state'].tolist()
                               }  # add key and value into it!
@@ -179,12 +188,42 @@ if __name__ == '__main__':
                               'next_obs_relative': next_obs_relative
                               }  # add key and value into it!
                 '''
+
+
                 transitions.append(transition)
                 obs = next_obs#don't forget this step!
+                #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                 #obs_relative = next_obs_relative  # don't forget this step!
                 constr_viol = constr_viol or info['constraint']#a way to update constr_viol
                 succ = succ or reward == 0#as said in the paper, reward=0 means success!
 
+                #Now, I should do the evaluation!
+                obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
+                #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
+                embeval = encoder.encode(obseval)#in latent space now!
+                #print('emb.shape',emb.shape)#torch.Size([1, 32])
+                #cbfdot_function.predict()
+                cbfpredict = cbfdot_function(embeval,already_embedded=True)#
+                cbfgt=hvn
+                if (cbfpredict>=0) and (cbfgt>=0):
+                    tn+=1
+                elif (cbfpredict>=0) and (cbfgt<0):
+                    fn+=1
+                elif (cbfpredict<0) and (cbfgt>=0):
+                    fp+=1
+                elif (cbfpredict<0) and (cbfgt<0):
+                    tp+=1
+                tncvalue=0.05**2-0.055**2+1e-8
+                if (cbfpredict>=tncvalue) and (cbfgt>=tncvalue):
+                    tnc+=1
+                elif (cbfpredict>=tncvalue) and (cbfgt<tncvalue):
+                    fnc+=1
+                elif (cbfpredict<tncvalue) and (cbfgt>=tncvalue):
+                    fpc+=1
+                elif (cbfpredict<tncvalue) and (cbfgt<tncvalue):
+                    tpc+=1
+                log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,position x:%f,position y:%f' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1]))
+                #the evaluation phase ended
                 if done:
                     break
             transitions[-1]['done'] = 1#change the last transition to success/done!
@@ -199,7 +238,7 @@ if __name__ == '__main__':
             #pu.make_movie_relative(movie_traj_relative, file=os.path.join(update_dir, 'trajectory%d_relative.gif' % j))
 
             log.info('    Cost: %d' % traj_reward)#see it in the terminal!
-            #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
+            log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
             in_ss = 0
             rtg = 0
             for transition in reversed(transitions):

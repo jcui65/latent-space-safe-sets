@@ -72,7 +72,7 @@ class SimplePointBot(Env, utils.EzPickle):
     def step(self, a):#it returns#if using cbf dot estimator, then see the sepsafety function below
         a = self._process_action(a)#line 166, an action satisfying the constraint
         old_state = self.state.copy()#2d state
-        next_state = self._next_state(self.state, a)#122, go to the next 2d state with noise
+        next_state = self._next_state(self.state, a)#122, go to the next 2d state with noise#it is really the state, not the image
         cur_reward = self.step_reward(self.state, a)#130, the reward of the current state
         self.state = next_state#move on to the next step#literally next_state#
         self._episode_steps += 1

@@ -237,8 +237,8 @@ class DMCWrapper(core.Env):
         #print('oldposition',oldposition,'oldtotarget',oldtotarget,'oldtoobstacle',oldtoobstacle,'oldvelocity',oldvelocity)
         oldtoonorm=oldtoobstacle/np.linalg.norm(oldtoobstacle)#old to o(bstacle) norm
         #print('oldtoonorm',oldtoonorm)
-        obstacleradius=0.05
-        relaxcoeff=1.2#1.2 should be the minimum to choose?#1.5#this might be an important hyperparameter
+        obstacleradius=0.05#this is from the customized reacher file!
+        relaxcoeff=1.1#1.1 should be the minimum to choose?#1.2#1.2 should be the minimum to choose?#1.5#this might be an important hyperparameter
         oldtoboundary=obstacleradius*oldtoonorm
         #print('oldtoboundary',oldtoboundary)
         otbrelax=relaxcoeff*oldtoboundary#0.07
