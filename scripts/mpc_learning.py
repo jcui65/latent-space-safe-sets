@@ -17,7 +17,7 @@ import numpy as np
 import pprint
 
 from latentsafesets.modules import VanillaVAE, CBFdotEstimator,CBFdotEstimatorlatentplana
-
+from datetime import datetime
 #provides a capability to “pretty-print” arbitrary Python data structures in a form that can be used as input to the interpreter
 log = logging.getLogger("main")#some logging stuff
 
@@ -30,7 +30,10 @@ if __name__ == '__main__':
     logdir = params['logdir']#around line 35
     os.makedirs(logdir)#e.g.: 'outputs/2022-07-15/17-41-16'
     #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')
-    utils.init_loggingcjn(logdir)#record started!
+    #utils.init_loggingcjn(logdir)#record started!
+    now = datetime.now()
+    date_string = now.strftime("%Y-%m-%d-%H-%M-%S")#year month day/hour minute second
+    f = open(logdir+"/logjianning"+date_string+".txt", "a")#so that I can write my own comments even when the simulation is still running!!!
     utils.init_logging(logdir)#record started!
     log.info('Training safe set MPC with params...')#at the very very start
     log.info(pprint.pformat(params))#just to pretty print all the parameters!

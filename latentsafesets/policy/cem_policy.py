@@ -1889,8 +1889,7 @@ class CEMSafeSetPolicy(Policy):
                     #print('acbfs.shape',acbfs.shape)#torch.Size([20, 1000, 5])right#torch.Size([20, 1000, 5, 1])wrong#
                     #cbfdots_violss = torch.sum(torch.mean(cbfdots_alls,dim=0) < acbfs,  # the acbfs is subject to change
                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
-                    cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0),
-                                               # the acbfs is subject to change
+                    cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0),# the acbfs is subject to change
                                                dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     #lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements####
                     #print('lhse.shape',lhse.shape)

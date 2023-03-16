@@ -53,24 +53,7 @@ def get_file_prefix(exper_name=None, seed=-1):
     if seed != -1:#that folder ended in 0001!!!
         folder = os.path.join(folder, str(seed))
     return folder#outputs/year-month-day/hour-minute-second
-'''
-def init_loggingcjn(folder, file_level=logging.INFO, console_level=logging.DEBUG):
-    # set up logging to file
-    logging.basicConfig(level=file_level,
-                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                        datefmt='%m-%d %H:%M:%S',
-                        filename=os.path.join(folder, 'logcjn.txt'),
-                        filemode='w')
-    # define a Handler which writes INFO messages or higher to the sys.stderr
-    console = logging.StreamHandler()
-    console.setLevel(console_level)
-    # set a format which is simpler for console use
-    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
-    # tell the handler to use this format
-    console.setFormatter(formatter)
-    # add the handler to the root logger
-    logging.getLogger('').addHandler(console)
-'''
+
 def init_logging(folder, file_level=logging.INFO, console_level=logging.DEBUG):
     # set up logging to file
     logging.basicConfig(level=file_level,
