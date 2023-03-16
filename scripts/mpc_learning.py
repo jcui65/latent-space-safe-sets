@@ -125,8 +125,9 @@ if __name__ == '__main__':
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
-                action= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
+                #action= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
                 #action= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
+                action= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -220,13 +221,13 @@ if __name__ == '__main__':
                 elif (cbfpredict<0) and (cbfgt<0):
                     tp+=1
                 tncvalue=0.05**2-0.055**2+1e-8
-                if (cbfpredict>=tncvalue) and (cbfgt>=tncvalue):
+                if (cbfpredict>=0) and (cbfgt>=tncvalue):
                     tnc+=1
-                elif (cbfpredict>=tncvalue) and (cbfgt<tncvalue):
+                elif (cbfpredict>=0) and (cbfgt<tncvalue):
                     fnc+=1
-                elif (cbfpredict<tncvalue) and (cbfgt>=tncvalue):
+                elif (cbfpredict<0) and (cbfgt>=tncvalue):
                     fpc+=1
-                elif (cbfpredict<tncvalue) and (cbfgt<tncvalue):
+                elif (cbfpredict<0) and (cbfgt<tncvalue):
                     tpc+=1
                 log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,position x:%f,position y:%f' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1]))
                 #the evaluation phase ended
