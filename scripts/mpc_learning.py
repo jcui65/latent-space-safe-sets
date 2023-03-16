@@ -29,6 +29,8 @@ if __name__ == '__main__':
     utils.seed(params['seed'])#around line 10, the default is -1, meaning random seed
     logdir = params['logdir']#around line 35
     os.makedirs(logdir)#e.g.: 'outputs/2022-07-15/17-41-16'
+    #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')
+    utils.init_loggingcjn(logdir)#record started!
     utils.init_logging(logdir)#record started!
     log.info('Training safe set MPC with params...')#at the very very start
     log.info(pprint.pformat(params))#just to pretty print all the parameters!
@@ -120,7 +122,8 @@ if __name__ == '__main__':
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
-                action= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
+                action= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
+                #action= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -278,3 +281,6 @@ if __name__ == '__main__':
 
         np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
         np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
+
+    #utils.init_logging(logdir)#record started!
+    #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')
