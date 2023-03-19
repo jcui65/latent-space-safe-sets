@@ -15,10 +15,10 @@ GT_STATE = False
 EARLY_TERMINATION = False
 
 
-def no_rot_dynamics(prev_target_qpos, action):
+def no_rot_dynamics(prev_target_qpos, action):#? what's this for?
     target_qpos = np.zeros_like(prev_target_qpos)
     target_qpos[:3] = action[:3] + prev_target_qpos[:3]
-    target_qpos[4] = action[3]
+    target_qpos[4] = action[3]#should this be 3 or 4?
     return target_qpos
 
 
@@ -29,15 +29,15 @@ def clip_target_qpos(target, lb, ub):
 
 class PushEnv(BaseMujocoEnv):
     def __init__(self):
-        parent_params = super()._default_hparams()
-        envs_folder = os.path.dirname(os.path.abspath(__file__))
-        self.reset_xml = os.path.join(envs_folder, 'push_env.xml')
-        super().__init__(self.reset_xml, parent_params)
+        parent_params = super()._default_hparams()#It's calling the _default_hparams() from its parent, BaseMujocoEnv
+        envs_folder = os.path.dirname(os.path.abspath(__file__))#this is only for the next line!
+        self.reset_xml = os.path.join(envs_folder, 'push_env.xml')#I know this!
+        super().__init__(self.reset_xml, parent_params)#This's calling the __init__() from its parent, BaseMujocoEnv
         self._adim = 2
         self.substeps = 500
-        self.low_bound = np.array([-0.4, -0.4, -0.05])
+        self.low_bound = np.array([-0.4, -0.4, -0.05])#what's this bound for?
         self.high_bound = np.array([0.4, 0.4, 0.15])
-        self.ac_high = 0.05*np.ones(self._adim)
+        self.ac_high = 0.05*np.ones(self._adim)#this is the action bound, right?
         self.ac_low = -self.ac_high
         self.action_space = Box(self.ac_low, self.ac_high)
         self._previous_target_qpos = None
@@ -52,32 +52,32 @@ class PushEnv(BaseMujocoEnv):
         self._num_steps = 0
         # self._viol = False
 
-        if self.gt_state:
+        if self.gt_state:#if states can be acquired!
             self.observation_space = Box(
-                low=-np.inf, high=np.inf, shape=(27, ))
-        else:
+                low=-np.inf, high=np.inf, shape=(27, ))#all those states
+        else:#it is the image inputs, all those states combined in the image
             self.observation_space = self.observation_space = Box(0, 1, shape=(3, 64, 64), dtype='float32')
         self.reset()
-        self.num_objs = (self.position.shape[0] - 6) // 7
+        self.num_objs = (self.position.shape[0] - 6) // 7#???
 
-    def render(self):
-        x = super().render()[:, ::-1].copy().squeeze()
-        return x.transpose((2, 0, 1)) # cartgripper cameras are flipped in height dimension
+    def render(self):#render means generating images
+        x = super().render()[:, ::-1].copy().squeeze()#this is using the render method from its parents!
+        return x.transpose((2, 0, 1)) # cartgripper cameras are flipped in height dimension#some data processing?
 
-    def reset(self, **kwargs):
-        self._reset_sim(self.reset_xml)
+    def reset(self, **kwargs):#that is only the reset!
+        self._reset_sim(self.reset_xml)#see the parent! It is directly using the method from the parent, BaseMujocoEnv
         #clear our observations from last rollout
-        self._last_obs = None
+        self._last_obs = None#that's why we start from everything being put together, still the method from parent
 
-        state = self.sim.get_state()
-        pos = np.copy(state.qpos[:])
-        pos[6:] = self.object_reset_poses().ravel()
-        state.qpos[:] = pos
+        state = self.sim.get_state()#where is this? See its parents!
+        pos = np.copy(state.qpos[:])#what is this qpos?
+        pos[6:] = self.object_reset_poses().ravel()#around 257#ravel means changing into 1 dimension so it goes from (3,7) to 21
+        state.qpos[:] = pos#also, the above object_reset_pose means that, at the first/0th frame, it is everything hold together
         self.sim.set_state(state)
         self._num_steps = 0
         # self._viol = False
 
-        self.sim.forward()
+        self.sim.forward()#self.sim is the MjSim shown in the parent
 
         self._previous_target_qpos = copy.deepcopy(
             self.sim.data.qpos[:5].squeeze())
@@ -86,7 +86,7 @@ class PushEnv(BaseMujocoEnv):
         if self.gt_state:
             return pos
         else:
-            return self.render()
+            return self.render()#around 63
 
     def step(self, action):
         position = self.position
@@ -94,22 +94,22 @@ class PushEnv(BaseMujocoEnv):
         action = np.clip(action, self.ac_low, self.ac_high)
         # Add extra action dimensions that we have artificially removed
         action = np.array(list(action) + [0, 0])
-        target_qpos = self._next_qpos(action)
-        if self._previous_target_qpos is None:
+        target_qpos = self._next_qpos(action)#297
+        if self._previous_target_qpos is None:#with reset, it should not be none?
             self._previous_target_qpos = target_qpos
         finger_force = np.zeros(2)
 
-        for st in range(self.substeps):
+        for st in range(self.substeps):#500
             alpha = st / (float(self.substeps) - 1)
             self.sim.data.ctrl[:] = alpha * target_qpos + (
                 1. - alpha) * self._previous_target_qpos
-            self.sim.step()
+            self.sim.step()#self.sim is the MjSim thing!
 
         self._previous_target_qpos = target_qpos
         # constraint = self._viol or self.topple_check()
         # self._viol = constraint
-        constraint = self.constraint_fn()
-        reward = self.reward_fn()
+        constraint = self.constraint_fn()#246
+        reward = self.reward_fn()#253
         if constraint:
             reward = -1
 
@@ -122,17 +122,17 @@ class PushEnv(BaseMujocoEnv):
         info = {
             "constraint": constraint,
             "reward": reward,
-            "state": position,
-            "next_state": self.position,
+            "state": position,#the position of the end effector?
+            "next_state": self.position,#it changes along the way?
             "action": action
         }
-
+        #print('state',position,'next_state',self.position)
         if self.gt_state:
             return self.position, reward, done, info
         else:
-            return self.render(), reward, done, info
+            return self.render(), reward, done, info#self.render() seems to generate the image?
 
-    def topple_check(self, debug=False):
+    def topple_check(self, debug=False):#seems not being used?
         quat = self.object_poses[:, 3:]
         phi = np.arctan2(
             2 *
@@ -162,30 +162,30 @@ class PushEnv(BaseMujocoEnv):
         # Can make step_size smaller to make demos more slow
         # Can also increase noise_std but this may make demos less reliable
         # print("BLOCK ID: ", block)
-        cur_pos = self.position[:3]
-        cur_pos[1] += 0.05  # compensate for length of jaws
+        cur_pos = self.position[:3]#this is the position of the end effector
+        cur_pos[1] += 0.05  # compensate for length of jaws#a fixed bias?
 
         block_done = False
         block_reset_done = False
-        block_pos = self.object_poses[block][:3]
+        block_pos = self.object_poses[block][:3]#0,1,2#those are object poses, not pose of the end effector
         action = np.zeros(self._adim)
-        delta = block_pos - cur_pos
+        delta = block_pos - cur_pos#3 dimensional vector
         if not block_done:
-            if abs(delta[0]) > 1e-3:
-                action[0] = delta[0]
+            if abs(delta[0]) > 1e-3:#that is the y, the movement in the horizontal direction!
+                action[0] = delta[0]#which will be confined by the constraint of the action limit
             else:
-                if abs(block_pos[1]) < 0.1:
-                    action[1] = -step_size
+                if abs(block_pos[1]) < 0.1:#it should be the x position, or the row/vertical position
+                    action[1] = -step_size#abs(block_pos)>0.075 will get you done for that block!
                 else:
                     block_done = True
         if block_done:
             if cur_pos[1] < 0.04:
-                action[1] = step_size
+                action[1] = step_size#?what's this for?
             else:
                 block_reset_done = True
   
         action = action + np.random.randn(self._adim) * noise_std
-        action = np.clip(action, self.ac_low, self.ac_high)
+        action = np.clip(action, self.ac_low, self.ac_high)#the action really implemented is with noise!!!
         return action, block_reset_done
 
     def get_demo(self, noise_std=0.001):
@@ -194,7 +194,7 @@ class PushEnv(BaseMujocoEnv):
         ac_list = []
         block_id = 0
         num_steps = 0
-        while block_id < self.num_objs and num_steps < self._max_episode_steps:
+        while block_id < self.num_objs and num_steps < self._max_episode_steps:#150
             ac, reset_done = self.expert_action(block=block_id, noise_std=noise_std)
             if reset_done:
                 block_id += 1
@@ -224,7 +224,7 @@ class PushEnv(BaseMujocoEnv):
             ac_list = []
             num_steps = 0
             while num_steps < self._max_episode_steps:
-                ac = self.action_space.sample()
+                ac = self.action_space.sample()#random action
                 ns, r, done, info = self.step(ac)
                 obs_list.append(ns)
                 ac_list.append(ac)
@@ -239,7 +239,7 @@ class PushEnv(BaseMujocoEnv):
         for block in range(self.num_objs):
             block_pos = self.object_poses[block][:3]
              # TODO: maybe make this an interval rather than a threshold later
-            if 0.075 < abs(block_pos[1]) and abs(block_pos[0]) < .2:
+            if 0.075 < abs(block_pos[1]) and abs(block_pos[0]) < .2:#x>0.075, y<0.2? what is this?
                 block_dones[block] = 1
         return block_dones
 
@@ -247,38 +247,38 @@ class PushEnv(BaseMujocoEnv):
         block_constr = []
         for block in range(self.num_objs):
             block_pos = self.object_poses[block][:3]
-            block_constr.append(abs(block_pos[2]) > .2)
+            block_constr.append(abs(block_pos[2]) > .2)#high or low? Falling means low!
         return any(block_constr)
 
     def reward_fn(self):
         block_dones = self.get_block_dones()
-        return int(np.sum(block_dones) == len(block_dones)) - 1
+        return int(np.sum(block_dones) == len(block_dones)) - 1#this means all 3 blocks must be pushed enough to get reward
 
     def object_reset_poses(self):
         new_poses = np.zeros((3, 7))
-        new_poses[:, 3] = 1
+        new_poses[:, 3] = 1#what is this?
         if self.randomize_objects == True:
             x = np.random.uniform(self.obj_x_range[0], self.obj_x_range[1])
             y1 = np.random.randn() * 0.05
-            y0 = y1 - np.random.uniform(self.obj_y_dist_range[0],
+            y0 = y1 - np.random.uniform(self.obj_y_dist_range[0],#0.05
                                         self.obj_y_dist_range[1])
             y2 = y1 + np.random.uniform(self.obj_y_dist_range[0],
                                         self.obj_y_dist_range[1])
-            new_poses[0, 0:2] = np.array([y0, x])
+            new_poses[0, 0:2] = np.array([y0, x])#new pose 0th column is y, 1th column is x!
             new_poses[1, 0:2] = np.array([y1, x])
             new_poses[2, 0:2] = np.array([y2, x])
         else:
-            x = np.mean(self.obj_x_range)
+            x = np.mean(self.obj_x_range)#which is -0.03
             y1 = 0.
             y0 = y1 - np.mean(self.obj_y_dist_range)
             y2 = y1 + np.mean(self.obj_y_dist_range)
-            new_poses[0, 0:2] = np.array([y0, x])
+            new_poses[0, 0:2] = np.array([y0, x])#what is x or y? row or column?
             new_poses[1, 0:2] = np.array([y1, x])
             new_poses[2, 0:2] = np.array([y2, x])
         return new_poses
 
     @property
-    def position(self):
+    def position(self):#here it is 27 dimensional!
         return np.copy(self.sim.get_state().qpos[:])
 
     @property
@@ -288,7 +288,7 @@ class PushEnv(BaseMujocoEnv):
         poses = []
         for i in range(num_objs):
             poses.append(np.copy(pos[i * 7 + 6:(i + 1) * 7 + 6]))
-        return np.array(poses)
+        return np.array(poses)#object poses, not end effector poses
 
     @property
     def target_object_height(self):
@@ -298,6 +298,93 @@ class PushEnv(BaseMujocoEnv):
         target = no_rot_dynamics(self._previous_target_qpos, action)
         target = clip_target_qpos(target, self.low_bound, self.high_bound)
         return target
+
+    def stepsafety(self, action):
+        position = self.position#this is the 27 dimensional thing!
+        # print("ACTION: ", action)
+        oldefy=position[0]#oldefy means old end effector y coordinate
+        oldblock1y=position[6]#
+        oldblock2y=position[13]
+        oldblock3y=position[20]
+        #some min max things
+        oefyabs=np.abs(oldefy)
+        ob1yabs=np.abs(oldblock1y)#old block 1 y abs 
+        ob2yabs=np.abs(oldblock2y)
+        ob3yabs=np.abs(oldblock3y)
+        #ob1yasat=np.where(ob1yabs<=0.4,ob1yabs,0)#old block 1 y abs saturate
+        #ob2yasat=np.where(ob2yabs<=0.4,ob2yabs,0)
+        #ob3yasat=np.where(ob3yabs<=0.4,ob3yabs,0)
+        thres=0.3
+        obf1=thres**2-ob1yabs**2#-ob1yasat**2#
+        obf2=thres**2-ob2yabs**2#-ob2yasat**2#
+        obf3=thres**2-ob3yabs**2#-ob3yasat**2#
+        rdo=max(ob1yabs,ob2yabs,ob3yabs)#max(ob1yasat,ob2yasat,ob3yasat)#
+        hvo=min(obf1,obf2,obf3)#the more negative, the more unsafe
+        action = np.clip(action, self.ac_low, self.ac_high)
+        # Add extra action dimensions that we have artificially removed
+        action = np.array(list(action) + [0, 0])
+        target_qpos = self._next_qpos(action)#297
+        if self._previous_target_qpos is None:#with reset, it should not be none?
+            self._previous_target_qpos = target_qpos
+        finger_force = np.zeros(2)
+
+        for st in range(self.substeps):#500
+            alpha = st / (float(self.substeps) - 1)
+            self.sim.data.ctrl[:] = alpha * target_qpos + (
+                1. - alpha) * self._previous_target_qpos
+            self.sim.step()#self.sim is the MjSim thing!
+
+        self._previous_target_qpos = target_qpos
+        # constraint = self._viol or self.topple_check()
+        # self._viol = constraint
+        constraint = self.constraint_fn()#246
+        reward = self.reward_fn()#253
+        if constraint:
+            reward = -1
+
+        self._num_steps += 1
+        if EARLY_TERMINATION:
+            done = (constraint > 0) or (reward > -0.5)
+        else:
+            done = self._num_steps >= self._max_episode_steps
+
+        newefy=self.position[0]#oldefy means old end effector y coordinate
+        newblock1y=self.position[6]#
+        newblock2y=self.position[13]
+        newblock3y=self.position[20]
+        #some min max things
+        nefyabs=np.abs(newefy)
+        nb1yabs=np.abs(newblock1y)#old block 1 y abs 
+        nb2yabs=np.abs(newblock2y)
+        nb3yabs=np.abs(newblock3y)
+        #nb1yasat=np.where((nb1yabs<=0.4)|((nb1yabs>0.4)&(ob1yabs<=0.4)),nb1yabs,0)#old block 1 y abs saturate
+        #nb2yasat=np.where((nb2yabs<=0.4)|((nb2yabs>0.4)&(ob2yabs<=0.4)),nb2yabs,0)#try to capture that moment!
+        #nb3yasat=np.where((nb3yabs<=0.4)|((nb3yabs>0.4)&(ob3yabs<=0.4)),nb3yabs,0)#the most ideal way!
+        thres=0.3
+        nbf1=thres**2-nb1yabs**2#-nb1yasat**2#
+        nbf2=thres**2-nb2yabs**2#-nb2yasat**2#
+        nbf3=thres**2-nb3yabs**2#-nb3yasat**2#
+        rdn=max(nb1yabs,nb2yabs,nb3yabs)#max(nb1yasat,nb2yasat,nb3yasat)#
+        hvn=min(nbf1,nbf2,nbf3)#the more negative, the more unsafe
+        hvd=hvn-hvo
+
+        info = {
+            "constraint": constraint,
+            "reward": reward,
+            "state": position,#the position of the end effector?
+            "next_state": self.position,#it changes along the way?
+            "action": action,
+            "rdo":rdo,#rdo for relative distance old#array now!
+            "rdn": rdn,#rdn for relative distance new#array now!
+            "hvo": hvo,#hvo for h value old#corresponding to the old state
+            "hvn":hvn,#hvn for h value new#corresponding to the new state
+            "hvd":hvd #hvd for h value difference
+        }
+        #print('state',position,'next_state',self.position)
+        if self.gt_state:
+            return self.position, reward, done, info
+        else:
+            return self.render(), reward, done, info#self.render() seems to generate the image?
 
 
 def npy_to_gif(im_list, filename, fps=4):

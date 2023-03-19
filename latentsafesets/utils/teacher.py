@@ -34,7 +34,7 @@ class AbstractTeacher(ABC):
         """
         The teacher initially tries to go northeast before going to the origin
         """
-        self.reset()
+        self.reset()#for pushing, it is just set the block_id=0
         transitions = []#AN EMPTY LIST
         obs = self.env.reset(random_start=self.random_start)#obs is a 3 channel image!
         #around line 85 in simple_point_bot.py#random_start is false by default
@@ -122,7 +122,8 @@ class AbstractTeacher(ABC):
                 action = action_input#if it not noisy, then it is just the same
             #import ipdb; ipdb.set_trace()
             action_input=np.float32(action_input)#has to be like this?#this is important!
-            next_obs, reward, done, info = self.env.step(action_input)#self.env.stepsafety2(action_input)#self.env.stepsafety(action_input)#63 in simple_point_bot.py
+            #next_obs, reward, done, info = self.env.step(action_input)#for reacher#63 in simple_point_bot.py
+            next_obs, reward, done, info = self.env.stepsafety(action_input)#for pushing and for spb#63 in simple_point_bot.py
             transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
                           'next_obs': next_obs, 'done': int(done),#this is a dictionary
                           'constraint': int(info['constraint']), 'safe_set': 0,
@@ -324,10 +325,10 @@ class PushTeacher(AbstractTeacher):
         self.horizon = 150
 
     def _expert_control(self, state, i):
-        action, block_done = self.env.expert_action(block=self.block_id, noise_std=0.004)
+        action, block_done = self.env.expert_action(block=self.block_id, noise_std=0.004)#the action we get is with noise!
         if block_done:
             self.block_id += 1
-            self.block_id = min(self.block_id, 2)
+            self.block_id = min(self.block_id, 2)#3 blocks: 0, 1, 2. everytime focus on one block!
 
         return action
 
@@ -364,7 +365,7 @@ class OutburstPushTeacher(AbstractTeacher):
         self.outburst = False
 
     def _expert_control(self, state, i):
-        if np.random.random() > .8:
+        if np.random.random() > .8:#only 10% random actions?
             self.outburst = True
 
         if np.random.random() > .9:
@@ -373,7 +374,7 @@ class OutburstPushTeacher(AbstractTeacher):
         if self.outburst:
             return self.env.action_space.sample().astype(np.float64)
 
-        return np.array((0, -0.02))
+        return np.array((0, -0.02))#-0.02 means it is pushing downwards
 
     def reset(self):
         self.block_id = 0

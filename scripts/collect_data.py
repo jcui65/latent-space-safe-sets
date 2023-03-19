@@ -63,6 +63,20 @@ def generate_teacher_demo_datasafety(env, data_dir, teacher, n=100, noisy=False,
         print('Trajectory %d, Reward %d' % (i, reward))
         demonstrations.append(traj)#traj is one piece of trajectories
         utils.save_trajectory(traj, file, i)#86 in utils.py#save 1 traj having 100 steps
+        '''
+        for k,frame in enumerate(traj):
+            st=frame['state']
+            ns=frame['next_state']
+            #print('state',state,'next_state',ns)
+            log.info('%dstate%d: 0:%f,1:%f,2:%f,3:%f,4:%f,5:%f,' % (i,k,st[0],st[1],st[2],st[3],st[4],st[5]))
+            log.info('06:%f,07:%f,08:%f,09:%f,10:%f,11:%f,12:%f,' % (st[6],st[7],st[8],st[9],st[10],st[11],st[12]))
+            log.info('13:%f,14:%f,15:%f,16:%f,17:%f,18:%f,19:%f,' % (st[13],st[14],st[15],st[16],st[17],st[18],st[19]))
+            log.info('20:%f,21:%f,22:%f,23:%f,24:%f,25:%f,26:%f.' % (st[20],st[21],st[22],st[23],st[24],st[25],st[26]))
+            log.info('%dnext_state%d: 0:%f,1:%f,2:%f,3:%f,4:%f,5:%f,' % (i,k,ns[0],ns[1],ns[2],ns[3],ns[4],ns[5]))
+            log.info('06:%f,07:%f,08:%f,09:%f,10:%f,11:%f,12:%f,' % (ns[6],ns[7],ns[8],ns[9],ns[10],ns[11],ns[12]))
+            log.info('13:%f,14:%f,15:%f,16:%f,17:%f,18:%f,19:%f,' % (ns[13],ns[14],ns[15],ns[16],ns[17],ns[18],ns[19]))
+            log.info('20:%f,21:%f,22:%f,23:%f,24:%f,25:%f,26:%f.' % (ns[20],ns[21],ns[22],ns[23],ns[24],ns[25],ns[26]))
+        '''
         if i < 50 and logdir is not None:
             pu.make_movie(traj, os.path.join(logdir, '%s_%d.gif' % (data_dir, i)))#do I add relative here or in other place?
     return demonstrations#list of list of trajectories?

@@ -17,7 +17,7 @@ class BaseMujocoEnv(BaseEnv):
 
         self._base_adim, self._base_sdim = None, None  #state/action dimension of Mujoco control
         self._adim, self._sdim = None, None  #state/action dimension presented to agent
-        self.num_objects, self._n_joints = None, None
+        self.num_objects, self._n_joints = None, None#what's the difference between the 2?
         self._goal_obj_pose = None
         self._goaldistances = []
 
@@ -33,14 +33,14 @@ class BaseMujocoEnv(BaseEnv):
         self._hp = _hp
 
     def _default_hparams(self):
-        parent_params = super()._default_hparams()
+        parent_params = super()._default_hparams()#is this the only place to call its parent?
         parent_params.add_hparam('viewer_image_height', 64)
         parent_params.add_hparam('viewer_image_width', 64)
         parent_params.add_hparam('ncam', 1)
 
         return parent_params
 
-    def set_goal_obj_pose(self, pose):
+    def set_goal_obj_pose(self, pose):#set the pose to be this!
         self._goal_obj_pose = pose
 
     def _reset_sim(self, model_path):
@@ -50,7 +50,7 @@ class BaseMujocoEnv(BaseEnv):
         :return: None
         """
         self._model_path = model_path
-        self.sim = MjSim(load_model_from_path(self._model_path))
+        self.sim = MjSim(load_model_from_path(self._model_path))#I find the meaning of self.sim!
 
     def reset(self):
         self._goaldistances = []
@@ -73,10 +73,10 @@ class BaseMujocoEnv(BaseEnv):
                 self._frame_width, self._frame_height, camera_name=cam)
         return images
 
-    def project_point(self, point, camera):
+    def project_point(self, point, camera):#geometric things that really mimic a camera?
         model_matrix = np.zeros((4, 4))
         model_matrix[:3, :3] = self.sim.data.get_camera_xmat(camera).T
-        model_matrix[-1, -1] = 1
+        model_matrix[-1, -1] = 1#homogeneous 1?
 
         fovy_radians = np.deg2rad(
             self.sim.model.cam_fovy[self.sim.model.camera_name2id(camera)])
@@ -108,7 +108,7 @@ class BaseMujocoEnv(BaseEnv):
         qpos_dim = self._n_joints  # the states contains pos and vel
         assert self.sim.data.qpos.shape[0] == qpos_dim + 7 * self.num_objects
         desig_pix = np.zeros([self._ncam, self.num_objects, 2], dtype=np.int)
-        ratio = self._frame_width / target_width
+        ratio = self._frame_width / target_width#self._frame_width is 64
         for icam, cam in enumerate(self.cameras):
             for i in range(self.num_objects):
                 if obj_poses is None:
