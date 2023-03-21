@@ -30,7 +30,7 @@ class AbstractTeacher(ABC):
             demonstrations.append(demo)
         return demonstrations
 
-    def generate_trajectory(self, noise_param=None, store_noisy=True):
+    def generate_trajectory(self, noise_param=None, store_noisy=True):#in collect_data, everything is default
         """
         The teacher initially tries to go northeast before going to the origin
         """

@@ -111,7 +111,7 @@ class CEMSafeSetPolicy(Policy):
                 #what if I change this into num_constraint_satisfying+2?
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where num_constraint_satisfying=1!
                     reset_count += 1
-                    act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
+                    act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
                         return self.env.action_space.sample()#really random action!NO MPC is implemented!
@@ -155,15 +155,17 @@ class CEMSafeSetPolicy(Policy):
                 nans = torch.isnan(all_values)
                 all_values[nans] = -1e5
                 values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
-
+                #line 7 in algorithm 1 in the PETS paper!
                 # Blow up cost for trajectories that are not constraint satisfying and/or don't end up
                 #   in the safe set
                 if not self.ignore_constraints:#Do I add the CBF term here?#to see the constraint condition of 1000 trajs
                     constraints_all = torch.sigmoid(self.constraint_function(predictions, already_embedded=True))#call forward#each in the model
                     #print(constraints_all.shape)#torch.Size([20, 1000, 5, 1])
-                    constraint_viols = torch.sum(torch.max(constraints_all, dim=0)[0] > self.constraint_thresh, dim=1)#those that violate the constraints
-                    #tempe=torch.max(constraints_all, dim=0)#a tuple of (value, indices)
-                    #print('tempe',tempe.shape)  # val's shape is torch.Size([1000, 5, 1])
+                    maxconstraintall=torch.max(constraints_all, dim=0)#value reduce the dimension to [1000,5,1], also contains 2 things, values and indices
+                    maxconstraintallvalues=maxconstraintall[0]#the value of maxconstraintall, has dimension [1000,5,1]
+                    constraint_viols = torch.sum(maxconstraintallvalues > self.constraint_thresh, dim=1)#those that violate the constraints,shape[1000,1]
+                    #tempe=torch.max(constraints_all, dim=0)#a tuple of (value, indices)#let the most dangerous particle safe, then everyone else's safe
+                    #print('tempe',tempe.shape)  # val's shape is torch.Size([1000, 5, 1])#thus each element in constraint_viols is between 0 and planning horizon
                     #print((torch.max(constraints_all, dim=0)[0]).shape)#torch.Size([1000, 5, 1])
                     #print((torch.max(constraints_all, dim=0)[0] > self.constraint_thresh).shape)#torch.Size([1000, 5, 1])
                     #print('constraint_viols.shape',constraint_viols.shape)#sum will consume the 1st dim (5 in this case)#1000 0,1,2,3,4,5s

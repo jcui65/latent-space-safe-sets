@@ -69,7 +69,7 @@ class PETSDynamics(nn.Module, EncodedModule):
             next_emb = next_obs
 
         if self.normalize_delta:
-            delta = next_emb - emb
+            delta = next_emb - emb#we want to predict the delta
             self.delta_rms.update(delta.detach())
             for model in self.models:
                 model.update_statistics(self.delta_rms.mean.detach(),
@@ -118,7 +118,7 @@ class PETSDynamics(nn.Module, EncodedModule):
             #print('t',t,'act',act)#when t=0 act=nan! the problem is from outside!
             act_tiled = act.repeat((self.n_particles, 1))#([20000,32])?
             model_ind = np.random.randint(0, self.n_models)#5
-            model = self.models[model_ind]#randomly choose models?#it is TS-1
+            model = self.models[model_ind]#randomly choose AMONG 5 models WITHIN HORIZON#it is TS-1
             #print('running_emb.shape',running_emb.shape)#torch.Size([20000, 32])
             #print('act_tiled.shape',act_tiled.shape)#torch.Size([20000, 2])
             next_emb = model.get_next_emb(running_emb, act_tiled)#propogate
@@ -147,7 +147,7 @@ class PETSDynamics(nn.Module, EncodedModule):
             g['lr'] = self.learning_rate
 
 
-class ProbabilisticDynamicsModel(nn.Module):
+class ProbabilisticDynamicsModel(nn.Module):#this is every model!
     def __init__(self, d_latent, d_act, n_layers=3, size=128):
         super(ProbabilisticDynamicsModel, self).__init__()
         self.d_latent = d_latent#32
@@ -171,7 +171,7 @@ class ProbabilisticDynamicsModel(nn.Module):
     def forward(self, emb, acs):
         inp = emb
         concat = torch.cat((inp, acs), dim=1)#latent states and action
-        delta_normalized_both = self.delta_network(concat)
+        delta_normalized_both = self.delta_network(concat)#its use is to output normalized \delta s_{t+1}
         delta_normalized_mean = delta_normalized_both[:, :self.d_latent]
         #print('delta_normalized_mean',delta_normalized_both)
         nans = torch.isnan(delta_normalized_mean)
@@ -184,14 +184,14 @@ class ProbabilisticDynamicsModel(nn.Module):
         # print(nansstd)#
         delta_normalized_std[nansstd] = 1e-6
         dist = torch.distributions.normal.Normal(delta_normalized_mean, delta_normalized_std)
-        return dist#dist means distribution, not distance!
+        return dist#dist means distribution, not distance! now it can predict \delta s_{t+1}!
 
     def loss(self, emb, delta_unnormalized, act):
-        delta_normalized = self._normalize_delta(delta_unnormalized)#204
+        delta_normalized = self._normalize_delta(delta_unnormalized)#204#just some data processing
         dist = self(emb, act)#the forward function
         log_prob = dist.log_prob(delta_normalized)
         loss = torch.mean(log_prob)#log_prob returns the logarithm of the density or probability.
-        return -loss#equation 8 in the paper!#that's why we need the negative of the log prob, as we want to minimize it!
+        return -loss#equation 8 in the LS3 paper!#that's why we need the negative of the log prob, as we want to minimize it!
 
     def get_next_emb(self, emb, acs):
         #if torch.min(emb)<=0:#it doesn't matter!
@@ -206,18 +206,18 @@ class ProbabilisticDynamicsModel(nn.Module):
         #print('acs01', acs)#this becomes nan!
         #print('torch.min(emb)',torch.min(emb))
         #print('torch.min(acs)', torch.min(acs))
-        dist = self(emb, acs)#the forward function!
-        delta_normalized = dist.rsample()#applying reparameterization trick
-        #print('torch.min(delta_normalized)',torch.min(delta_normalized))
+        dist = self(emb, acs)#the forward function!Here you already introduces randomness, see line 180-187#you get a distribution!
+        delta_normalized = dist.rsample()#applying reparameterization trick to sample, so that gradient can be passed!
+        #print('torch.min(delta_normalized)',torch.min(delta_normalized))#sample with mean+epsilon*std!
         #print('torch.min(self.delta_mean)',torch.min(self.delta_mean))
         #print('torch.min(self.delta_std)', torch.min(self.delta_std))
-        delta = self._unnormalize_delta(delta_normalized)#210
+        delta = self._unnormalize_delta(delta_normalized)#210#just some data processing to recover unnormalized_delta
         #if torch.min(delta)<=0:#it's not a problem!#we know that big minus delta is a big problem!
         #print('torch.min(delta)!',torch.min(delta))#<=0#how can min(delta) not to be negative!
         #if torch.min(self.delta_std)==0:
             #print('torch.min(delta_std)==0!',torch.min(self.delta_std))
         #print('embinner02.shape',emb.shape)#torch.Size([20000, 32])
-        return emb + delta#the new embedding
+        return emb + delta#the new embedding#delta is calculating the increment, or \delta s_{t+1}
 
     def get_next_emb_and_loss(self, emb, delta_unnormalized, act):
         """

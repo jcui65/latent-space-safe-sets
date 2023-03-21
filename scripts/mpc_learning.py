@@ -154,7 +154,7 @@ if __name__ == '__main__':
                 #next_obs_relative = np.array(next_obs_relative)  # relative or not? # to make this image a numpy array
                 movie_traj.append({'obs': next_obs.reshape((-1, 3, 64, 64))[0]})  # add this image
                 #movie_traj_relative.append({'obs_relative': next_obs_relative.reshape((-1, 3, 64, 64))[0]}) #relative or not # add this image
-                traj_rews.append(reward)
+                traj_rews.append(reward)#reward is either 0 or 1!
 
                 constr = info['constraint']#its use is seen a few lines later
                 hvo=info['hvo']#
@@ -202,7 +202,7 @@ if __name__ == '__main__':
                 obs = next_obs#don't forget this step!
                 #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                 #obs_relative = next_obs_relative  # don't forget this step!
-                constr_viol = constr_viol or info['constraint']#a way to update constr_viol
+                constr_viol = constr_viol or info['constraint']#a way to update constr_viol#either 0 or 1
                 succ = succ or reward == 0#as said in the paper, reward=0 means success!
 
                 #Now, I should do the evaluation!
@@ -235,7 +235,7 @@ if __name__ == '__main__':
                 if done:
                     break
             transitions[-1]['done'] = 1#change the last transition to success/done!
-            traj_reward = sum(traj_rews)#total reward
+            traj_reward = sum(traj_rews)#total reward, should be >=-100/-150
             #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints
             logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol))
             all_rewards.append(traj_rews)#does it use any EpLen?
