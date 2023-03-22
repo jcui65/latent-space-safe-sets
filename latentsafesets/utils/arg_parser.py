@@ -21,9 +21,9 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)
-    parser.add_argument('--num_updates', type=int, default=100)#25)#1)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=1)#100)#25)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
-
+    parser.add_argument('--repeat_times',type=int,default=3)#7)
     add_controller_args(parser)
     add_encoder_args(parser)
     add_ss_args(parser)

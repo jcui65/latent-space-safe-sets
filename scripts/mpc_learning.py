@@ -25,9 +25,16 @@ log = logging.getLogger("main")#some logging stuff
 if __name__ == '__main__':
     params = parse_args()#get the parameters from parse_args, see arg_parser.py
     # Misc preliminaries
-
+    #repeattimes=params['repeat_times']
+    #for i in range(repeattimes):
+    #params['seed']=23
+    #seed=params['seed']
+    #print('seed',seed)
     utils.seed(params['seed'])#around line 10, the default is -1, meaning random seed
-    logdir = params['logdir']#around line 35
+    #folder = os.path.join(folder, str(seed))
+    #logdir = params['logdir']#around line 35
+    #logdirbeforeseed = params['logdir']#around line 35
+    logdir=params['logdir']##os.path.join(logdirbeforeseed, str(seed))
     os.makedirs(logdir)#e.g.: 'outputs/2022-07-15/17-41-16'
     #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')
     #utils.init_loggingcjn(logdir)#record started!
@@ -69,13 +76,13 @@ if __name__ == '__main__':
 
     log.info("Creating policy")
     #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                              #constraint_function, goal_indicator, params)
+                            #constraint_function, goal_indicator, params)
     policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                              constraint_function, goal_indicator, cbfdot_function, params)
+                            constraint_function, goal_indicator, cbfdot_function, params)
     #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
-                              #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
+                            #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
     #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
-                              #constraint_function, goal_indicator, cbfdot_function, encoder2,dynamics_model2, params)
+                            #constraint_function, goal_indicator, cbfdot_function, encoder2,dynamics_model2, params)
     num_updates = params['num_updates']#default 25
     traj_per_update = params['traj_per_update']#default 10
 
@@ -142,18 +149,18 @@ if __name__ == '__main__':
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs_relative / 255, env.state, tp,
-                                                                                             #fp,fn, tn, tpc, fpc, fnc, tnc)
+                                                                                            #fp,fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs_relative / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)#not finished yet!                                                                             
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive(obs / 255, env.state, tp,
-                                                                                             #fp,#forever banned! forever obsolete
-                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
+                                                                                            #fp,#forever banned! forever obsolete
+                                                                                            #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive2(obs / 255, env.state, tp,
-                                                                                             #fp,fn, tn, tpc, fpc, fnc, tnc,obs_relative/255)
+                                                                                            #fp,fn, tn, tpc, fpc, fnc, tnc,obs_relative/255)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanb(obs_relative / 255, env.state, tp,
-                                                                                             #fp,
-                                                                                             #fn, tn,
-                                                                                             #tpc, fpc, fnc, tnc)
+                                                                                            #fp,
+                                                                                            #fn, tn,
+                                                                                            #tpc, fpc, fnc, tnc)
                 # the CEM (candidates, elites, etc.) is in here
                 #next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
                 next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
@@ -173,38 +180,38 @@ if __name__ == '__main__':
                 ns=info['next_state']
                 '''
                 transition = {'obs': obs, 'action': action, 'reward': reward,#sARSa
-                              'next_obs': next_obs, 'done': done,
-                              'constraint': constr, 'safe_set': 0, 'on_policy': 1}
+                            'next_obs': next_obs, 'done': done,
+                            'constraint': constr, 'safe_set': 0, 'on_policy': 1}
                 '''
                 transition = {'obs': obs, 'action': action, 'reward': reward,
-                              'next_obs': next_obs, 'done': done,  # this is a dictionary
-                              'constraint': constr, 'safe_set': 0,
-                              'on_policy': 1,
-                              'rdo': info['rdo'].tolist(),#rdo for relative distance old
-                              'rdn': info['rdn'].tolist(),#rdn for relative distance new
-                              'hvo': hvo,#hvo for h value old
-                              'hvn': hvn,#hvn for h value new
-                              'hvd': hvd,
-                              'state': info['state'].tolist(),
-                              'next_state': info['next_state'].tolist()
-                              }  # add key and value into it!
+                            'next_obs': next_obs, 'done': done,  # this is a dictionary
+                            'constraint': constr, 'safe_set': 0,
+                            'on_policy': 1,
+                            'rdo': info['rdo'].tolist(),#rdo for relative distance old
+                            'rdn': info['rdn'].tolist(),#rdn for relative distance new
+                            'hvo': hvo,#hvo for h value old
+                            'hvn': hvn,#hvn for h value new
+                            'hvd': hvd,
+                            'state': info['state'].tolist(),
+                            'next_state': info['next_state'].tolist()
+                            }  # add key and value into it!
                 '''
                 transition = {'obs': obs, 'action': action, 'reward': reward,
-                              'next_obs': next_obs, 'done': done,  # this is a dictionary
-                              'constraint': constr, 'safe_set': 0,
-                              'on_policy': 1,
-                              'rdo': info['rdo'].tolist(),  # rdo for relative distance old
-                              'rdn': info['rdn'].tolist(),  # rdn for relative distance new
-                              'hvo': info['hvo'],  # hvo for h value old
-                              'hvn': info['hvn'],  # hvn for h value new
-                              'hvd': info['hvd'],  # hvd for h value difference
-                              'state': info['state'].tolist(),
-                              'next_state': info['next_state'].tolist(),
-                              'state_relative': info['state_relative'].tolist(),
-                              'next_state_relative': info['next_state_relative'].tolist(),
-                              'obs_relative': obs_relative,
-                              'next_obs_relative': next_obs_relative
-                              }  # add key and value into it!
+                            'next_obs': next_obs, 'done': done,  # this is a dictionary
+                            'constraint': constr, 'safe_set': 0,
+                            'on_policy': 1,
+                            'rdo': info['rdo'].tolist(),  # rdo for relative distance old
+                            'rdn': info['rdn'].tolist(),  # rdn for relative distance new
+                            'hvo': info['hvo'],  # hvo for h value old
+                            'hvn': info['hvn'],  # hvn for h value new
+                            'hvd': info['hvd'],  # hvd for h value difference
+                            'state': info['state'].tolist(),
+                            'next_state': info['next_state'].tolist(),
+                            'state_relative': info['state_relative'].tolist(),
+                            'next_state_relative': info['next_state_relative'].tolist(),
+                            'obs_relative': obs_relative,
+                            'next_obs_relative': next_obs_relative
+                            }  # add key and value into it!
                 '''
 
 
@@ -276,8 +283,8 @@ if __name__ == '__main__':
         std_rewards.append(std_rew)
         log.info('Iteration %d average reward: %.4f' % (i, mean_rew))
         pu.simple_plot(avg_rewards, std=std_rewards, title='Average Rewards',
-                       file=os.path.join(logdir, 'rewards.pdf'),
-                       ylabel='Average Reward', xlabel='# Training updates')
+                    file=os.path.join(logdir, 'rewards.pdf'),
+                    ylabel='Average Reward', xlabel='# Training updates')
 
         logger.log_tabular('Epoch', i)
         logger.log_tabular('TrainEpisodes', n_episodes)
@@ -296,6 +303,7 @@ if __name__ == '__main__':
 
         np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
         np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
-
+    
+    params['seed']=params['seed']+i+1
     #utils.init_logging(logdir)#record started!
     #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')
