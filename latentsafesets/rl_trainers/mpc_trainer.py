@@ -303,10 +303,12 @@ class MPCTrainer(Trainer):
 
         self.params = params
         self.env = env
-
-        self.logdir = params['logdir']
-
-        loss_plotter = LossPlotter(os.path.join(params['logdir'], 'loss_plots'))
+        #self.logdir = params['logdir']
+        self.logdirbeforeseed = params['logdir']
+        seed=self.params['seed']#should I keep self?
+        self.logdir=os.path.join(self.logdirbeforeseed, str(seed))
+        #loss_plotter = LossPlotter(os.path.join(params['logdir'], 'loss_plots'))
+        loss_plotter = LossPlotter(os.path.join(self.logdir, 'loss_plots'))
         self.encoder_data_loader = EncoderDataLoader(params)
 
         self.trainers = []#the following shows the sequence of training

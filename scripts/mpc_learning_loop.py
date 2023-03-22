@@ -19,7 +19,7 @@ import pprint
 from latentsafesets.modules import VanillaVAE, CBFdotEstimator,CBFdotEstimatorlatentplana
 from datetime import datetime
 #provides a capability to “pretty-print” arbitrary Python data structures in a form that can be used as input to the interpreter
-log = logging.getLogger("main")#some logging stuff
+#log = logging.getLogger("main")#some logging stuff
 
 
 if __name__ == '__main__':
@@ -28,8 +28,9 @@ if __name__ == '__main__':
     repeattimes=params['repeat_times']
     for i in range(repeattimes):
         #params['seed']=23
+        log = logging.getLogger("main")#some logging stuffs
         seed=params['seed']
-        print('seed',seed)
+        #print('seed',seed)#works as expected!
         utils.seed(params['seed'])#around line 10, the default is -1, meaning random seed
         #folder = os.path.join(folder, str(seed))
         #logdir = params['logdir']#around line 35

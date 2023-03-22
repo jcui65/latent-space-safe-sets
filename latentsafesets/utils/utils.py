@@ -50,8 +50,8 @@ def get_file_prefix(exper_name=None, seed=-1):
         now = datetime.now()
         date_string = now.strftime("%Y-%m-%d/%H-%M-%S")#year month day/hour minute second
         folder = os.path.join('outputs', date_string)#outputs/year-month-day/hour-minute-second
-    if seed != -1:#that folder ended in 0001!!!#I change/delete it!
-        folder = os.path.join(folder, str(seed))
+    #if seed != -1:#that folder ended in 0001!!!#I change/delete it!
+        #folder = os.path.join(folder, str(seed))
     return folder#outputs/year-month-day/hour-minute-second
 
 def init_logging(folder, file_level=logging.INFO, console_level=logging.DEBUG):
