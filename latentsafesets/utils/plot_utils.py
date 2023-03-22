@@ -133,27 +133,34 @@ def visualize_value(obs, value_func, file, env=None):
     values = value_func.forward_np(obs, already_embedded=True).squeeze()#not spb?
     obs = ptu.to_numpy(value_func.encoder.decode(ptu.torchify(obs)))
     sort_ind = np.argsort(values)
-    low_ind = sort_ind[:5]
-    high_ind = sort_ind[-5:]
+    eachline=8
+    low_ind = sort_ind[:eachline]#the lowest five among 256
+    mid_ind=sort_ind[int(values.shape[0]/2-eachline/2):int(values.shape[0]/2+eachline/2)]
+    high_ind = sort_ind[-eachline:]#the highest five among 256
     low_vals = values[low_ind]
-
     if len(obs.shape) == 5:
-        obs = obs[:, 0]
+        obs = obs[:, 0]#the first in the length-3 series
 
     low_obs = obs[low_ind]
     high_vals = values[high_ind]
     high_obs = obs[high_ind]
+    mid_vals = values[mid_ind]
+    mid_obs = obs[mid_ind]
 
-    fig, axs = plt.subplots(2, 5)
+    fig, axs = plt.subplots(3, eachline)
 
-    for i in range(5):
+    for i in range(eachline):
         axs[0][i].imshow(high_obs[i].squeeze().transpose((1, 2, 0)))
         axs[0][i].set_title('%3.3f' % high_vals[i])
         axs[0][i].set_axis_off()
 
-        axs[1][i].imshow(low_obs[i].squeeze().transpose((1, 2, 0)))
-        axs[1][i].set_title('%3.3f' % low_vals[i])
+        axs[1][i].imshow(mid_obs[i].squeeze().transpose((1, 2, 0)))
+        axs[1][i].set_title('%3.3f' % mid_vals[i])
         axs[1][i].set_axis_off()
+
+        axs[2][i].imshow(low_obs[i].squeeze().transpose((1, 2, 0)))
+        axs[2][i].set_title('%3.3f' % low_vals[i])
+        axs[2][i].set_axis_off()
 
     plt.savefig(file)
     plt.close()

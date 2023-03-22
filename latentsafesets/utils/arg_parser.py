@@ -194,7 +194,7 @@ def add_gi_args(parser):
 
 def add_cbfd_args(parser):
     # Constraint Estimator params
-    parser.add_argument('--cbfdot_thresh', type=float, default=1.0)#0.6)#0.4)#0.8)#0.48)#838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
+    parser.add_argument('--cbfdot_thresh', type=float, default=0.5)#0.75)#1.0)#0.6)#0.4)#0.8)#0.48)#838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
     parser.add_argument('--cbfdot_thresh_mult', type=float, default=1.0)#1.2)#1.25)#0.8)#
     parser.add_argument('--cbfd_lr', type=float, default=1e-4,
                         help='Learning rate for cbfd network')
