@@ -75,6 +75,8 @@ class CEMSafeSetPolicy(Policy):
         self.prev_sol = np.tile((self.ac_lb + self.ac_ub) / 2, [self.plan_hor])#how it is being used?
         self.init_var = np.tile(np.square(self.ac_ub - self.ac_lb) / 16, [self.plan_hor])#how it is being used?
 
+        #self.reward_type=params['reward_type']
+        #self.conservative=params['conservative']
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """

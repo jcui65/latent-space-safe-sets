@@ -257,27 +257,40 @@ def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, t
     values = cbfd.cbfdots(obs, already_embedded=True).squeeze()#not spb?
     obs = ptu.to_numpy(cbfd.encoder.decode(ptu.torchify(obs)))
     sort_ind = np.argsort(values)
-    low_ind = sort_ind[:5]#the lowest five among 256
-    high_ind = sort_ind[-5:]#the highest five among 256
+    eachline=8
+    low_ind = sort_ind[:eachline]#the lowest five among 256
+    #print('low_ind',low_ind)
+    #print('values.shape[0]',values.shape[0])#256
+    mid_ind=sort_ind[int(values.shape[0]/2-eachline/2):int(values.shape[0]/2+eachline/2)]
+    #print('mid_ind',mid_ind)
+    #mid_ind=sort_ind[124:132]
+    high_ind = sort_ind[-eachline:]#the highest five among 256
+    #print('high_ind',high_ind)
     low_vals = values[low_ind]
-
+    #print('obs.shape',obs.shape)#in reacher it is (256,3,3,64,64)
     if len(obs.shape) == 5:
-        obs = obs[:, 0]
+        obs = obs[:, 0]#the first in the length-3 series
 
     low_obs = obs[low_ind]
     high_vals = values[high_ind]
     high_obs = obs[high_ind]
+    mid_vals = values[mid_ind]
+    mid_obs = obs[mid_ind]
 
-    fig, axs = plt.subplots(2, 5)
+    fig, axs = plt.subplots(3, eachline)
 
-    for i in range(5):
+    for i in range(eachline):
         axs[0][i].imshow(high_obs[i].squeeze().transpose((1, 2, 0)))
         axs[0][i].set_title('%3.5f' % high_vals[i])
         axs[0][i].set_axis_off()
 
-        axs[1][i].imshow(low_obs[i].squeeze().transpose((1, 2, 0)))
-        axs[1][i].set_title('%3.5f' % low_vals[i])
+        axs[1][i].imshow(mid_obs[i].squeeze().transpose((1, 2, 0)))
+        axs[1][i].set_title('%3.5f' % mid_vals[i])
         axs[1][i].set_axis_off()
+
+        axs[2][i].imshow(low_obs[i].squeeze().transpose((1, 2, 0)))
+        axs[2][i].set_title('%3.5f' % low_vals[i])
+        axs[2][i].set_axis_off()
 
     plt.savefig(file)
     plt.close()

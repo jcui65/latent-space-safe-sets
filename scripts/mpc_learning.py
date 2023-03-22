@@ -88,6 +88,11 @@ if __name__ == '__main__':
     n_episodes = 0
 
     tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
+
+    reward_type=params['reward_type']
+    #print('reward_type',reward_type)
+    conservative=params['conservative']
+    #print('conservative',conservative)
     for i in range(num_updates):#default 25 in spb
         update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
         os.makedirs(update_dir)#mkdir!
@@ -123,11 +128,16 @@ if __name__ == '__main__':
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
-                #action= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
+                if conservative=='conservative' and reward_type=='sparse':
+                    #print('conservative and sparse!')#you get this right!
+                    action= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
-                #action= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
-                action= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
-                #action= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
+                elif conservative=='average' and reward_type=='sparse':
+                    action= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
+                elif conservative=='conservative' and reward_type=='dense':
+                    action= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
+                elif conservative=='average' and reward_type=='dense':
+                    action= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -146,8 +156,8 @@ if __name__ == '__main__':
                                                                                              #tpc, fpc, fnc, tnc)
                 # the CEM (candidates, elites, etc.) is in here
                 #next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
-                #next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
-                next_obs, reward, done, info = env.stepsafety(action)#applies to pushing and spb  # 63 in simple_point_bot.py
+                next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
+                #next_obs, reward, done, info = env.stepsafety(action)#applies to pushing and spb  # 63 in simple_point_bot.py
                 #next_obs = np.array(next_obs)#to make this image a numpy array
                 #next_obs, reward, done, info,next_obs_relative = env.stepsafety_relative(action)  # 63 in simple_point_bot.py
                 next_obs = np.array(next_obs) #relative or not? # to make this image a numpy array
