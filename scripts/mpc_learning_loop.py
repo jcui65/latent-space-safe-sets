@@ -26,7 +26,7 @@ if __name__ == '__main__':
     params = parse_args()#get the parameters from parse_args, see arg_parser.py
     # Misc preliminaries
     repeattimes=params['repeat_times']
-    for k in range(repeattimes):
+    for m in range(repeattimes):
         #params['seed']=23
         log = logging.getLogger("main")#some logging stuffs
         seed=params['seed']
@@ -305,6 +305,6 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
         
-        params['seed']=params['seed']+k+1
+        params['seed']=params['seed']+m+1
         #utils.init_logging(logdir)#record started!
         #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')
