@@ -239,7 +239,7 @@ if __name__ == '__main__':
                         fp+=1
                     elif (cbfpredict<0) and (cbfgt<0):
                         tp+=1
-                    tncvalue=0.3**2-0.4**2+1e-3#0.05**2-0.055**2+1e-8#for reacher!
+                    tncvalue=0.05**2-0.055**2+1e-8#for reacher!#0.3**2-0.4**2+1e-3#FOR PUSHING!#
                     if (cbfpredict>=0) and (cbfgt>=tncvalue):
                         tnc+=1
                     elif (cbfpredict>=0) and (cbfgt<tncvalue):
@@ -263,7 +263,7 @@ if __name__ == '__main__':
                 pu.make_movie(movie_traj, file=os.path.join(update_dir, 'trajectory%d.gif' % j))
                 #pu.make_movie_relative(movie_traj_relative, file=os.path.join(update_dir, 'trajectory%d_relative.gif' % j))
 
-                log.info('    Cost: %d' % traj_reward)#see it in the terminal!
+                log.info('    Cost: %d, constraint violation: %d' % (traj_reward,constr_viol))#see it in the terminal!
                 log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
                 in_ss = 0
                 rtg = 0

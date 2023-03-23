@@ -1552,9 +1552,10 @@ class CEMSafeSetPolicy(Policy):
                     act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
+                        log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        return self.env.action_space.sample()#for fair comparison#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -1567,7 +1568,9 @@ class CEMSafeSetPolicy(Policy):
                 #import ipdb#it seems that they are lucky to run into the following case
                 if torch.isnan(self.std[0,0]):#self.std[0,0]==torch.nan:
                     #ipdb.set_trace()
-                    print('elites.shape',elites.shape)##print('nan',self.std[0,0])
+                    #print('elites.shape',elites.shape)##print('nan',self.std[0,0])
+                    eshape=elites.shape
+                    log.info('eshape[0]:%d,eshape[1]:%d,eshape[2]:%d' % (eshape[0],eshape[1],eshape[2]))
                     #self.std=0.5*torch.rand_like(self.mean)+0.1#1e-2#is it just a work around?
                     self.std = 0.0 * torch.ones_like(self.mean)#0.8 * torch.ones_like(self.mean)##1.0 * torch.ones_like(self.mean)# 1e-2#is it just a work around?
                     #0.8 is the hyperparameter I choose which I think may have good performance
@@ -1823,9 +1826,10 @@ class CEMSafeSetPolicy(Policy):
                     act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
+                        log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        return self.env.action_space.sample()#for fair comparison!#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -1838,7 +1842,9 @@ class CEMSafeSetPolicy(Policy):
                 #import ipdb#it seems that they are lucky to run into the following case
                 if torch.isnan(self.std[0,0]):#self.std[0,0]==torch.nan:
                     #ipdb.set_trace()
-                    print('elites.shape',elites.shape)##print('nan',self.std[0,0])
+                    #print('elites.shape',elites.shape)##print('nan',self.std[0,0])
+                    eshape=elites.shape
+                    log.info('eshape[0]:%d,eshape[1]:%d,eshape[2]:%d' % (eshape[0],eshape[1],eshape[2]))
                     #self.std=0.5*torch.rand_like(self.mean)+0.1#1e-2#is it just a work around?
                     self.std = 0.0 * torch.ones_like(self.mean)#0.8 * torch.ones_like(self.mean)##1.0 * torch.ones_like(self.mean)# 1e-2#is it just a work around?
                     #0.8 is the hyperparameter I choose which I think may have good performance
@@ -1964,9 +1970,10 @@ class CEMSafeSetPolicy(Policy):
                     act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
+                        log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        return self.env.action_space.sample()#for fair comparison#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -1979,7 +1986,9 @@ class CEMSafeSetPolicy(Policy):
                 #import ipdb#it seems that they are lucky to run into the following case
                 if torch.isnan(self.std[0,0]):#self.std[0,0]==torch.nan:
                     #ipdb.set_trace()
-                    print('elites.shape',elites.shape)##print('nan',self.std[0,0])
+                    #print('elites.shape',elites.shape)##print('nan',self.std[0,0])
+                    eshape=elites.shape
+                    log.info('eshape[0]:%d,eshape[1]:%d,eshape[2]:%d' % (eshape[0],eshape[1],eshape[2]))
                     #self.std=0.5*torch.rand_like(self.mean)+0.1#1e-2#is it just a work around?
                     self.std = 0.0 * torch.ones_like(self.mean)#0.8 * torch.ones_like(self.mean)##1.0 * torch.ones_like(self.mean)# 1e-2#is it just a work around?
                     #0.8 is the hyperparameter I choose which I think may have good performance
@@ -2113,9 +2122,10 @@ class CEMSafeSetPolicy(Policy):
                     act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
+                        log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        return self.env.action_space.sample()#for fair comparison with LS3#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -2128,7 +2138,9 @@ class CEMSafeSetPolicy(Policy):
                 #import ipdb#it seems that they are lucky to run into the following case
                 if torch.isnan(self.std[0,0]):#self.std[0,0]==torch.nan:
                     #ipdb.set_trace()
-                    print('elites.shape',elites.shape)##print('nan',self.std[0,0])
+                    #print('elites.shape',elites.shape)##print('nan',self.std[0,0])
+                    eshape=elites.shape
+                    log.info('eshape[0]:%d,eshape[1]:%d,eshape[2]:%d' % (eshape[0],eshape[1],eshape[2]))
                     #self.std=0.5*torch.rand_like(self.mean)+0.1#1e-2#is it just a work around?
                     self.std = 0.0 * torch.ones_like(self.mean)#0.8 * torch.ones_like(self.mean)##1.0 * torch.ones_like(self.mean)# 1e-2#is it just a work around?
                     #0.8 is the hyperparameter I choose which I think may have good performance
@@ -2279,7 +2291,9 @@ class CEMSafeSetPolicy(Policy):
                 #import ipdb#it seems that they are lucky to run into the following case
                 if torch.isnan(self.std[0,0]):#self.std[0,0]==torch.nan:
                     #ipdb.set_trace()
-                    print('elites.shape',elites.shape)##print('nan',self.std[0,0])
+                    eshape=elites.shape
+                    #print('elites.shape',eshape)##print('nan',self.std[0,0])
+                    log.info('eshape[0]:%d,eshape[1]:%d,eshape[2]:%d,current state x:%f, current state y:%f' % (eshape[0],eshape[1],eshape[2],state[0],state[1]))
                     #self.std=0.5*torch.rand_like(self.mean)+0.1#1e-2#is it just a work around?
                     self.std = 0.0 * torch.ones_like(self.mean)#0.8 * torch.ones_like(self.mean)##1.0 * torch.ones_like(self.mean)# 1e-2#is it just a work around?
                     #0.8 is the hyperparameter I choose which I think may have good performance
