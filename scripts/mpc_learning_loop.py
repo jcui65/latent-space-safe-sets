@@ -239,7 +239,7 @@ if __name__ == '__main__':
                         fp+=1
                     elif (cbfpredict<0) and (cbfgt<0):
                         tp+=1
-                    tncvalue=0.05**2-0.055**2+1e-8#for reacher!#0.3**2-0.4**2+1e-3#FOR PUSHING!#
+                    tncvalue=0.05**2-0.06**2+1e-4#0.05**2-0.055**2+1e-4#for reacher!#0.3**2-0.4**2+1e-3#FOR PUSHING!#
                     if (cbfpredict>=0) and (cbfgt>=tncvalue):
                         tnc+=1
                     elif (cbfpredict>=0) and (cbfgt<tncvalue):
@@ -248,7 +248,7 @@ if __name__ == '__main__':
                         fpc+=1
                     elif (cbfpredict<0) and (cbfgt<tncvalue):
                         tpc+=1
-                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,position x:%f,position y:%f' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1]))
+                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,state x:%f,state y:%f,constr_viol:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol))
                     #the evaluation phase ended
                     if done:
                         break
@@ -257,7 +257,7 @@ if __name__ == '__main__':
                 #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints
                 logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol))
                 all_rewards.append(traj_rews)#does it use any EpLen?
-                constr_viols.append(constr_viol)#whether this 100-length traj violate any constraints
+                constr_viols.append(constr_viol)#whether this 100-length traj violate any constraints, then compute the average
                 task_succ.append(succ)
                 #save the result in the gift form!
                 pu.make_movie(movie_traj, file=os.path.join(update_dir, 'trajectory%d.gif' % j))
