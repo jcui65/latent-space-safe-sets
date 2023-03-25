@@ -77,7 +77,7 @@ class CEMSafeSetPolicy(Policy):
         self.ac_buf = np.array([]).reshape(0, self.d_act)#action buffer?
         self.prev_sol = np.tile((self.ac_lb + self.ac_ub) / 2, [self.plan_hor])#how it is being used?
         self.init_var = np.tile(np.square(self.ac_ub - self.ac_lb) / 16, [self.plan_hor])#how it is being used?
-
+        self.action_type=params['action_type']
         #self.reward_type=params['reward_type']
         #self.conservative=params['conservative']
     @torch.no_grad()
@@ -1288,7 +1288,10 @@ class CEMSafeSetPolicy(Policy):
                         self.mean = None
                         log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        if self.action_type=='zero':
+                            return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        elif self.action_type=='random':
+                            return self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -1558,7 +1561,10 @@ class CEMSafeSetPolicy(Policy):
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return self.env.action_space.sample()#for fair comparison#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        if self.action_type=='random':
+                            return self.env.action_space.sample()#for fair comparison#
+                        elif self.action_type=='zero':
+                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!#
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -1832,7 +1838,11 @@ class CEMSafeSetPolicy(Policy):
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return self.env.action_space.sample()#for fair comparison!#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        if self.action_type=='random':
+                            return self.env.action_space.sample()#for fair comparison#
+                        elif self.action_type=='zero':
+                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                        #return self.env.action_space.sample()#for fair comparison!#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -1976,7 +1986,11 @@ class CEMSafeSetPolicy(Policy):
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return self.env.action_space.sample()#for fair comparison#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        if self.action_type=='random':
+                            return self.env.action_space.sample()#for fair comparison#
+                        elif self.action_type=='zero':
+                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                        #return self.env.action_space.sample()#for fair comparison#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -2128,7 +2142,11 @@ class CEMSafeSetPolicy(Policy):
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return self.env.action_space.sample()#for fair comparison with LS3#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        if self.action_type=='random':
+                            return self.env.action_space.sample()#for fair comparison#
+                        elif self.action_type=='zero':
+                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                        #return self.env.action_space.sample()#for fair comparison with LS3#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -2281,7 +2299,11 @@ class CEMSafeSetPolicy(Policy):
                         self.mean = None
                         log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        if self.action_type=='random':
+                            return self.env.action_space.sample()#for fair comparison#
+                        elif self.action_type=='zero':
+                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                        #return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -2556,7 +2578,11 @@ class CEMSafeSetPolicy(Policy):
                         self.mean = None
                         log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        if self.action_type=='random':
+                            return self.env.action_space.sample()#for fair comparison#
+                        elif self.action_type=='zero':
+                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                        #return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -3088,7 +3114,11 @@ class CEMSafeSetPolicy(Policy):
                         self.mean = None
                         log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        if self.action_type=='random':
+                            return self.env.action_space.sample()#for fair comparison#
+                        elif self.action_type=='zero':
+                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                        #return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -3341,7 +3371,11 @@ class CEMSafeSetPolicy(Policy):
                         self.mean = None
                         log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
+                        if self.action_type=='random':
+                            return self.env.action_space.sample()#for fair comparison#
+                        elif self.action_type=='zero':
+                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                        #return 0*self.env.action_space.sample(),tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
