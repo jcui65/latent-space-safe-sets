@@ -393,6 +393,49 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
         #print(modules['cbfd'])
     return modules
 
+def make_modulessafetylight(params, val=False, dyn=False,
+                 gi=False, cbfd=False):
+    from latentsafesets.modules import VanillaVAE, ValueEnsemble, \
+        ValueFunction, PETSDynamics, GoalIndicator, CBFdotEstimatorlatentplana #CBFdotEstimatorlatent
+    import latentsafesets.utils.pytorch_utils as ptu
+
+    modules = {}
+
+    encoder = VanillaVAE(params)#initialize/instantiate the VAE
+    if params['enc_checkpoint']:
+        encoder.load(params['enc_checkpoint'])#load the parameters of the VAE at specfic checkpoints!
+    modules['enc'] = encoder
+
+    if val:
+        if params['val_ensemble']:#what are the difference
+            value_func = ValueEnsemble(encoder, params).to(ptu.TORCH_DEVICE)
+        else:
+            value_func = ValueFunction(encoder, params).to(ptu.TORCH_DEVICE)
+        if params['val_checkpoint']:
+            value_func.load(params['val_checkpoint'])
+        modules['val'] = value_func
+
+    if dyn:
+        dynamics = PETSDynamics(encoder, params)
+        if params['dyn_checkpoint']:
+            dynamics.load(params['dyn_checkpoint'])
+        modules['dyn'] = dynamics
+
+    if gi:
+        goal_indicator = GoalIndicator(encoder, params).to(ptu.TORCH_DEVICE)
+        if params['gi_checkpoint']:
+            goal_indicator.load(params['gi_checkpoint'])
+        modules['gi'] = goal_indicator
+
+    if cbfd:
+        #cbfdot = CBFdotEstimatorlatent(encoder, params).to(ptu.TORCH_DEVICE)
+        cbfdot = CBFdotEstimatorlatentplana(encoder, params).to(ptu.TORCH_DEVICE)
+        if params['cbfd_checkpoint']:
+            cbfdot.load(params['cbfd_checkpoint'])
+        modules['cbfd'] = cbfdot
+        #print(modules['cbfd'])
+    return modules
+
 def make_modulessafetyexpensive(params, ss=False, val=False, dyn=False,
                  gi=False, constr=False,cbfd=False):
     from latentsafesets.modules import VanillaVAE, ValueEnsemble, \

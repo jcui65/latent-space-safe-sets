@@ -310,15 +310,18 @@ class MPCTrainer(Trainer):
         #loss_plotter = LossPlotter(os.path.join(params['logdir'], 'loss_plots'))
         loss_plotter = LossPlotter(os.path.join(self.logdir, 'loss_plots'))
         self.encoder_data_loader = EncoderDataLoader(params)
+        light=params['light']
 
         self.trainers = []#the following shows the sequence of training
 
         self.trainers.append(VAETrainer(params, modules['enc'], loss_plotter))
         self.trainers.append(PETSDynamicsTrainer(params, modules['dyn'], loss_plotter))
         self.trainers.append(ValueTrainer(env, params, modules['val'], loss_plotter))
-        self.trainers.append(SafeSetTrainer(env, params, modules['ss'], loss_plotter))
-        self.trainers.append(ConstraintTrainer(env, params, modules['constr'], loss_plotter))
         self.trainers.append(GoalIndicatorTrainer(env, params, modules['gi'], loss_plotter))
+        if light=='normal':
+            self.trainers.append(SafeSetTrainer(env, params, modules['ss'], loss_plotter))
+            self.trainers.append(ConstraintTrainer(env, params, modules['constr'], loss_plotter))
+        
         #self.trainers.append(CBFdotTrainer(env, params, modules['cbfd'], loss_plotter))
         #self.trainers.append(CBFdotlatentTrainer(env, params, modules['cbfd'], loss_plotter))
         #self.trainers.append(VAETrainer(params, modules['enc2'], loss_plotter))

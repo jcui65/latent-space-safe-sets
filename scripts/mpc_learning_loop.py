@@ -50,17 +50,20 @@ if __name__ == '__main__':
         env = utils.make_env(params)#spb, reacher, etc.#around line 148 in utils
         #The result is to have env=SimplePointBot in spb
         # Setting up encoder, around line 172 in utils, get all the parts equipped!
-
+        light=params['light']
+        #if light=='normal':
         #modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
         modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
         #modules = utils.make_modulessafetyexpensive(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)#forever banned!
         #modules = utils.make_modulessafetyexpensive2(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True,dyn2=True)#forever banned!
         #the result is to set up the encoder, etc.
-        encoder = modules['enc']#it is a value in a dictionary, uh?
         safe_set = modules['ss']
+        constraint_function = modules['constr']
+        #elif light=='light':
+        #modules = utils.make_modulessafetylight(params, val=True, dyn=True, gi=True, cbfd=True)
+        encoder = modules['enc']#it is a value in a dictionary, uh?
         dynamics_model = modules['dyn']
         value_func = modules['val']
-        constraint_function = modules['constr']
         goal_indicator = modules['gi']
         cbfdot_function = modules['cbfd']
         #encoder2 = modules['enc2']  # it is a value in a dictionary, uh?
