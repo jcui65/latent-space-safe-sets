@@ -16,13 +16,14 @@ def loss_plot(losses, file, title=None):
     simple_plot(losses, title=title, show=False, file=file, ylabel='Loss', xlabel='Iters', log=log_scale)
 
 
-def simple_plot(data, std=None, title=None, show=False, file=None, ylabel=None, xlabel=None, log=False):
+def simple_plot(data, std=None, title=None, show=False, file=None, ylabel=None, xlabel=None, log=False, nonreward=False):
     plt.figure()
     if log:
         plt.semilogy(data)
     else:
         plt.plot(data)
-
+    if nonreward:
+        plt.ylim(0, 1)
     if std is not None:
         assert not log, 'not sure how to implement this with log'
         upper = np.add(data, std)

@@ -12,7 +12,7 @@ import os
 def parse_args():
     parser = argparse.ArgumentParser(description='CEM Learning Args')
     parser.add_argument('--env', type=str, default='spb')
-    parser.add_argument('--seed', type=int, default=1, help='Random seed')#-1, help='Random seed')#
+    parser.add_argument('--seed', type=int, default=4, help='Random seed')#1, help='Random seed')#-1, help='Random seed')#
     parser.add_argument('--log_freq', type=int, default=100,
                         help='How frequently to log updates')
     parser.add_argument('--plot_freq', type=int, default=500,#2000,#1000,#
@@ -23,8 +23,8 @@ def parse_args():
     parser.add_argument('--traj_per_update', default=10, type=int)
     parser.add_argument('--num_updates', type=int, default=25)#1)#100)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
-    parser.add_argument('--repeat_times',type=int,default=3)#7)
-    parser.add_argument('--light',type=str,default='light')#'normal')#'expensive')#'ls3')#'ls3' means original, no CBF#
+    parser.add_argument('--repeat_times',type=int,default=7)#3)#
+    parser.add_argument('--light',type=str,default='light')#'normal')#'expensive')#'ls3')#'ls3' means original, no CBF#'nosasfety')#no any safety measures
     parser.add_argument('--action_type',type=str,default='random')#'zero')#
     add_controller_args(parser)
     add_encoder_args(parser)
@@ -196,7 +196,7 @@ def add_gi_args(parser):
 
 def add_cbfd_args(parser):
     # Constraint Estimator params
-    parser.add_argument('--cbfdot_thresh', type=float, default=0.25)#0.5)#for 1.2 don't do this?#0.75)#1.0)#0.6)#0.4)#0.8)#0.48)#838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
+    parser.add_argument('--cbfdot_thresh', type=float, default=0.5)#0.25)#for 1.2 don't do this?#0.75)#1.0)#0.6)#0.4)#0.8)#0.48)#838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
     parser.add_argument('--cbfdot_thresh_mult', type=float, default=1.0)#1.2)#1.25)#0.8)#
     parser.add_argument('--cbfd_lr', type=float, default=1e-4,
                         help='Learning rate for cbfd network')

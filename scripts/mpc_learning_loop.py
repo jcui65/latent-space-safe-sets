@@ -38,7 +38,7 @@ if __name__ == '__main__':
         logdir=os.path.join(logdirbeforeseed, str(seed))
         os.makedirs(logdir)#e.g.: 'outputs/2022-07-15/17-41-16'
         #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')
-        #utils.init_loggingcjn(logdir)#record started!
+        #utils.init_loggingcjn(logdir)#record started!#only recording the current parameters!
         now = datetime.now()
         date_string = now.strftime("%Y-%m-%d-%H-%M-%S")#year month day/hour minute second
         f = open(logdir+"/logjianning"+date_string+".txt", "a")#so that I can write my own comments even when the simulation is still running!!!
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         safe_set = modules['ss']
         constraint_function = modules['constr']
         #elif light=='light':
-        #modules = utils.make_modulessafetylight(params, val=True, dyn=True, gi=True, cbfd=True)
+        #modules = utils.make_modulessafetylight(params, val=True, dyn=True, gi=True, cbfd=True)#turn out to be useless
         encoder = modules['enc']#it is a value in a dictionary, uh?
         dynamics_model = modules['dyn']
         value_func = modules['val']

@@ -72,6 +72,15 @@ class CEMSafeSetPolicy(Policy):
         if self.light=='light':
             self.ignore_safe_set = True#False#False, for ablation study!#changed to true after using cbf dot
             self.ignore_constraints = True#False#false
+            self.ignore_cbfdots = False
+        elif self.light=='ls3':
+            self.ignore_safe_set = False#False, for ablation study!#changed to true after using cbf dot
+            self.ignore_constraints = False#false
+            self.ignore_cbfdots = True
+        elif self.light=='nosafety':
+            self.ignore_safe_set = True#False, for ablation study!#changed to true after using cbf dot
+            self.ignore_constraints = True#false
+            self.ignore_cbfdots = True
         self.mean = torch.zeros(self.d_act)#the dimension of action
         self.std = torch.ones(self.d_act)#all the action candidates start from standard normal distribution
         self.ac_buf = np.array([]).reshape(0, self.d_act)#action buffer?
