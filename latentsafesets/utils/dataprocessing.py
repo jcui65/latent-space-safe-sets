@@ -14,7 +14,7 @@ mar24='2023-03-24'
 mar23='2023-03-23'
 mar22='2023-03-22'
 mar25='2023-03-25'
-time='14-02-35'#'14-03-38'#'13-24-46'#'00-54-16'#'19-45-47'#'19-45-12'#'13-24-32'#
+time='13-24-32'#'19-45-12'#'14-02-35'#'14-03-38'#'13-24-46'#'00-54-16'#'19-45-47'#
 logdirbeforeseed = os.path.join(outputdir+mar24,time) #params['logdir']#around line 35
 #logdirbeforeseed = os.path.join('outputs/'+mar24,time) #params['logdir']#around line 35
 print('logdirbeforeseed',logdirbeforeseed)
@@ -35,7 +35,7 @@ for seed in seedlist:
     rfarray=np.vstack((rfarray,rewardsumi))
     successi=rewardsumi>-100
     successratei=np.average(successi)
-    print('successrate',successratei)
+    #print('successrate',successratei)
     rewardaveragei=np.average(rewardsumi)
     print('rewardaveragei',rewardaveragei)
     #print('shape',rewardsumi[-lastnum:].shape)#it is 50
@@ -45,7 +45,7 @@ for seed in seedlist:
     #print('constri.shape',constri.shape)#250
     totalconstri=np.sum(constri)
     constrirate=totalconstri/constri.shape[0]
-    print('constrirate',constrirate)
+    #print('constrirate',constrirate)
     srlist.append(successratei)
     cvrlist.append(constrirate)
     ralist.append(rewardaveragei)
@@ -64,16 +64,16 @@ pu.simple_plot(rfmean, std=rfstd, title='Average Rewards',
 rfcarray=np.zeros((3,))#c means corse
 for i in range(int(rfarray.shape[1]/10)):
     rfciclip=rfarray[:,i*10:(i+1)*10]
-    print(rfciclip)
+    #print(rfciclip)
     rfci=np.average(rfciclip,axis=1)
     #print('rfci.shape',rfci)
     rfcarray=np.vstack((rfcarray,rfci))
 rfcarray=rfcarray[1:]
 #print('rfcarray.shape',rfcarray.shape)#3,250
 rfcmean=np.mean(rfcarray,axis=1)
-print(rfcmean)
+#print(rfcmean)
 rfcstd=np.std(rfcarray,axis=1)
-print(rfcstd)
+#print(rfcstd)
 pu.simple_plot(rfcmean, std=rfcstd, title='Average Rewards',
                         file=os.path.join(logdirbeforeseed, 'rewardscorse'+mar24+time+'.pdf'),
                         ylabel='Average Reward', xlabel='# Training updates')
