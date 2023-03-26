@@ -242,7 +242,7 @@ if __name__ == '__main__':
                         fp+=1
                     elif (cbfpredict<0) and (cbfgt<0):
                         tp+=1
-                    tncvalue=0.05**2-0.06**2+1e-4#0.05**2-0.055**2+1e-4#for reacher!#0.3**2-0.4**2+1e-3#FOR PUSHING!#
+                    tncvalue=0.05**2-0.055**2+1e-4#for reacher!#0.05**2-0.06**2+1e-4#0.3**2-0.4**2+1e-3#FOR PUSHING!#
                     if (cbfpredict>=0) and (cbfgt>=tncvalue):
                         tnc+=1
                     elif (cbfpredict>=0) and (cbfgt<tncvalue):

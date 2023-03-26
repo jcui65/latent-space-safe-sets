@@ -14,9 +14,10 @@ mar24='2023-03-24'
 mar23='2023-03-23'
 mar22='2023-03-22'
 mar25='2023-03-25'
-time='13-24-32'#'19-45-12'#'14-02-35'#'14-03-38'#'13-24-46'#'00-54-16'#'19-45-47'#
-logdirbeforeseed = os.path.join(outputdir+mar24,time) #params['logdir']#around line 35
-#logdirbeforeseed = os.path.join('outputs/'+mar24,time) #params['logdir']#around line 35
+date=mar23#mar22#mar24#
+time='15-53-12'#'09-31-42'#'09-30-18'#'11-53-02'#'11-51-10'#'11-34-01'#'11-33-24'#'13-24-32'#'19-45-12'#'14-02-35'#'14-03-38'#'13-24-46'#'00-54-16'#'19-45-47'#
+logdirbeforeseed = os.path.join(outputdir+date,time) #params['logdir']#around line 35
+#logdirbeforeseed = os.path.join('outputs/'+date,time) #params['logdir']#around line 35
 print('logdirbeforeseed',logdirbeforeseed)
 srlist=[]#success rate list
 ralist=[]#reward average list
@@ -24,7 +25,7 @@ rfarray=np.zeros((250,))
 ralastlist=[]#reward average last list
 cvrlist=[]#constraint violation rate list
 lastnum=50
-seedlist=[1,2,3]#24#[1,26,51]#23#[1,101,201]#22#
+seedlist=[1,101,201]#22#[1,26,51]#[1,2,3]#24#23#
 for seed in seedlist:
     logdir=os.path.join(logdirbeforeseed, str(seed))
     #update_dir = os.path.join(logdir, "update_%d" % i)#
@@ -59,7 +60,7 @@ rfmean=np.mean(rfarray,axis=0)
 rfstd=np.std(rfarray,axis=0)
 #print(rfstd)
 pu.simple_plot(rfmean, std=rfstd, title='Average Rewards',
-                        file=os.path.join(logdirbeforeseed, 'rewards'+mar24+time+'.pdf'),
+                        file=os.path.join(logdirbeforeseed, 'rewardstrajs'+date+time+'.pdf'),
                         ylabel='Average Reward', xlabel='# Training updates')
 rfcarray=np.zeros((3,))#c means corse
 for i in range(int(rfarray.shape[1]/10)):
@@ -75,7 +76,7 @@ rfcmean=np.mean(rfcarray,axis=1)
 rfcstd=np.std(rfcarray,axis=1)
 #print(rfcstd)
 pu.simple_plot(rfcmean, std=rfcstd, title='Average Rewards',
-                        file=os.path.join(logdirbeforeseed, 'rewardscorse'+mar24+time+'.pdf'),
+                        file=os.path.join(logdirbeforeseed, 'rewardsepochs'+date+time+'.pdf'),
                         ylabel='Average Reward', xlabel='# Training updates')
 sra=np.array(srlist)
 cvra=np.array(cvrlist)
@@ -84,11 +85,11 @@ ralasta=np.array(ralastlist)
 sraave=np.mean(sra)
 print('successrate ave',sraave,'successrate std',np.std(sra))
 pu.simple_plot(sra, title='Success rate plot',
-                        file=os.path.join(logdirbeforeseed, 'successrate'+mar24+time+'.pdf'),
+                        file=os.path.join(logdirbeforeseed, 'successrate'+date+time+'.pdf'),
                         ylabel='success rate', xlabel='# seeds',nonreward=True)
 print('constraint rate ave',np.mean(cvra),'constraint rate std',np.std(cvra))
 pu.simple_plot(cvra, title='Constraint violation rate plot',
-                        file=os.path.join(logdirbeforeseed, 'violationrate'+mar24+time+'.pdf'),
+                        file=os.path.join(logdirbeforeseed, 'violationrate'+date+time+'.pdf'),
                         ylabel='constraint violation rate', xlabel='# seeds',nonreward=True)
 print('reward ave',np.mean(raa),'reward std',np.std(raa))
 print('reward last ave',np.mean(ralasta),'reward last std',np.std(ralasta))
