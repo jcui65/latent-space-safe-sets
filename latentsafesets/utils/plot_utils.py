@@ -289,15 +289,15 @@ def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, t
 
     for i in range(eachline):
         axs[0][i].imshow(high_obs[i].squeeze().transpose((1, 2, 0)))
-        axs[0][i].set_title('%3.5f' % high_vals[i])
+        axs[0][i].set_title('%3.4f' % high_vals[i])
         axs[0][i].set_axis_off()
 
         axs[1][i].imshow(mid_obs[i].squeeze().transpose((1, 2, 0)))
-        axs[1][i].set_title('%3.5f' % mid_vals[i])
+        axs[1][i].set_title('%3.4f' % mid_vals[i])
         axs[1][i].set_axis_off()
 
         axs[2][i].imshow(low_obs[i].squeeze().transpose((1, 2, 0)))
-        axs[2][i].set_title('%3.5f' % low_vals[i])
+        axs[2][i].set_title('%3.4f' % low_vals[i])
         axs[2][i].set_axis_off()
 
     plt.savefig(file)

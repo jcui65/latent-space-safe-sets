@@ -21,7 +21,7 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)
-    parser.add_argument('--num_updates', type=int, default=25)#1)#100)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=25)#100)#1)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
     parser.add_argument('--repeat_times',type=int,default=7)#3)#
     parser.add_argument('--light',type=str,default='light')#'normal')#'expensive')#'ls3')#'ls3' means original, no CBF#'nosasfety')#no any safety measures
@@ -58,8 +58,8 @@ def add_controller_args(parser):
                         help='How many CEM iterations')
     parser.add_argument('--random_percent', type=float, default=1.0,#1 is default#0,#you know this in the paper!
                         help='How many CEM candidates should be sampled from a new distribution')
-    parser.add_argument('--conservative', type=str, default='conservative')#'average')#
-    parser.add_argument('--reward_type', type=str, default='dense')#'sparse')#
+    parser.add_argument('--conservative', type=str, default='average')#'conservative')#
+    parser.add_argument('--reward_type', type=str, default='sparse')#'dense')#
 
 def add_encoder_args(parser):
     # Latent embedding params
@@ -196,7 +196,7 @@ def add_gi_args(parser):
 
 def add_cbfd_args(parser):
     # Constraint Estimator params
-    parser.add_argument('--cbfdot_thresh', type=float, default=0.5)#0.25)#for 1.2 don't do this?#0.75)#1.0)#0.6)#0.4)#0.8)#0.48)#838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
+    parser.add_argument('--cbfdot_thresh', type=float, default=1.0)#0.5)#0.25)#for 1.2 don't do this?#0.75)#0.6)#0.4)#0.8)#0.48)#838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
     parser.add_argument('--cbfdot_thresh_mult', type=float, default=1.0)#1.2)#1.25)#0.8)#
     parser.add_argument('--cbfd_lr', type=float, default=1e-4,
                         help='Learning rate for cbfd network')
@@ -209,7 +209,7 @@ def add_cbfd_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
+    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
     # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.
     # pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#
