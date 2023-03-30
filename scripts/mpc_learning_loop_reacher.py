@@ -80,10 +80,10 @@ if __name__ == '__main__':
         trainer.initial_train(replay_buffer)#initialize all the parts!
 
         log.info("Creating policy")
-        policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                                constraint_function, goal_indicator, params)
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                                #constraint_function, goal_indicator, cbfdot_function, params)
+                                #constraint_function, goal_indicator, params)
+        policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
+                                constraint_function, goal_indicator, cbfdot_function, params)
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
                                 #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
@@ -99,7 +99,7 @@ if __name__ == '__main__':
         task_succ = []
         n_episodes = 0
 
-        #tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
+        tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
 
         reward_type=params['reward_type']
         #print('reward_type',reward_type)
@@ -174,8 +174,8 @@ if __name__ == '__main__':
                                                                                                 #tpc, fpc, fnc, tnc)
                     # the CEM (candidates, elites, etc.) is in here
                     #next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
-                    #next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
-                    next_obs, reward, done, info = env.stepsafety(action)#applies to pushing and spb  # 63 in simple_point_bot.py
+                    next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
+                    #next_obs, reward, done, info = env.stepsafety(action)#applies to pushing and spb  # 63 in simple_point_bot.py
                     #next_obs = np.array(next_obs)#to make this image a numpy array
                     #next_obs, reward, done, info,next_obs_relative = env.stepsafety_relative(action)  # 63 in simple_point_bot.py
                     next_obs = np.array(next_obs) #relative or not? # to make this image a numpy array
@@ -186,11 +186,11 @@ if __name__ == '__main__':
 
                     constr = info['constraint']#its use is seen a few lines later
 
-                    #hvo=info['hvo']#
-                    #hvn=info['hvn']#
-                    #hvd=info['hvd']#,#hvd for h value difference
+                    hvo=info['hvo']#
+                    hvn=info['hvn']#
+                    hvd=info['hvd']#,#hvd for h value difference
                     ns=info['next_state']
-                    
+                    '''
                     transition = {'obs': obs, 'action': action, 'reward': reward,#sARSa
                                 'next_obs': next_obs, 'done': done,
                                 'constraint': constr, 'safe_set': 0, 'on_policy': 1}
@@ -207,7 +207,7 @@ if __name__ == '__main__':
                                 'state': info['state'].tolist(),
                                 'next_state': info['next_state'].tolist()
                                 }  # add key and value into it!
-                    
+                    '''
                     transition = {'obs': obs, 'action': action, 'reward': reward,
                                 'next_obs': next_obs, 'done': done,  # this is a dictionary
                                 'constraint': constr, 'safe_set': 0,
@@ -234,7 +234,7 @@ if __name__ == '__main__':
                     constr_viol = constr_viol or info['constraint']#a way to update constr_viol#either 0 or 1
                     succ = succ or reward == 0#as said in the paper, reward=0 means success!
 
-                    '''
+                    
                     #Now, I should do the evaluation!
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
@@ -261,7 +261,7 @@ if __name__ == '__main__':
                     elif (cbfpredict<0) and (cbfgt<tncvalue):
                         tpc+=1
                     log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,state x:%f,state y:%f,constr_viol:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol))
-                    '''
+                    
                     #the evaluation phase ended
                     if done:
                         break

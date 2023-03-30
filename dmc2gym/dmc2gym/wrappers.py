@@ -238,7 +238,7 @@ class DMCWrapper(core.Env):
         oldtoonorm=oldtoobstacle/np.linalg.norm(oldtoobstacle)#old to o(bstacle) norm
         #print('oldtoonorm',oldtoonorm)
         obstacleradius=0.05#this is from the customized reacher file!
-        relaxcoeff=1.1#1.1 should be the minimum to choose?#1.2#1.2 should be the minimum to choose?#1.5#this might be an important hyperparameter
+        relaxcoeff=1.2#1.2 should be the minimum to choose?#1.1#1.1 should be the minimum to choose?#1.5#this might be an important hyperparameter
         oldtoboundary=obstacleradius*oldtoonorm
         #print('oldtoboundary',oldtoboundary)
         otbrelax=relaxcoeff*oldtoboundary#0.07
@@ -280,7 +280,7 @@ class DMCWrapper(core.Env):
                 "hvd":hvd #hvd for h value difference
                 }
         return obs, reward, done, extra#that's how it originally works!
-    '''
+    
     def stepsafety2(self, action):
         assert self._norm_action_space.contains(action)
         action = self._convert_action(action)
@@ -325,7 +325,7 @@ class DMCWrapper(core.Env):
                  'action': action}
 
         return obs, reward, done, extra#that's how it originally works!
-    '''
+    
     def reset(self, **kwargs):
         time_step = self._env.reset()
         self.current_state = _flatten_obs(time_step.observation)
