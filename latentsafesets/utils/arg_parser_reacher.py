@@ -20,12 +20,12 @@ def parse_args():
     parser.add_argument('--checkpoint_freq', type=int, default=2000,
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
-    parser.add_argument('--traj_per_update', default=10, type=int)
-    parser.add_argument('--num_updates', type=int, default=25)#100)#1)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
+    parser.add_argument('--traj_per_update', default=10, type=int)#10 is the default value
+    parser.add_argument('--num_updates', type=int, default=25)#1)#100)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
-    parser.add_argument('--repeat_times',type=int,default=10)#7)#3)#
+    parser.add_argument('--repeat_times',type=int,default=3)#2)#10)#7)#
     parser.add_argument('--light',type=str,default='light')#'normal')#'expensive')#'ls3')#'ls3' means original, no CBF#'nosasfety')#no any safety measures
-    parser.add_argument('--action_type',type=str,default='random')#'zero')#
+    parser.add_argument('--action_type',type=str,default='random')#'zero')#'onestd')#
     add_controller_args(parser)
     add_encoder_args(parser)
     add_ss_args(parser)

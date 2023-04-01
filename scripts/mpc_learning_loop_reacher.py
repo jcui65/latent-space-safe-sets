@@ -43,6 +43,13 @@ if __name__ == '__main__':
         now = datetime.now()
         date_string = now.strftime("%Y-%m-%d-%H-%M-%S")#year month day/hour minute second
         f = open(logdir+"/logjianning"+date_string+".txt", "a")#so that I can write my own comments even when the simulation is still running!!!
+        f.write('The alpha: %1.3f\t'%(params['cbfdot_thresh']))
+        f.write('H: %d\t'%(int(params['plan_hor'])))
+        f.write('r_{thres}=1.2\t')
+        f.write('action_type: %s\t'%(params['action_type']))
+        f.write('conservativeness: %s, reward_type: %s\t'%(params['conservative'],params['reward_type']))
+        f.write('conservativeness: %s, reward_type: %s, lightness: %s\t'%(params['conservative'],params['reward_type'],params['light']))
+        f.close()
         utils.init_logging(logdir)#record started!
         log.info('Training safe set MPC with params...')#at the very very start
         log.info(pprint.pformat(params))#just to pretty print all the parameters!
@@ -96,6 +103,9 @@ if __name__ == '__main__':
         std_rewards = []
         all_rewards = []
         constr_viols = []
+        all_action_rands = []
+        constr_viols_cbf = []
+        constr_viols_cbf2 = []
         task_succ = []
         n_episodes = 0
 
@@ -128,6 +138,10 @@ if __name__ == '__main__':
                 traj_rews = []#rews: rewards
                 constr_viol = False
                 succ = False
+                traj_action_rands=[]
+                action_rand=False
+                constr_viol_cbf = False
+                constr_viol_cbf2 = False
 
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
@@ -147,14 +161,18 @@ if __name__ == '__main__':
                     
                     if conservative=='conservative' and reward_type=='sparse':
                         #print('conservative and sparse!')#you get this right!
-                        action= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
+                        action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     elif conservative=='average' and reward_type=='sparse':
-                        action= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
+                        action,randflag= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
+                    elif conservative=='onestd' and reward_type=='sparse':
+                        action,randflag= policy.actcbfdsquarelatentplanareacheronestd(obs / 255)#, env.state)#
                     elif conservative=='conservative' and reward_type=='dense':
-                        action= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
+                        action,randflag= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
                     elif conservative=='average' and reward_type=='dense':
-                        action= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
+                        action,randflag= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
+                    elif conservative=='average' and reward_type=='dense':
+                        action,randflag= policy.actcbfdsquarelatentplanareacheronestdnogoaldense(obs / 255)#, env.state)#
                     
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
@@ -186,6 +204,16 @@ if __name__ == '__main__':
 
                     constr = info['constraint']#its use is seen a few lines later
 
+                    rfn=not randflag#rfn means rand flag not
+                    action_rand=randflag
+                    #constr_cbf = rfn*info['constraint']#(1-randflag)*info['constraint']#its use is seen a few lines later
+                    if len(traj_action_rands)==0:
+                        constr_cbf = rfn*info['constraint']#
+                        constr_cbf2=constr_cbf
+                    else:
+                        constr_cbf = rfn*info['constraint']#
+                        constr_cbf2 = rfn*info['constraint'] or (1-traj_action_rands[-1])*info['constraint']#one previous step buffer
+                    traj_action_rands.append(action_rand)
                     hvo=info['hvo']#
                     hvn=info['hvn']#
                     hvd=info['hvd']#,#hvd for h value difference
@@ -232,6 +260,8 @@ if __name__ == '__main__':
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                     #obs_relative = next_obs_relative  # don't forget this step!
                     constr_viol = constr_viol or info['constraint']#a way to update constr_viol#either 0 or 1
+                    constr_viol_cbf = constr_viol_cbf or constr_cbf#a way to update constr_viol#either 0 or 1
+                    constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1
                     succ = succ or reward == 0#as said in the paper, reward=0 means success!
 
                     
@@ -260,7 +290,7 @@ if __name__ == '__main__':
                         fpc+=1
                     elif (cbfpredict<0) and (cbfgt<tncvalue):
                         tpc+=1
-                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,state x:%f,state y:%f,constr_viol:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol))
+                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
                     
                     #the evaluation phase ended
                     if done:
@@ -270,7 +300,10 @@ if __name__ == '__main__':
                 #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints
                 logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol))
                 all_rewards.append(traj_rews)#does it use any EpLen?
+                all_action_rands.append(traj_action_rands)
                 constr_viols.append(constr_viol)#whether this 100-length traj violate any constraints, then compute the average
+                constr_viols_cbf.append(constr_viol_cbf)#
+                constr_viols_cbf2.append(constr_viol_cbf2)#
                 task_succ.append(succ)
                 #save the result in the gift form!
                 pu.make_movie(movie_traj, file=os.path.join(update_dir, 'trajectory%d.gif' % j))
@@ -307,6 +340,8 @@ if __name__ == '__main__':
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('EpConstr', average_only=True)
             logger.log_tabular('ConstrRate', np.mean(constr_viols))
+            logger.log_tabular('ConstrcbfRate', np.mean(constr_viols_cbf))
+            logger.log_tabular('Constrcbf2Rate', np.mean(constr_viols_cbf2))
             logger.log_tabular('SuccRate', np.mean(task_succ))
             logger.dump_tabular()
             n_episodes += traj_per_update#10 by default
@@ -317,6 +352,9 @@ if __name__ == '__main__':
 
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
+            np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)
+            np.save(os.path.join(logdir, 'constrcbf2.npy'), constr_viols_cbf2)
+            np.save(os.path.join(logdir, 'action_rands.npy'), all_action_rands)
         
         params['seed']=params['seed']+1#m+1#
         #utils.init_logging(logdir)#record started!

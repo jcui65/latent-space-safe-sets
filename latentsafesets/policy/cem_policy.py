@@ -1650,6 +1650,7 @@ class CEMSafeSetPolicy(Policy):
         act_ss_thresh = self.safe_set_thresh#initially 0.8
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
         #print('env.state',state)
+        randflag=0#this is the flag to show if a random action is finally being chosen!
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -1675,10 +1676,11 @@ class CEMSafeSetPolicy(Policy):
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
+                        randflag=1
                         if self.action_type=='random':
-                            return self.env.action_space.sample()#for fair comparison#
+                            return self.env.action_space.sample(),randflag#for fair comparison#
                         elif self.action_type=='zero':
-                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!#
+                            return 0*self.env.action_space.sample(),randflag#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!#
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
                     continue
@@ -1910,7 +1912,7 @@ class CEMSafeSetPolicy(Policy):
             itr += 1#CEM Evolution method
         # Return the best action
         action = actions_sorted[-1][0]#the best one
-        return action.detach().cpu().numpy()#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
+        return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
     def actcbfdsquarelatentplanareacheraverage(self, obs):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
         """
@@ -1927,6 +1929,7 @@ class CEMSafeSetPolicy(Policy):
         reset_count = 0#
         act_ss_thresh = self.safe_set_thresh#initially 0.8
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
+        randflag=0#this is the flag to show if a random action is finally being chosen!
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -1952,10 +1955,11 @@ class CEMSafeSetPolicy(Policy):
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
+                        randflag=1
                         if self.action_type=='random':
-                            return self.env.action_space.sample()#for fair comparison#
+                            return self.env.action_space.sample(),randflag#for fair comparison#
                         elif self.action_type=='zero':
-                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                            return 0*self.env.action_space.sample(),randflag#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
                         #return self.env.action_space.sample()#for fair comparison!#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
@@ -2057,9 +2061,9 @@ class CEMSafeSetPolicy(Policy):
             itr += 1#CEM Evolution method
         # Return the best action
         action = actions_sorted[-1][0]#the best one
-        return action.detach().cpu().numpy()#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
+        return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
-def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
+    def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
         """
         Returns the action that this controller would take at time t given observation obs.
         Arguments:obs: The current observation. Cannot be a batch
@@ -2074,6 +2078,7 @@ def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,
         reset_count = 0#
         act_ss_thresh = self.safe_set_thresh#initially 0.8
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
+        randflag=0
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -2099,10 +2104,11 @@ def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
+                        randflag=1
                         if self.action_type=='random':
-                            return self.env.action_space.sample()#for fair comparison#
+                            return self.env.action_space.sample(),randflag#for fair comparison#
                         elif self.action_type=='zero':
-                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                            return 0*self.env.action_space.sample(),randflag#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
                         #return self.env.action_space.sample()#for fair comparison!#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
@@ -2208,7 +2214,7 @@ def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,
             itr += 1#CEM Evolution method
         # Return the best action
         action = actions_sorted[-1][0]#the best one
-        return action.detach().cpu().numpy()#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
+        return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
 
     def actcbfdsquarelatentplanareachernogoaldense(self, obs):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
@@ -2227,6 +2233,7 @@ def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,
         act_ss_thresh = self.safe_set_thresh#initially 0.8
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
         #print('env.state',state)
+        randflag=0
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -2252,10 +2259,11 @@ def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
+                        randflag=1
                         if self.action_type=='random':
-                            return self.env.action_space.sample()#for fair comparison#
+                            return self.env.action_space.sample(),randflag#for fair comparison#
                         elif self.action_type=='zero':
-                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                            return 0*self.env.action_space.sample(),randflag#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
                         #return self.env.action_space.sample()#for fair comparison#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
@@ -2366,7 +2374,7 @@ def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,
             itr += 1#CEM Evolution method
         # Return the best action
         action = actions_sorted[-1][0]#the best one
-        return action.detach().cpu().numpy()#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
+        return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
     def actcbfdsquarelatentplanareacheraveragenogoaldense(self, obs):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
         """
@@ -2383,6 +2391,7 @@ def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,
         reset_count = 0#
         act_ss_thresh = self.safe_set_thresh#initially 0.8
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
+        randflag=0
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -2408,10 +2417,11 @@ def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
+                        randflag=1
                         if self.action_type=='random':
-                            return self.env.action_space.sample()#for fair comparison#
+                            return self.env.action_space.sample(),randflag#for fair comparison#
                         elif self.action_type=='zero':
-                            return 0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                            return 0*self.env.action_space.sample(),randflag#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
                         #return self.env.action_space.sample()#for fair comparison with LS3#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
@@ -2520,7 +2530,7 @@ def actcbfdsquarelatentplanareacheronestd(self, obs):#,state):#,tp,fp,fn,tn,tpc,
             itr += 1#CEM Evolution method
         # Return the best action
         action = actions_sorted[-1][0]#the best one
-        return action.detach().cpu().numpy()#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
+        return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
     def actcbfdsquarelatentplanaexpensive(self, obs,state,tp,fp,fn,tn,tpc,fpc,fnc,tnc,obs_relative):#some intermediate step that the cbf dot part still requires states rather than latent states
         """

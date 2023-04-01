@@ -13,30 +13,28 @@ import latentsafesets.utils.plot_utils as pu
 @click.command()
 @click.option('--date', default='03-30',help='the date when the simulation started', type=str)
 @click.option('--time', default='00-36-31', help='time of the simulation', type=str)
-
 def main(date, time):
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
-    mar24='03-24'
-    mar23='03-23'
-    mar22='03-22'
-    mar25='03-25'
-    mar26='03-26'
-    mar27='03-27'
-    mar28='03-28'
-    #date=mar28#mar22#mar24#mar26#mar27#mar25#mar23#
-    #time='23-17-32'#'23-16-17'#'11-51-10'#'19-45-47'#'19-45-12'#'13-24-32'#'14-02-35'#'01-09-11'#'01-07-55'#'01-06-51'#'01-03-46'#'20-29-18'#'20-28-35'#'20-26-13'#'20-23-19'#'00-08-25'#'00-04-54'#'00-02-15'#
-    #'20-22-45'#'20-22-06'#'20-11-00'#'20-09-26'#'20-07-08'#'20-05-38'#'19-38-18'#'15-36-29'#'15-35-54'#'15-22-41'#'14-54-22'#'14-53-10'#'18-37-20'#'17-27-44'#'17-06-29'#
-    #time='15-53-12'#'09-30-18'##'11-53-02'#'11-34-01'#'11-33-24'#'14-03-38'#'13-24-46'#'00-54-16'#
+    mar24='2023-03-24'
+    mar23='2023-03-23'
+    mar22='2023-03-22'
+    mar25='2023-03-25'
+    mar26='2023-03-26'
+    mar27='2023-03-27'
+    mar28='2023-03-28'
+    #date=mar28#mar26#mar27#mar25#mar23#mar22#mar24#
+    #time='20-29-18'#'20-28-35'#'20-26-13'#'20-23-19'#'00-08-25'#'00-04-54'#'00-02-15'#'20-22-45'#'20-22-06'#'20-11-00'#'20-09-26'#'20-07-08'#'20-05-38'#'19-38-18'#'15-36-29'#'15-35-54'#'15-22-41'#'14-54-22'#'14-53-10'#'18-37-20'#'17-27-44'#'17-06-29'#
+    #time='15-53-12'#'09-30-18'##'11-53-02'#'11-51-10'#'11-34-01'#'11-33-24'#'13-24-32'#'19-45-12'#'14-02-35'#'14-03-38'#'13-24-46'#'00-54-16'#'19-45-47'#
     logdirbeforeseed = os.path.join(outputdir+date,time) #params['logdir']#around line 35
     #logdirbeforeseed = os.path.join('outputs/'+date,time) #params['logdir']#around line 35
     print('logdirbeforeseed',logdirbeforeseed)
     srlist=[]#success rate list
     ralist=[]#reward average list
-    rfarray=np.zeros((250,))#reacher#np.zeros((1000,))#push#
+    rfarray=np.zeros((1000,))#push#np.zeros((250,))#reacher
     ralastlist=[]#reward average last list
     cvrlist=[]#constraint violation rate list
     lastnum=50
-    seedlist=[1,2,3]#24,25#[1,2,3,4,5,6,7,8,9,10]#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    seedlist=[1,2,3]#24,25#[4,5,6,7,8,9,10]#[1,101,201]#23#22#[1,26,51]##
     for seed in seedlist:
         logdir=os.path.join(logdirbeforeseed, str(seed))
         #update_dir = os.path.join(logdir, "update_%d" % i)#
@@ -45,7 +43,7 @@ def main(date, time):
         rewardsumi=np.sum(rewardi,axis=1)
         #print('rewardsumi.shape',rewardsumi.shape)#250
         rfarray=np.vstack((rfarray,rewardsumi))
-        successi=rewardsumi>-100#reacher-150#push#
+        successi=rewardsumi>-150#push#-100#reacher
         successratei=np.average(successi)
         #print('successrate',successratei)
         rewardaveragei=np.average(rewardsumi)
