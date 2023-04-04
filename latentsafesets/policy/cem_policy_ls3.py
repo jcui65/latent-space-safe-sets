@@ -20,7 +20,7 @@ import logging
 log = logging.getLogger('cem')
 
 
-class CEMSafeSetPolicy(Policy):
+class CEMSafeSetPolicyls3(Policy):
     def __init__(self, env: gym.Env,
                  encoder: VanillaVAE,
                  safe_set,
@@ -107,6 +107,7 @@ class CEMSafeSetPolicy(Policy):
         itr = 0#start from 0
         reset_count = 0#
         act_ss_thresh = self.safe_set_thresh#initally 0.8
+        randflag=0#this is the flag to show if a random action is finally being chosen!
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -128,7 +129,9 @@ class CEMSafeSetPolicy(Policy):
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
-                        return self.env.action_space.sample()#really random action!NO MPC is implemented!
+                        log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
+                        randflag=1
+                        return self.env.action_space.sample(),randflag##really random action!NO MPC is implemented!
 
                     itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
@@ -203,7 +206,7 @@ class CEMSafeSetPolicy(Policy):
 
         # Return the best action
         action = actions_sorted[-1][0]#the best one
-        return action.detach().cpu().numpy()
+        return action.detach().cpu().numpy(),randflag#
 
     def actzero(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -221,6 +224,7 @@ class CEMSafeSetPolicy(Policy):
         itr = 0#start from 0
         reset_count = 0#
         act_ss_thresh = self.safe_set_thresh#initally 0.8
+        randflag=0#this is the flag to show if a random action is finally being chosen!
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -242,7 +246,9 @@ class CEMSafeSetPolicy(Policy):
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
-                        return 0*self.env.action_space.sample()#really 0 action!NO MPC is implemented!
+                        log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
+                        randflag=1
+                        return 0*self.env.action_space.sample(),randflag##really 0 action!NO MPC is implemented!
                     itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
                     continue
@@ -308,7 +314,7 @@ class CEMSafeSetPolicy(Policy):
             itr += 1#CEM Evolution method
         # Return the best action
         action = actions_sorted[-1][0]#the best one
-        return action.detach().cpu().numpy()
+        return action.detach().cpu().numpy(),randflag#
 
     @torch.no_grad()
     def actcbfd(self, obs,state,tp,fp,fn,tn,tpc,fpc,fnc,tnc):#some intermediate step that the cbf dot part still requires states rather than latent states

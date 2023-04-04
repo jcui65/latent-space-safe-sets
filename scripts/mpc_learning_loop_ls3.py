@@ -3,11 +3,12 @@ import sys
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 
-from latentsafesets.policy import CEMSafeSetPolicy#this is the class!
+from latentsafesets.policy import CEMSafeSetPolicyls3#this is the class!
 import latentsafesets.utils as utils
 import latentsafesets.utils.plot_utils as pu
 #from latentsafesets.utils.arg_parser import parse_args
-from latentsafesets.utils.arg_parser_reacher import parse_args
+from latentsafesets.utils.arg_parser_push_ls3 import parse_args
+#from latentsafesets.utils.arg_parser_reacher_ls3 import parse_args
 from latentsafesets.rl_trainers import MPCTrainer
 import latentsafesets.utils.pytorch_utils as ptu
 
@@ -47,7 +48,6 @@ if __name__ == '__main__':
         f.write('H: %d\t'%(int(params['plan_hor'])))
         f.write('r_{thres}=1.2\t')
         f.write('action_type: %s\t'%(params['action_type']))
-        f.write('conservativeness: %s, reward_type: %s\t'%(params['conservative'],params['reward_type']))
         f.write('conservativeness: %s, reward_type: %s, lightness: %s\t'%(params['conservative'],params['reward_type'],params['light']))
         f.close()
         utils.init_logging(logdir)#record started!
@@ -60,8 +60,8 @@ if __name__ == '__main__':
         # Setting up encoder, around line 172 in utils, get all the parts equipped!
         light=params['light']
         #if light=='normal':
-        #modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
-        modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
+        modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
+        #modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
         #modules = utils.make_modulessafetyexpensive(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)#forever banned!
         #modules = utils.make_modulessafetyexpensive2(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True,dyn2=True)#forever banned!
         #the result is to set up the encoder, etc.
@@ -73,7 +73,7 @@ if __name__ == '__main__':
         dynamics_model = modules['dyn']
         value_func = modules['val']
         goal_indicator = modules['gi']
-        cbfdot_function = modules['cbfd']
+        #cbfdot_function = modules['cbfd']
         #encoder2 = modules['enc2']  # it is a value in a dictionary, uh?
         #dynamics_model2 = modules['dyn2']
         # Populate replay buffer
@@ -87,10 +87,10 @@ if __name__ == '__main__':
         trainer.initial_train(replay_buffer)#initialize all the parts!
 
         log.info("Creating policy")
+        policy = CEMSafeSetPolicyls3(env, encoder, safe_set, value_func, dynamics_model,
+                                constraint_function, goal_indicator, params)
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                                #constraint_function, goal_indicator, params)
-        policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                                constraint_function, goal_indicator, cbfdot_function, params)
+                                #constraint_function, goal_indicator, cbfdot_function, params)
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
                                 #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         task_succ = []
         n_episodes = 0
 
-        tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
+        #tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
 
         reward_type=params['reward_type']
         #print('reward_type',reward_type)
@@ -136,9 +136,9 @@ if __name__ == '__main__':
                 movie_traj = [{'obs': obs.reshape((-1, 3, 64, 64))[0]}]  # a dict
                 #movie_traj_relative = [{'obs_relative': obs_relative.reshape((-1, 3, 64, 64))[0]}]  # a dict
                 traj_rews = []#rews: rewards
+                traj_action_rands=[]
                 constr_viol = False
                 succ = False
-                traj_action_rands=[]
                 action_rand=False
                 constr_viol_cbf = False
                 constr_viol_cbf2 = False
@@ -146,10 +146,10 @@ if __name__ == '__main__':
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]
-                    #if action_type=='random':
-                        #action = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
-                    #elif action_type=='zero':
-                        #action = policy.actzero(obs/255)
+                    if action_type=='random':
+                        action,randflag = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
+                    elif action_type=='zero':
+                        action,randflag = policy.actzero(obs/255)
                     #storch=ptu.torchify(env.state)#state torch
                     #action,tp,fp,fn,tn,tpc,fpc,fnc,tnc = policy.actcbfd(obs/255,env.state,tp,fp,fn,tn,tpc,fpc,fnc,tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdcircle(obs / 255, env.state, tp, fp, fn, tn, tpc,
@@ -158,22 +158,18 @@ if __name__ == '__main__':
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
-                    
+                    '''
                     if conservative=='conservative' and reward_type=='sparse':
                         #print('conservative and sparse!')#you get this right!
                         action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     elif conservative=='average' and reward_type=='sparse':
                         action,randflag= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
-                    elif conservative=='onestd' and reward_type=='sparse':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheronestd(obs / 255)#, env.state)#
                     elif conservative=='conservative' and reward_type=='dense':
                         action,randflag= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
                     elif conservative=='average' and reward_type=='dense':
                         action,randflag= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
-                    elif conservative=='average' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheronestdnogoaldense(obs / 255)#, env.state)#
-                    
+                    '''
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -192,8 +188,9 @@ if __name__ == '__main__':
                                                                                                 #tpc, fpc, fnc, tnc)
                     # the CEM (candidates, elites, etc.) is in here
                     #next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
-                    next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
+                    #next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
                     #next_obs, reward, done, info = env.stepsafety(action)#applies to pushing and spb  # 63 in simple_point_bot.py
+                    next_obs, reward, done, info = env.step(action)#original ls3 pushing
                     #next_obs = np.array(next_obs)#to make this image a numpy array
                     #next_obs, reward, done, info,next_obs_relative = env.stepsafety_relative(action)  # 63 in simple_point_bot.py
                     next_obs = np.array(next_obs) #relative or not? # to make this image a numpy array
@@ -213,12 +210,14 @@ if __name__ == '__main__':
                     else:
                         constr_cbf = rfn*info['constraint']#
                         constr_cbf2 = rfn*info['constraint'] or (1-traj_action_rands[-1])*info['constraint']#one previous step buffer
-                    traj_action_rands.append(action_rand)
-                    hvo=info['hvo']#
-                    hvn=info['hvn']#
-                    hvd=info['hvd']#,#hvd for h value difference
+                        #constr_cbf2 = rfn*info['constraint'] and (1-traj_action_rands[-1])#one previous step buffer
+                    traj_action_rands.append(action_rand)#this is really a small bug/inadequacy!
+
+                    #hvo=info['hvo']#
+                    #hvn=info['hvn']#
+                    #hvd=info['hvd']#,#hvd for h value difference
                     ns=info['next_state']
-                    '''
+                    
                     transition = {'obs': obs, 'action': action, 'reward': reward,#sARSa
                                 'next_obs': next_obs, 'done': done,
                                 'constraint': constr, 'safe_set': 0, 'on_policy': 1}
@@ -235,7 +234,7 @@ if __name__ == '__main__':
                                 'state': info['state'].tolist(),
                                 'next_state': info['next_state'].tolist()
                                 }  # add key and value into it!
-                    '''
+                    
                     transition = {'obs': obs, 'action': action, 'reward': reward,
                                 'next_obs': next_obs, 'done': done,  # this is a dictionary
                                 'constraint': constr, 'safe_set': 0,
@@ -260,11 +259,10 @@ if __name__ == '__main__':
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                     #obs_relative = next_obs_relative  # don't forget this step!
                     constr_viol = constr_viol or info['constraint']#a way to update constr_viol#either 0 or 1
+                    succ = succ or reward == 0#as said in the paper, reward=0 means success!
                     constr_viol_cbf = constr_viol_cbf or constr_cbf#a way to update constr_viol#either 0 or 1
                     constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1
-                    succ = succ or reward == 0#as said in the paper, reward=0 means success!
-
-                    
+                    '''
                     #Now, I should do the evaluation!
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
@@ -290,15 +288,15 @@ if __name__ == '__main__':
                         fpc+=1
                     elif (cbfpredict<0) and (cbfgt<tncvalue):
                         tpc+=1
-                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
-                    
+                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,state x:%f,state y:%f,constr_viol:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol))
+                    '''
                     #the evaluation phase ended
                     if done:
                         break
                 transitions[-1]['done'] = 1#change the last transition to success/done!
                 traj_reward = sum(traj_rews)#total reward, should be >=-100/-150
                 #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints
-                logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol))
+                logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol), EpConstrcbf=float(constr_viol_cbf), EpConstrcbf2=float(constr_viol_cbf2))
                 all_rewards.append(traj_rews)#does it use any EpLen?
                 all_action_rands.append(traj_action_rands)
                 constr_viols.append(constr_viol)#whether this 100-length traj violate any constraints, then compute the average
@@ -340,6 +338,8 @@ if __name__ == '__main__':
             logger.log_tabular('EpRet')
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('EpConstr', average_only=True)
+            logger.log_tabular('EpConstrcbf', average_only=True)
+            logger.log_tabular('EpConstrcbf2', average_only=True)
             logger.log_tabular('ConstrRate', np.mean(constr_viols))
             logger.log_tabular('ConstrcbfRate', np.mean(constr_viols_cbf))
             logger.log_tabular('Constrcbf2Rate', np.mean(constr_viols_cbf2))

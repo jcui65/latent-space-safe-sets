@@ -45,9 +45,10 @@ if __name__ == '__main__':
         f = open(logdir+"/logjianning"+date_string+".txt", "a")#so that I can write my own comments even when the simulation is still running!!!
         f.write('The alpha: %1.3f\t'%(params['cbfdot_thresh']))
         f.write('H: %d\t'%(int(params['plan_hor'])))
-        f.write('r_{thres}=1.2\t')
+        f.write('d_{thres}=0.2\t')
         f.write('action_type: %s\t'%(params['action_type']))
         f.write('conservativeness: %s, reward_type: %s, lightness: %s\t'%(params['conservative'],params['reward_type'],params['light']))
+        f.write('push_cbf_strategy: %d\t'%(params['push_cbf_strategy']))
         f.close()
         utils.init_logging(logdir)#record started!
         log.info('Training safe set MPC with params...')#at the very very start
@@ -187,7 +188,8 @@ if __name__ == '__main__':
                     # the CEM (candidates, elites, etc.) is in here
                     #next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
                     #next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
-                    next_obs, reward, done, info = env.stepsafety(action)#applies to pushing and spb  # 63 in simple_point_bot.py
+                    #next_obs, reward, done, info = env.stepsafety(action)#applies to pushing and spb  # 63 in simple_point_bot.py
+                    next_obs, reward, done, info = env.stepsafety2(action)#applies to pushing and spb  # 63 in simple_point_bot.py
                     #next_obs = np.array(next_obs)#to make this image a numpy array
                     #next_obs, reward, done, info,next_obs_relative = env.stepsafety_relative(action)  # 63 in simple_point_bot.py
                     next_obs = np.array(next_obs) #relative or not? # to make this image a numpy array
@@ -216,7 +218,8 @@ if __name__ == '__main__':
                                 'next_obs': next_obs, 'done': done,
                                 'constraint': constr, 'safe_set': 0, 'on_policy': 1}
                     '''
-                    transition = {'obs': obs, 'action': action, 'reward': reward,
+                    if params['push_cbf_strategy']==1:
+                        transition = {'obs': obs, 'action': action, 'reward': reward,
                                 'next_obs': next_obs, 'done': done,  # this is a dictionary
                                 'constraint': constr, 'safe_set': 0,
                                 'on_policy': 1,
@@ -225,6 +228,27 @@ if __name__ == '__main__':
                                 'hvo': hvo,#hvo for h value old
                                 'hvn': hvn,#hvn for h value new
                                 'hvd': hvd,
+                                'state': info['state'].tolist(),
+                                'next_state': info['next_state'].tolist()
+                                }  # add key and value into it!
+                    elif params['push_cbf_strategy']==2:
+                        hvoef=info['hvoef']#
+                        hvnef=info['hvnef']#
+                        hvdef=info['hvdef']#,#hvd for h value difference
+                        transition = {'obs': obs, 'action': action, 'reward': reward,
+                                'next_obs': next_obs, 'done': done,  # this is a dictionary
+                                'constraint': constr, 'safe_set': 0,
+                                'on_policy': 1,
+                                'rdo': info['rdo'].tolist(),#rdo for relative distance old
+                                'rdn': info['rdn'].tolist(),#rdn for relative distance new
+                                'hvo': hvo,#hvo for h value old
+                                'hvn': hvn,#hvn for h value new
+                                'hvd': hvd,
+                                'rdoef': info['rdoef'].tolist(),#rdo for relative distance old
+                                'rdnef': info['rdnef'].tolist(),#rdn for relative distance new
+                                'hvoef': hvoef,#hvo for h value old
+                                'hvnef': hvnef,#hvn for h value new
+                                'hvdef': hvdef,
                                 'state': info['state'].tolist(),
                                 'next_state': info['next_state'].tolist()
                                 }  # add key and value into it!
@@ -246,7 +270,6 @@ if __name__ == '__main__':
                                 'next_obs_relative': next_obs_relative
                                 }  # add key and value into it!
                     '''
-
 
                     transitions.append(transition)
                     obs = next_obs#don't forget this step!
@@ -301,7 +324,7 @@ if __name__ == '__main__':
                 pu.make_movie(movie_traj, file=os.path.join(update_dir, 'trajectory%d.gif' % j))
                 #pu.make_movie_relative(movie_traj_relative, file=os.path.join(update_dir, 'trajectory%d_relative.gif' % j))
 
-                log.info('    Cost: %d, constraint violation: %d' % (traj_reward,constr_viol))#see it in the terminal!
+                log.info('    Cost: %d, constraint violation: %d, cv_cbf: %d, cv_cbf2: %d' % (traj_reward,constr_viol,constr_viol_cbf,constr_viol_cbf2))#see it in the terminal!
                 #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
                 in_ss = 0
                 rtg = 0
@@ -322,7 +345,7 @@ if __name__ == '__main__':
             std_rewards.append(std_rew)
             log.info('Iteration %d average reward: %.4f' % (i, mean_rew))
             pu.simple_plot(avg_rewards, std=std_rewards, title='Average Rewards',
-                        file=os.path.join(logdir, 'rewards.pdf'),
+                        file=os.path.join(logdir, 'rewards%1.5f.pdf'%(np.mean(constr_viols))),
                         ylabel='Average Reward', xlabel='# Training updates')
 
             logger.log_tabular('Epoch', i)
@@ -349,7 +372,7 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)
             np.save(os.path.join(logdir, 'constrcbf2.npy'), constr_viols_cbf2)
             np.save(os.path.join(logdir, 'action_rands.npy'), all_action_rands)
-        
+            np.save(os.path.join(logdir, 'tasksuccess.npy'), task_succ)
         params['seed']=params['seed']+1#m+1#
         #utils.init_logging(logdir)#record started!
         #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')

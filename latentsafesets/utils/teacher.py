@@ -123,8 +123,11 @@ class AbstractTeacher(ABC):
             #import ipdb; ipdb.set_trace()
             action_input=np.float32(action_input)#has to be like this?#this is important!
             #next_obs, reward, done, info = self.env.step(action_input)#for reacher#63 in simple_point_bot.py
-            next_obs, reward, done, info = self.env.stepsafety(action_input)#for pushing and for spb#63 in simple_point_bot.py
-            transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
+            #next_obs, reward, done, info = self.env.stepsafety(action_input)#for pushing and for spb#63 in simple_point_bot.py
+            next_obs,reward,done,info=self.env.stepsafety2(action_input)#strategy 2 for pushing!#for pushing and for spb#63 in simple_point_bot.py
+            '''
+            if self.params['push_cbf_strategy']==1:
+                transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
                           'next_obs': next_obs, 'done': int(done),#this is a dictionary
                           'constraint': int(info['constraint']), 'safe_set': 0,
                           'on_policy': int(self.on_policy),##
@@ -133,6 +136,25 @@ class AbstractTeacher(ABC):
                           'hvo': info['hvo'],
                           'hvn': info['hvn'],
                           'hvd': info['hvd'],
+                          'state':info['state'].tolist(),
+                          'next_state':info['next_state'].tolist()
+                          }#add key and value into it!
+            elif self.params['push_cbf_strategy']==2:
+            ''' 
+            transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
+                          'next_obs': next_obs, 'done': int(done),#this is a dictionary
+                          'constraint': int(info['constraint']), 'safe_set': 0,
+                          'on_policy': int(self.on_policy),##
+                          'rdo': info['rdo'].tolist(),
+                          'rdn': info['rdn'].tolist(),
+                          'hvo': info['hvo'],#the teacher has to store all the things. This makes sense!
+                          'hvn': info['hvn'],
+                          'hvd': info['hvd'],
+                          'rdoef': info['rdoef'].tolist(),
+                          'rdnef': info['rdnef'].tolist(),
+                          'hvoef': info['hvoef'],
+                          'hvnef': info['hvnef'],
+                          'hvdef': info['hvdef'],
                           'state':info['state'].tolist(),
                           'next_state':info['next_state'].tolist()
                           }#add key and value into it!

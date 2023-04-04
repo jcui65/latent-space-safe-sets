@@ -385,6 +385,104 @@ class PushEnv(BaseMujocoEnv):
             return self.position, reward, done, info
         else:
             return self.render(), reward, done, info#self.render() seems to generate the image?
+    def stepsafety2(self, action):#push strategy 2!
+        position = self.position#this is the 27 dimensional thing!
+        # print("ACTION: ", action)
+        oldefy=position[0]#oldefy means old end effector y coordinate#confirmed it is the y position!!!
+        oldblock1y=position[6]#
+        oldblock2y=position[13]
+        oldblock3y=position[20]
+        #some min max things
+        oefyabs=np.abs(oldefy)
+        ob1yabs=np.abs(oldblock1y)#old block 1 y abs 
+        ob2yabs=np.abs(oldblock2y)
+        ob3yabs=np.abs(oldblock3y)
+        #ob1yasat=np.where(ob1yabs<=0.4,ob1yabs,0)#old block 1 y abs saturate
+        #ob2yasat=np.where(ob2yabs<=0.4,ob2yabs,0)
+        #ob3yasat=np.where(ob3yabs<=0.4,ob3yabs,0)
+        thres=0.3
+        thresef=0.2#3
+        oeff=thresef**2-oefyabs**2#old end effector function value
+        obf1=thres**2-ob1yabs**2#-ob1yasat**2#
+        obf2=thres**2-ob2yabs**2#-ob2yasat**2#
+        obf3=thres**2-ob3yabs**2#-ob3yasat**2#
+        rdo=max(ob1yabs,ob2yabs,ob3yabs)#max(ob1yasat,ob2yasat,ob3yasat)#
+        hvo=min(obf1,obf2,obf3)#the more negative, the more unsafe
+        rdoef=oefyabs#max(ob1yabs,ob2yabs,ob3yabs)#max(ob1yasat,ob2yasat,ob3yasat)#
+        hvoef=oeff#min(obf1,obf2,obf3)#the more negative, the more unsafe
+        action = np.clip(action, self.ac_low, self.ac_high)
+        # Add extra action dimensions that we have artificially removed
+        action = np.array(list(action) + [0, 0])
+        target_qpos = self._next_qpos(action)#297
+        if self._previous_target_qpos is None:#with reset, it should not be none?
+            self._previous_target_qpos = target_qpos
+        finger_force = np.zeros(2)
+
+        for st in range(self.substeps):#500
+            alpha = st / (float(self.substeps) - 1)
+            self.sim.data.ctrl[:] = alpha * target_qpos + (
+                1. - alpha) * self._previous_target_qpos
+            self.sim.step()#self.sim is the MjSim thing!
+
+        self._previous_target_qpos = target_qpos
+        # constraint = self._viol or self.topple_check()
+        # self._viol = constraint
+        constraint = self.constraint_fn()#246
+        reward = self.reward_fn()#253
+        if constraint:
+            reward = -1
+
+        self._num_steps += 1
+        if EARLY_TERMINATION:
+            done = (constraint > 0) or (reward > -0.5)
+        else:
+            done = self._num_steps >= self._max_episode_steps
+
+        newefy=self.position[0]#oldefy means old end effector y coordinate
+        newblock1y=self.position[6]#
+        newblock2y=self.position[13]
+        newblock3y=self.position[20]
+        #some min max things
+        nefyabs=np.abs(newefy)
+        nb1yabs=np.abs(newblock1y)#old block 1 y abs 
+        nb2yabs=np.abs(newblock2y)
+        nb3yabs=np.abs(newblock3y)
+        #nb1yasat=np.where((nb1yabs<=0.4)|((nb1yabs>0.4)&(ob1yabs<=0.4)),nb1yabs,0)#old block 1 y abs saturate
+        #nb2yasat=np.where((nb2yabs<=0.4)|((nb2yabs>0.4)&(ob2yabs<=0.4)),nb2yabs,0)#try to capture that moment!
+        #nb3yasat=np.where((nb3yabs<=0.4)|((nb3yabs>0.4)&(ob3yabs<=0.4)),nb3yabs,0)#the most ideal way!
+        neff=thresef**2-nefyabs**2#new end effector function value
+        nbf1=thres**2-nb1yabs**2#-nb1yasat**2#
+        nbf2=thres**2-nb2yabs**2#-nb2yasat**2#
+        nbf3=thres**2-nb3yabs**2#-nb3yasat**2#
+        rdn=max(nb1yabs,nb2yabs,nb3yabs)#max(nb1yasat,nb2yasat,nb3yasat)#
+        hvn=min(nbf1,nbf2,nbf3)#the more negative, the more unsafe
+        rdnef=nefyabs#max(ob1yabs,ob2yabs,ob3yabs)#max(ob1yasat,ob2yasat,ob3yasat)#
+        hvnef=neff#min(obf1,obf2,obf3)#the more negative, the more unsafe
+        hvd=hvn-hvo
+        hvdef=hvnef-hvoef
+
+        info = {
+            "constraint": constraint,
+            "reward": reward,
+            "state": position,#the position of the end effector?
+            "next_state": self.position,#it changes along the way?
+            "action": action,
+            "rdo":rdo,#rdo for relative distance old#array now!
+            "rdn": rdn,#rdn for relative distance new#array now!
+            "hvo": hvo,#hvo for h value old#corresponding to the old state
+            "hvn":hvn,#hvn for h value new#corresponding to the new state
+            "hvd":hvd, #hvd for h value difference
+            "rdoef":rdoef,#rdo for relative distance old#array now!
+            "rdnef": rdnef,#rdn for relative distance new#array now!
+            "hvoef": hvoef,#hvo for h value old#corresponding to the old state
+            "hvnef":hvnef,#hvn for h value new#corresponding to the new state
+            "hvdef":hvdef #hvd for h value difference
+        }
+        #print('state',position,'next_state',self.position)
+        if self.gt_state:
+            return self.position, reward, done, info
+        else:
+            return self.render(), reward, done, info#self.render() seems to generate the image?
 
 
 def npy_to_gif(im_list, filename, fps=4):

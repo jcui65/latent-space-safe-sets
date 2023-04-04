@@ -192,7 +192,10 @@ class CBFdotlatentplanaTrainer(Trainer):
             #print('obs',obs)
             #print('obs.shape',obs.shape)
             #rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']#0 or 1
-            rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
+            if self.params['push_cbf_strategy']==1:
+                rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
+            elif self.params['push_cbf_strategy']==2:
+                rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
             #rda=np.concatenate((rdo,action),axis=1)
             #rdal = np.concatenate((obs, action), axis=1)#l for latent
             #print('rdal',rdal)
@@ -226,7 +229,12 @@ class CBFdotlatentplanaTrainer(Trainer):
             out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
             #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
             #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
-            obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
+            if self.params['push_cbf_strategy']==1:
+                obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
+            elif self.params['push_cbf_strategy']==2:
+                obs, rdn, hvn = out_dict['obs'], out_dict['rdnef'], out_dict['hvnef']  # 0 or 1
+            #rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
+            #rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
             #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
             #print('rdo.shape',rdo.shape)#(256, 2)
             #print('action.shape',action.shape)#(256, 2)
