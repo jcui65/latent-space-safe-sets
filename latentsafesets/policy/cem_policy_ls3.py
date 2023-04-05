@@ -124,7 +124,7 @@ class CEMSafeSetPolicyls3(Policy):
                 num_constraint_satisfying = sum(values > -1e5)#no any constraints violation
                 iter_num_elites = min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
                 #what if I change this into num_constraint_satisfying+2?
-                if num_constraint_satisfying <2:#this is critical in avoiding bugs#== 0:#it is definitely a bug not to include the case where num_constraint_satisfying=1!
+                if num_constraint_satisfying == 0:#<2:#this is critical in avoiding bugs#it is definitely a bug not to include the case where num_constraint_satisfying=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
                     if reset_count > self.safe_set_thresh_mult_iters:
@@ -243,7 +243,7 @@ class CEMSafeSetPolicyls3(Policy):
                 num_constraint_satisfying = sum(values > -1e5)#no any constraints violation
                 iter_num_elites = min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
                 #what if I change this into num_constraint_satisfying+2?
-                if num_constraint_satisfying<2:# == 0:#it is definitely a bug not to include the case where num_constraint_satisfying=1!
+                if num_constraint_satisfying== 0:#<2:# it is definitely a bug not to include the case where num_constraint_satisfying=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
                     if reset_count > self.safe_set_thresh_mult_iters:

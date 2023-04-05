@@ -7,8 +7,8 @@ from latentsafesets.policy import CEMSafeSetPolicyls3#this is the class!
 import latentsafesets.utils as utils
 import latentsafesets.utils.plot_utils as pu
 #from latentsafesets.utils.arg_parser import parse_args
-from latentsafesets.utils.arg_parser_push_ls3 import parse_args
-#from latentsafesets.utils.arg_parser_reacher_ls3 import parse_args
+#from latentsafesets.utils.arg_parser_push_ls3 import parse_args
+from latentsafesets.utils.arg_parser_reacher_ls3 import parse_args
 from latentsafesets.rl_trainers import MPCTrainer
 import latentsafesets.utils.pytorch_utils as ptu
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         #utils.init_loggingcjn(logdir)#record started!#only recording the current parameters!
         now = datetime.now()
         date_string = now.strftime("%Y-%m-%d-%H-%M-%S")#year month day/hour minute second
-        f = open(logdir+"/logjianning"+date_string+".txt", "a")#so that I can write my own comments even when the simulation is still running!!!
+        f = open(logdir+"/logjianning"+date_string+"reacherls3.txt", "a")#so that I can write my own comments even when the simulation is still running!!!
         f.write('The alpha: %1.3f\t'%(params['cbfdot_thresh']))
         f.write('H: %d\t'%(int(params['plan_hor'])))
         f.write('r_{thres}=1.2\t')
@@ -111,9 +111,9 @@ if __name__ == '__main__':
 
         #tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
 
-        reward_type=params['reward_type']
+        #reward_type=params['reward_type']
         #print('reward_type',reward_type)
-        conservative=params['conservative']
+        #conservative=params['conservative']
         #print('conservative',conservative)
         action_type=params['action_type']
         for i in range(num_updates):#default 25 in spb
@@ -290,7 +290,6 @@ if __name__ == '__main__':
                         tpc+=1
                     log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,state x:%f,state y:%f,constr_viol:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol))
                     '''
-                    log.info('s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
                     #the evaluation phase ended
                     if done:
                         break
