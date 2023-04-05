@@ -127,6 +127,7 @@ class CEMSafeSetPolicyls3(Policy):
                 if num_constraint_satisfying <2:#== 0:#this is critical in avoiding bugs#it is definitely a bug not to include the case where num_constraint_satisfying=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
+                    log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
                         log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
@@ -246,6 +247,7 @@ class CEMSafeSetPolicyls3(Policy):
                 if num_constraint_satisfying<2:#== 0:# it is definitely a bug not to include the case where num_constraint_satisfying=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
+                    log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
                         log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
