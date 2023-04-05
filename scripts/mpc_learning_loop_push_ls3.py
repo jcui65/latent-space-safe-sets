@@ -309,7 +309,7 @@ if __name__ == '__main__':
                 #pu.make_movie_relative(movie_traj_relative, file=os.path.join(update_dir, 'trajectory%d_relative.gif' % j))
 
                 #log.info('    Cost: %d, constraint violation: %d' % (traj_reward,constr_viol))#see it in the terminal!
-                log.info('    Cost: %d, constraint violation: %d, cv_cbf: %d, cv_cbf2: %d' % (traj_reward,constr_viol,constr_viol_cbf,constr_viol_cbf2))#see it in the terminal!
+                log.info('    Cost: %d, constraint violation: %d, cv_safety: %d, cv_safety2: %d' % (traj_reward,constr_viol,constr_viol_cbf,constr_viol_cbf2))#see it in the terminal!
                 #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
                 in_ss = 0
                 rtg = 0
@@ -339,11 +339,11 @@ if __name__ == '__main__':
             logger.log_tabular('EpRet')
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('EpConstr', average_only=True)
-            logger.log_tabular('EpConstrcbf', average_only=True)
-            logger.log_tabular('EpConstrcbf2', average_only=True)
+            logger.log_tabular('EpConstrsafety', average_only=True)
+            logger.log_tabular('EpConstrsafety2', average_only=True)
             logger.log_tabular('ConstrRate', np.mean(constr_viols))
-            logger.log_tabular('ConstrcbfRate', np.mean(constr_viols_cbf))
-            logger.log_tabular('Constrcbf2Rate', np.mean(constr_viols_cbf2))
+            logger.log_tabular('ConstrsafetyRate', np.mean(constr_viols_cbf))
+            logger.log_tabular('Constrsafety2Rate', np.mean(constr_viols_cbf2))
             logger.log_tabular('SuccRate', np.mean(task_succ))
             logger.dump_tabular()
             n_episodes += traj_per_update#10 by default
@@ -354,8 +354,8 @@ if __name__ == '__main__':
 
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
-            np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)
-            np.save(os.path.join(logdir, 'constrcbf2.npy'), constr_viols_cbf2)
+            np.save(os.path.join(logdir, 'constrsafety.npy'), constr_viols_cbf)
+            np.save(os.path.join(logdir, 'constrsafety2.npy'), constr_viols_cbf2)
             np.save(os.path.join(logdir, 'action_rands.npy'), all_action_rands)
             np.save(os.path.join(logdir, 'tasksuccess.npy'), task_succ)
         params['seed']=params['seed']+1#m+1#
