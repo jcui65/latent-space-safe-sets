@@ -32,27 +32,28 @@ class EncodedReplayBuffer:
     def store_transition(self, transition):#a transition is 1 step#It is a dictionary
         if len(self.data) > 0:#at first it is not like this, from second it is like this
             key_set = set(self.data)#the keys of self.data are the keys of transition!
-        else:#at first it is like this
+        else:#at first it is like this#self.data is different from self.transition!
             key_set = set(transition)#you only get the keys of that dictionary! python usage!
 
         # assert key_set == set(transition), "Expected transition to have keys %s" % key_set
 
         for key in key_set:#it is a set
             data = self.data.get(key, None)#.get() is to get the value of a key
+            #print('transition',transition)
+            if key in transition:#I added!
+                new_data = np.array(transition[key])#it seems already converts value list to array
+                if key in self.im_keys:
+                    im = np.array(transition[key])#seems to be the image?
+                    im = ptu.torchify(im)
+                    new_data_mean, new_data_log_std = self.encoder(im[None] / 255)
+                    new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
+                    new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()
+                    new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()
 
-            new_data = np.array(transition[key])#it seems already converts value list to array
-            if key in self.im_keys:
-                im = np.array(transition[key])#seems to be the image?
-                im = ptu.torchify(im)
-                new_data_mean, new_data_log_std = self.encoder(im[None] / 255)
-                new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
-                new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()
-                new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()
-
-            if data is None:
-                data = np.zeros((self.size, *new_data.shape))#then fill one by one
-            data[self._index] = new_data#now fill one by one
-            self.data[key] = data#the value of self.data[key] is a np array#the way to init a value in a dict
+                if data is None:
+                    data = np.zeros((self.size, *new_data.shape))#then fill one by one
+                data[self._index] = new_data#now fill one by one
+                self.data[key] = data#the value of self.data[key] is a np array#the way to init a value in a dict
 
         self._index = (self._index + 1) % self.size#no more no less, just 10k pieces of data#a queue like dagger
         self._len = min(self._len + 1, self.size)#a thing saturate at self.size!

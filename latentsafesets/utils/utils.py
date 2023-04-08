@@ -176,7 +176,7 @@ def load_replay_buffer(params, encoder=None, first_only=False):#it doesn't have 
     for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe 50 & obstacle 50
         #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
         if params['light']=='ls3':
-            real_dir = os.path.join('', 'datals3',directory)  #
+            real_dir = os.path.join('', 'data',directory)  #new data!#ls3',directory)  #old data!#
         else:
             real_dir = os.path.join('', 'data',directory)  #
         trajectories += load_trajectories(num, file=real_dir)#now you have 50+50=100 pieces of trajs each containing 100 time steps

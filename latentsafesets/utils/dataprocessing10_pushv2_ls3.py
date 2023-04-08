@@ -12,13 +12,13 @@ import latentsafesets.utils.plot_utils as pu
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
 @click.option('--dateo', default='04-01',help='the date1 when the simulation started', type=str)
-@click.option('--timeo', default='13-44-17', help='time1 of the simulation', type=str)
+@click.option('--timeo', default='14-11-42', help='time1 of the simulation', type=str)
 @click.option('--datet', default='04-04',help='the date2 when the simulation started', type=str)
-@click.option('--timet', default='03-09-05', help='time2 of the simulation', type=str)
-@click.option('--dateth', default='04-04',help='the date1 when the simulation started', type=str)
-@click.option('--timeth', default='03-07-53', help='time1 of the simulation', type=str)
-@click.option('--datef', default='04-04',help='the date2 when the simulation started', type=str)
-@click.option('--timef', default='03-06-05', help='time2 of the simulation', type=str)
+@click.option('--timet', default='13-25-17', help='time2 of the simulation', type=str)
+@click.option('--dateth', default='04-04',help='the date3 when the simulation started', type=str)
+@click.option('--timeth', default='13-28-34', help='time3 of the simulation', type=str)
+@click.option('--datef', default='04-04',help='the date4 when the simulation started', type=str)
+@click.option('--timef', default='13-27-02', help='time4 of the simulation', type=str)
 def main(dateo, timeo,datet, timet,dateth, timeth,datef, timef):
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
     #date=mar28#mar26#mar27#mar25#mar23#mar22#mar24#
@@ -27,7 +27,7 @@ def main(dateo, timeo,datet, timet,dateth, timeth,datef, timef):
     
     srlist=[]#success rate list
     ralist=[]#reward average list
-    fh=1000#500#fh means five hundred
+    fh=500#1000#fh means five hundred
     rfarray=np.zeros((fh,))#np.zeros((1000,))#push#np.zeros((250,))#reacher
     tsrarray=np.zeros((fh,))#np.zeros((1000,))#reacher#np.zeros((1000,))#push#
     ralastlist=[]#reward average last list

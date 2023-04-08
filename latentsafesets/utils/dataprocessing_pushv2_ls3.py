@@ -37,7 +37,7 @@ def main(date, time):
     cvrcbflist=[]#constraint violation rate list
     cvrcbf2list=[]#constraint violation rate list
     lastnum=50
-    seedlist=[1,2,3]#24,25#[4,5,6,7,8,9,10]#[1,101,201]#23#22#[1,26,51]##
+    seedlist=[8,9,10]#[1,2,3]#24,25#[4,5,6,7,8,9,10]#[1,101,201]#23#22#[1,26,51]##
     fh=500#fh means five hundred
     for seed in seedlist:
         logdir=os.path.join(logdirbeforeseed, str(seed))
@@ -60,11 +60,11 @@ def main(date, time):
         #print('constri.shape',constri.shape)#250
         totalconstri=np.sum(constri[0:fh])
         constrirate=totalconstri/fh#constri.shape[0]
-        constrcbfi=np.load(os.path.join(logdir, "constrcbf.npy"))
+        constrcbfi=np.load(os.path.join(logdir, "constrcbf.npy"))#safety.npy"))#
         #print('constri.shape',constri.shape)#250
         totalconstrcbfi=np.sum(constrcbfi[0:fh])
         constrcbfirate=totalconstrcbfi/fh#constrcbfi.shape[0]
-        constrcbf2i=np.load(os.path.join(logdir, "constrcbf2.npy"))
+        constrcbf2i=np.load(os.path.join(logdir, "constrcbf2.npy"))#safety2.npy"))#
         totalconstrcbf2i=np.sum(constrcbf2i[0:fh])
         constrcbf2irate=totalconstrcbf2i/fh#constrcbf2i.shape[0]
         #print('constrirate',constrirate)
@@ -140,13 +140,13 @@ def main(date, time):
     cvrcbfastd=np.std(cvrcbfa)
     print('constraint rate cbf ave',cvrcbfaave,'constraint rate cbf std',cvrcbfastd)
     pu.simple_plot(cvrcbfa, title='Constraint violation cbf rate %f'%(cvrcbfaave)+"\u00B1"+'%f'%(cvrcbfastd),
-                            file=os.path.join(logdirbeforeseed, 'violationcbf'+str(lenseed)+'rate'+date+'-'+time+'ls3.pdf'),
+                            file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'safetyls3.pdf'),
                             ylabel='constraint violation cbf rate', xlabel='# seeds',nonreward=True)
     cvrcbf2aave=np.mean(cvrcbf2a)
     cvrcbf2astd=np.std(cvrcbf2a)
     print('constraint rate cbf2 ave',cvrcbf2aave,'constraint rate cbf2 std',cvrcbfastd)
     pu.simple_plot(cvrcbf2a, title='Constraint violation cbf2 rate %f'%(cvrcbf2aave)+"\u00B1"+'%f'%(cvrcbf2astd),
-                            file=os.path.join(logdirbeforeseed, 'violation2cbf'+str(lenseed)+'rate'+date+'-'+time+'ls3.pdf'),
+                            file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'safety2ls3.pdf'),
                             ylabel='constraint violation cbf2 rate', xlabel='# seeds',nonreward=True)
     print('reward ave',np.mean(raa),'reward std',np.std(raa))
     print('reward last ave',np.mean(ralasta),'reward last std',np.std(ralasta))

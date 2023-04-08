@@ -61,6 +61,7 @@ def add_controller_args(parser):
                         help='How many CEM candidates should be sampled from a new distribution')
     parser.add_argument('--conservative', type=str, default='average')#'conservative')#
     parser.add_argument('--reward_type', type=str, default='sparse')#'dense')#
+    parser.add_argument('--zero_one',type=str,default='zero')#'one')#
 
 def add_encoder_args(parser):
     # Latent embedding params

@@ -87,6 +87,7 @@ class CEMSafeSetPolicyls3(Policy):
         self.prev_sol = np.tile((self.ac_lb + self.ac_ub) / 2, [self.plan_hor])#how it is being used?
         self.init_var = np.tile(np.square(self.ac_ub - self.ac_lb) / 16, [self.plan_hor])#how it is being used?
         self.action_type=params['action_type']
+        self.zero_one=params['zero_one']
         #self.reward_type=params['reward_type']
         #self.conservative=params['conservative']
     @torch.no_grad()
@@ -124,19 +125,34 @@ class CEMSafeSetPolicyls3(Policy):
                 num_constraint_satisfying = sum(values > -1e5)#no any constraints violation
                 iter_num_elites = min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
                 #what if I change this into num_constraint_satisfying+2?
-                if num_constraint_satisfying <2:#== 0:#this is critical in avoiding bugs#it is definitely a bug not to include the case where num_constraint_satisfying=1!
-                    reset_count += 1
-                    act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
-                    log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))
-                    if reset_count > self.safe_set_thresh_mult_iters:
-                        self.mean = None
-                        log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
-                        randflag=1
-                        return self.env.action_space.sample(),randflag##really random action!NO MPC is implemented!
+                if self.zero_one=='zero':
+                    if num_constraint_satisfying == 0:#<2:#this is critical in avoiding bugs#it is definitely a bug not to include the case where num_constraint_satisfying=1!
+                        reset_count += 1
+                        act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
+                        #log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))#just 0!
+                        if reset_count > self.safe_set_thresh_mult_iters:
+                            self.mean = None
+                            log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
+                            randflag=1
+                            return self.env.action_space.sample(),randflag##really random action!NO MPC is implemented!
 
-                    itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
-                    self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
-                    continue
+                        itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
+                        self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
+                        continue
+                if self.zero_one=='one':
+                    if num_constraint_satisfying <2:#== 0:#this is critical in avoiding bugs#it is definitely a bug not to include the case where num_constraint_satisfying=1!
+                        reset_count += 1
+                        act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
+                        log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))
+                        if reset_count > self.safe_set_thresh_mult_iters:
+                            self.mean = None
+                            log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
+                            randflag=1
+                            return self.env.action_space.sample(),randflag##really random action!NO MPC is implemented!
+
+                        itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
+                        self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
+                        continue
 
                 # Sort
                 sortid = values.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
