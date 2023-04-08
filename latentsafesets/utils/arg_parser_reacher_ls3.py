@@ -20,12 +20,13 @@ def parse_args():
     parser.add_argument('--checkpoint_freq', type=int, default=2000,
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
-    parser.add_argument('--traj_per_update', default=10, type=int)#10 is the default value
-    parser.add_argument('--num_updates', type=int, default=25)#1)#100)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
+    parser.add_argument('--traj_per_update', default=10, type=int)#2, type=int)#10 is the default value
+    parser.add_argument('--num_updates', type=int, default=25)#2)#100)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
     parser.add_argument('--repeat_times',type=int,default=10)#1)#3)#7)#2)#
     parser.add_argument('--light',type=str,default='ls3')#'ls3' means original, no CBF#'light')#'normal')#'expensive')#'nosasfety')#no any safety measures
     parser.add_argument('--action_type',type=str,default='random')#'zero')#
+    parser.add_argument('--datasetnumber',type=int,default=1)#1 for old data, 2 for new data, 3 for data 3!
     add_controller_args(parser)
     add_encoder_args(parser)
     add_ss_args(parser)
@@ -75,7 +76,7 @@ def add_encoder_args(parser):
     parser.add_argument('--enc_init_iters', type=int, default=100000,
                         help='Initial training iterations')
     
-    parser.add_argument('--enc_checkpoint', type=str, default='outputs/2023-02-18/19-47-57/1/vae.pth',#old reacher#'outputs/2023-04-05/19-29-19/vae.pth',#new reacher#'outputs/2022-07-18/19-38-58/vae.pth',#for pushing#
+    parser.add_argument('--enc_checkpoint', type=str, default='outputs/2023-04-08/02-02-17/vae.pth',#new 2 reacher#'outputs/2023-04-08/01-57-17/vae.pth',#old 2 reacher#'outputs/2023-02-18/19-47-57/1/vae.pth',#old reacher#'outputs/2023-04-05/19-29-19/vae.pth',#new reacher#'outputs/2022-07-18/19-38-58/vae.pth',#for pushing#
                         #None,#'outputs/2023-02-18/19-47-57/1/vae_72000.pth',#'outputs/2022-07-13/17-24-59/vae.pth',#'outputs/2023-02-16/21-43-17/vae.pth',#global#'outputs/2023-02-16/21-42-26/vae.pth',#relative#None,#'outputs/2023-02-04/15-01-49/vae.pth',#'outputs/2022-11-13/15-19-54/vae.pth',#planaego#'outputs/2023-01-30/01-25-33/vae.pth',#new 5
                         #'outputs/2022-11-21/01-35-45/vae.pth',#plan b relative var 1#'outputs/2022-11-27/08-55-19/vae.pth',#'outputs/2022-11-23/10-53-55/vae.pth',#plan b relative var 0.01#'outputs/2022-11-25/01-29-50/vae.pth',#plan b global coordinates, var=0.01#'outputs/2022-11-25/19-17-37/vae.pth',#plan b global coordinates, var=1#
                         # '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',#
@@ -103,7 +104,7 @@ def add_ss_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--safe_set_ignore', action='store_true')
     parser.add_argument('--safe_set_update_iters', type=int, default=512)
-    parser.add_argument('--safe_set_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/ss.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/ss.pth')#really new reacher#'outputs/2023-04-06/06-04-22/1/initial_train/ss.pth')#new reacher#'outputs/2023-02-21/09-18-27/1/initial_train/ss.pth')#pushing#
+    parser.add_argument('--safe_set_checkpoint', type=str, default='outputs/2023-04-08/12-42-19/1/initial_train/ss.pth')#new 2 reacher#'outputs/2023-04-08/12-39-06/1/initial_train/ss.pth')#old 2 reacher#'outputs/2023-02-19/16-20-28/1/initial_train/ss.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/ss.pth')#really new reacher#'outputs/2023-04-06/06-04-22/1/initial_train/ss.pth')#new reacher#'outputs/2023-02-21/09-18-27/1/initial_train/ss.pth')#pushing#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/ss.pth')#'outputs/2022-12-26/11-14-08/initial_train/ss.pth')#'outputs/2022-12-26/22-29-25/initial_train/ss.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/ss.pth')#None)#'outputs/2022-12-26/11-14-08/initial_train/ss.pth')#'outputs/2022-11-21/11-01-14/initial_train/ss.pth')#'outputs/2022-11-19/10-32-29/initial_train/ss.pth')#'outputs/2022-07-15/17-41-16/initial_train/ss.pth')#'outputs/2022-09-17/21-54-24/update_99/ss.pth')#'outputs/2022-08-07/01-56-19/update_3/ss.pth')#'outputs/2022-08-07/01-36-19/update_4/ss.pth')#'outputs/2022-08-07/01-09-48/update_5/ss.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/ss.pth')#'outputs/2022-07-20/14-46-50/update_16/ss.pth')#
     # #'outputs/2022-07-15/17-41-16/initial_train/ss.pth')#'outputs/2022-07-18/22-58-04/initial_train/ss.pth')#
@@ -128,7 +129,7 @@ def add_dyn_args(parser):
     parser.add_argument('--dyn_init_iters', type=int, default=10000,
                         help='Initial training iterations')
     parser.add_argument('--dyn_update_iters', type=int, default=512)
-    parser.add_argument('--dyn_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/dyn.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/dyn.pth')#'outputs/2023-04-06/06-04-22/1/initial_train/dyn.pth')#new reacher#reacher#'outputs/2023-02-21/09-18-27/1/initial_train/dyn.pth')#pushing#
+    parser.add_argument('--dyn_checkpoint', type=str, default='outputs/2023-04-08/12-42-19/1/initial_train/dyn.pth')#new 2 reacher#'outputs/2023-04-08/12-39-06/1/initial_train/dyn.pth')#old 2 reacher#'outputs/2023-02-19/16-20-28/1/initial_train/dyn.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/dyn.pth')#'outputs/2023-04-06/06-04-22/1/initial_train/dyn.pth')#new reacher#reacher#'outputs/2023-02-21/09-18-27/1/initial_train/dyn.pth')#pushing#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/dyn.pth')#'outputs/2022-12-26/11-14-08/initial_train/dyn.pth')#'outputs/2022-12-26/22-29-25/initial_train/dyn.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/dyn.pth')#'outputs/2022-12-26/11-14-08/initial_train/dyn.pth')#'outputs/2022-12-03/15-32-41/initial_train/dyn.pth')#'outputs/2022-11-21/11-01-14/initial_train/dyn.pth')#'outputs/2022-11-19/10-32-29/initial_train/dyn.pth')#'outputs/2022-07-15/17-41-16/initial_train/dyn.pth')#'outputs/2022-08-07/01-56-19/update_3/dyn.pth')#'outputs/2022-08-07/01-36-19/update_4/dyn.pth')#'outputs/2022-08-07/01-09-48/update_5/dyn.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/dyn.pth')#'outputs/2022-07-20/14-46-50/update_16/dyn.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/dyn.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/dyn.pth')#
@@ -154,7 +155,7 @@ def add_val_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--val_reduction', type=str, default='mean')
     parser.add_argument('--val_update_iters', type=int, default=2000)
-    parser.add_argument('--val_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/val.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/val.pth')#'outputs/2023-04-06/06-04-22/1/initial_train/val.pth')#new reacher#'outputs/2023-02-21/09-18-27/1/initial_train/val.pth')#pushing#
+    parser.add_argument('--val_checkpoint', type=str, default='outputs/2023-04-08/12-42-19/1/initial_train/val.pth')#new 2 reacher#'outputs/2023-04-08/12-39-06/1/initial_train/val.pth')#old 2 reacher#'outputs/2023-02-19/16-20-28/1/initial_train/val.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/val.pth')#'outputs/2023-04-06/06-04-22/1/initial_train/val.pth')#new reacher#'outputs/2023-02-21/09-18-27/1/initial_train/val.pth')#pushing#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/val.pth')#'outputs/2022-12-26/11-14-08/initial_train/val.pth')#'outputs/2022-12-26/22-29-25/initial_train/val.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/val.pth')#'outputs/2022-12-26/11-14-08/initial_train/val.pth')#'outputs/2022-11-14/11-34-20/update_199/val.pth')#'outputs/2022-11-21/11-01-14/initial_train/val.pth')#'outputs/2022-11-19/10-32-29/initial_train/val.pth')#'outputs/2022-07-15/17-41-16/initial_train/val.pth')#'outputs/2022-09-17/21-54-24/update_99/val.pth')#'outputs/2022-08-07/01-56-19/update_3/val.pth')#'outputs/2022-08-07/01-36-19/update_4/val.pth')#'outputs/2022-08-07/01-09-48/update_5/val.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/val.pth')#'outputs/2022-07-20/14-46-50/update_16/val.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/val.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/val.pth')#
@@ -173,7 +174,7 @@ def add_constr_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--constr_ignore', action='store_true')
     parser.add_argument('--constr_update_iters', type=int, default=512)
-    parser.add_argument('--constr_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/constr.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/constr.pth')#'outputs/2023-04-06/06-04-22/1/initial_train/constr.pth')#new reacher#'outputs/2023-02-21/09-18-27/1/initial_train/constr.pth')#pushing#
+    parser.add_argument('--constr_checkpoint', type=str, default='outputs/2023-04-08/12-42-19/1/initial_train/constr.pth')#new 2 reacher#'outputs/2023-04-08/12-39-06/1/initial_train/constr.pth')#old 2 reacher#'outputs/2023-02-19/16-20-28/1/initial_train/constr.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/constr.pth')#'outputs/2023-04-06/06-04-22/1/initial_train/constr.pth')#new reacher#'outputs/2023-02-21/09-18-27/1/initial_train/constr.pth')#pushing#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/constr.pth')#'outputs/2022-12-26/11-14-08/initial_train/constr.pth')#'outputs/2022-12-26/22-29-25/initial_train/constr.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/constr.pth')#'outputs/2022-12-26/11-14-08/initial_train/constr.pth')#'outputs/2022-11-21/11-01-14/initial_train/constr.pth')#'outputs/2022-11-19/10-32-29/initial_train/constr.pth')#'outputs/2022-07-15/17-41-16/initial_train/constr.pth')#'outputs/2022-08-07/01-56-19/update_3/constr.pth')#'outputs/2022-08-07/01-36-19/update_4/constr.pth')#'outputs/2022-08-07/01-09-48/update_5/constr.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/constr.pth')#'outputs/2022-07-20/14-46-50/update_16/constr.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/constr.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/constr.pth')#
@@ -191,7 +192,7 @@ def add_gi_args(parser):
     parser.add_argument('--gi_init_iters', type=int, default=10000,
                         help='Initial training iterations')
     parser.add_argument('--gi_update_iters', type=int, default=512)
-    parser.add_argument('--gi_checkpoint', type=str, default='outputs/2023-02-19/16-20-28/1/initial_train/gi.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/gi.pth')#'outputs/2023-04-06/06-04-22/1/initial_train/gi.pth')#new reacher#'outputs/2023-02-21/09-18-27/1/initial_train/gi.pth')#pushing#
+    parser.add_argument('--gi_checkpoint', type=str, default='outputs/2023-04-08/12-42-19/1/initial_train/gi.pth')#new 2 reacher#'outputs/2023-04-08/12-39-06/1/initial_train/gi.pth')#old 2 reacher#'outputs/2023-02-19/16-20-28/1/initial_train/gi.pth')#old reacher#'outputs/2023-04-07/19-43-49/1/initial_train/gi.pth')#'outputs/2023-04-06/06-04-22/1/initial_train/gi.pth')#new reacher#'outputs/2023-02-21/09-18-27/1/initial_train/gi.pth')#pushing#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/gi.pth')#'outputs/2022-12-26/11-14-08/initial_train/gi.pth')#'outputs/2022-12-26/22-29-25/initial_train/gi.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/gi.pth')#'outputs/2022-12-26/11-14-08/initial_train/gi.pth')#'outputs/2022-11-14/11-34-20/update_199/gi.pth')#'outputs/2022-11-21/11-01-14/initial_train/gi.pth')#'outputs/2022-11-19/10-32-29/initial_train/gi.pth')#'outputs/2022-07-15/17-41-16/initial_train/gi.pth')#'outputs/2022-08-07/01-56-19/update_3/gi.pth')#'outputs/2022-08-07/01-36-19/update_4/gi.pth')#'outputs/2022-08-07/01-09-48/update_5/gi.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/gi.pth')#'outputs/2022-07-20/14-46-50/update_16/gi.pth')#
     #'outputs/2022-07-18/22-58-04/initial_train/gi.pth')#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-15/17-41-16/initial_train/gi.pth')#

@@ -8,7 +8,14 @@ import os
 class EncoderDataLoader:
     def __init__(self, params):
         #self.data_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data_images', params['env'])
-        self.data_dir = os.path.join('','data_images', params['env'])
+        if params['light']=='ls3':
+            if params['datasetnumber']==1:
+                self.data_dir = os.path.join('','data_imagesls3', params['env'])
+            elif params['datasetnumber']==2:
+                print('Enters the new dataset/dataset 2!')
+                self.data_dir = os.path.join('','data_images', params['env'])
+        else:
+            self.data_dir = os.path.join('','data_images', params['env'])
         #self.data_dir = os.path.join('', 'data_images_relative', params['env'])#for using relative image
         self.frame_stack = params['frame_stack']
         self.env = params['env']
