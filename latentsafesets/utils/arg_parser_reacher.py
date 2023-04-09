@@ -11,7 +11,7 @@ import os
 
 def parse_args():
     parser = argparse.ArgumentParser(description='CEM Learning Args')
-    parser.add_argument('--env', type=str, default='spb')
+    parser.add_argument('--env', type=str, default='reacher')
     parser.add_argument('--seed', type=int, default=1, help='Random seed')#4, help='Random seed')#-1, help='Random seed')#
     parser.add_argument('--log_freq', type=int, default=100,
                         help='How frequently to log updates')
@@ -20,12 +20,14 @@ def parse_args():
     parser.add_argument('--checkpoint_freq', type=int, default=2000,
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
-    parser.add_argument('--traj_per_update', default=10, type=int)#10 is the default value
-    parser.add_argument('--num_updates', type=int, default=25)#1)#100)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
+    parser.add_argument('--traj_per_update', default=10, type=int)#2, type=int)#10 is the default value
+    parser.add_argument('--num_updates', type=int, default=25)#2)#1)#100)#10)#200)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
-    parser.add_argument('--repeat_times',type=int,default=3)#2)#10)#7)#
+    parser.add_argument('--repeat_times',type=int,default=5)#1)#3)#2)#10)#7)#
     parser.add_argument('--light',type=str,default='light')#'normal')#'expensive')#'ls3')#'ls3' means original, no CBF#'nosasfety')#no any safety measures
     parser.add_argument('--action_type',type=str,default='random')#'zero')#'recovery')#
+    parser.add_argument('--datasetnumber',type=int,default=2)#1 for old data, 2 for new data, 3 for data 3!
+    parser.add_argument('--vaesnumber',type=str,default='d2v1')#divj means dataset i vae j, noj means no pretrain, while only taking the jth vae of the dataset
     add_controller_args(parser)
     add_encoder_args(parser)
     add_ss_args(parser)
@@ -211,8 +213,8 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
     parser.add_argument('--reduce_horizon', action='store_true')
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
-    #None)#'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
+    parser.add_argument('--cbfd_checkpoint', type=str, default=None)#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
+    #'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
     # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.
     # pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#
     # 'outputs/2022-08-06/15-02-09/cbfd_10000.pth')#'outputs/2022-08-06/15-02-09/cbfd_20000.pth')#

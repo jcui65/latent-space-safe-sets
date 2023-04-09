@@ -87,6 +87,7 @@ class CEMSafeSetPolicy(Policy):
         self.prev_sol = np.tile((self.ac_lb + self.ac_ub) / 2, [self.plan_hor])#how it is being used?
         self.init_var = np.tile(np.square(self.ac_ub - self.ac_lb) / 16, [self.plan_hor])#how it is being used?
         self.action_type=params['action_type']
+        self.reduce_horizon=params['reduce_horizon']
         #self.reward_type=params['reward_type']
         #self.conservative=params['conservative']
     @torch.no_grad()
@@ -1671,8 +1672,9 @@ class CEMSafeSetPolicy(Policy):
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
-                    if (not self.params['reduce_horizon']):
+                    if (not self.reduce_horizon):
                         act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
+                        act_cbfd_thresh=min(act_cbfd_thresh,1)
                     else:
                         cbfhorizon-=1
                         cbfhorizon=max(1,cbfhorizon)
@@ -1987,6 +1989,7 @@ class CEMSafeSetPolicy(Policy):
         act_ss_thresh = self.safe_set_thresh#initially 0.8
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
         randflag=0#this is the flag to show if a random action is finally being chosen!
+        cbfhorizon=self.plan_hor
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -2006,7 +2009,12 @@ class CEMSafeSetPolicy(Policy):
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
-                    act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
+                    if (not self.reduce_horizon):
+                        act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
+                        act_cbfd_thresh=min(act_cbfd_thresh,1)
+                    else:
+                        cbfhorizon-=1
+                        cbfhorizon=max(1,cbfhorizon)
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
@@ -2136,6 +2144,7 @@ class CEMSafeSetPolicy(Policy):
         act_ss_thresh = self.safe_set_thresh#initially 0.8
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
         randflag=0
+        cbfhorizon=self.plan_hor
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -2155,7 +2164,12 @@ class CEMSafeSetPolicy(Policy):
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
-                    act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
+                    if (not self.reduce_horizon):
+                        act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
+                        act_cbfd_thresh=min(act_cbfd_thresh,1)
+                    else:
+                        cbfhorizon-=1
+                        cbfhorizon=max(1,cbfhorizon)
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
@@ -2291,6 +2305,7 @@ class CEMSafeSetPolicy(Policy):
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
         #print('env.state',state)
         randflag=0
+        cbfhorizon=self.plan_hor
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -2310,7 +2325,12 @@ class CEMSafeSetPolicy(Policy):
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
-                    act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
+                    if (not self.reduce_horizon):
+                        act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
+                        act_cbfd_thresh=min(act_cbfd_thresh,1)
+                    else:
+                        cbfhorizon-=1
+                        cbfhorizon=max(1,cbfhorizon)
                     if reset_count > self.safe_set_thresh_mult_iters:
                         self.mean = None
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
@@ -2449,6 +2469,7 @@ class CEMSafeSetPolicy(Policy):
         act_ss_thresh = self.safe_set_thresh#initially 0.8
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
         randflag=0
+        cbfhorizon=self.plan_hor
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)

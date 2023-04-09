@@ -346,6 +346,144 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
     modules = {}
 
     encoder = VanillaVAE(params)#initialize/instantiate the VAE
+    env=params['env']
+    dsn=params['datasetnumber']
+    vsn=params['vaesnumber']
+    if env=='reacher':
+        if dsn==1:
+            if vsn=='d1v1':
+                params['enc_checkpoint']='outputs/2023-02-18/19-47-57/1/vae.pth'#old reacher#
+                params['safe_set_checkpoint']='outputs/2023-02-19/16-20-28/1/initial_train/ss.pth'#old reacher#
+                params['val_checkpoint']='outputs/2023-02-19/16-20-28/1/initial_train/val.pth'#old reacher#
+                params['dyn_checkpoint']='outputs/2023-02-19/16-20-28/1/initial_train/dyn.pth'#old reacher#
+                params['gi_checkpoint']='outputs/2023-02-19/16-20-28/1/initial_train/gi.pth'#old reacher#
+                params['constr_checkpoint']='outputs/2023-02-19/16-20-28/1/initial_train/constr.pth'#old reacher#
+                params['cbfd_checkpoint']=None
+            elif vsn=='d1v2':
+                params['enc_checkpoint']='outputs/2023-04-08/01-57-17/vae.pth'#old 2 reacher#
+                params['safe_set_checkpoint']='outputs/2023-04-08/12-39-06/1/initial_train/ss.pth'#old 2 reacher#
+                params['val_checkpoint']='outputs/2023-04-08/12-39-06/1/initial_train/val.pth'#old 2 reacher#
+                params['dyn_checkpoint']='outputs/2023-04-08/12-39-06/1/initial_train/dyn.pth'#old 2 reacher#
+                params['gi_checkpoint']='outputs/2023-04-08/12-39-06/1/initial_train/gi.pth'#old 2 reacher#
+                params['constr_checkpoint']='outputs/2023-04-08/12-39-06/1/initial_train/constr.pth'#old 2 reacher#
+                params['cbfd_checkpoint']=None
+            elif vsn=='no1':
+                params['enc_checkpoint']='outputs/2023-02-18/19-47-57/1/vae.pth'#old reacher#
+                params['safe_set_checkpoint']=None
+                params['val_checkpoint']=None
+                params['dyn_checkpoint']=None
+                params['gi_checkpoint']=None
+                params['constr_checkpoint']=None
+                params['cbfd_checkpoint']=None
+            elif vsn=='no2':
+                params['enc_checkpoint']='outputs/2023-04-08/01-57-17/vae.pth'#old 2 reacher#
+                params['safe_set_checkpoint']=None
+                params['val_checkpoint']=None
+                params['dyn_checkpoint']=None
+                params['gi_checkpoint']=None
+                params['constr_checkpoint']=None
+                params['cbfd_checkpoint']=None
+        if dsn==2:
+            if vsn=='d2v1':
+                params['enc_checkpoint']='outputs/2023-04-05/19-29-19/vae.pth'#new reacher#
+                params['safe_set_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/ss.pth'#really new reacher#
+                params['val_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/val.pth'#really new reacher
+                params['dyn_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/dyn.pth'#really new reacher
+                params['gi_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/gi.pth'#really new reacher
+                params['constr_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/constr.pth'#really new reacher
+                params['cbfd_checkpoint']='outputs/2023-04-09/01-55-20/1/initial_train/cbfd.pth'#really new reacher
+            elif vsn=='d2v2':
+                params['enc_checkpoint']='outputs/2023-04-08/02-02-17/vae.pth'#new 2 reacher#
+                params['safe_set_checkpoint']='outputs/2023-04-08/12-42-19/1/initial_train/ss.pth'#new 2 reacher#
+                params['val_checkpoint']='outputs/2023-04-08/12-42-19/1/initial_train/val.pth'#new 2 reacher#
+                params['dyn_checkpoint']='outputs/2023-04-08/12-42-19/1/initial_train/dyn.pth'#new 2 reacher#
+                params['gi_checkpoint']='outputs/2023-04-08/12-42-19/1/initial_train/gi.pth'#new 2 reacher#
+                params['constr_checkpoint']='outputs/2023-04-08/12-42-19/1/initial_train/constr.pth'#new 2 reacher#
+                params['cbfd_checkpoint']=None
+            elif vsn=='no1':
+                params['enc_checkpoint']='outputs/2023-04-05/19-29-19/vae.pth'#new reacher#
+                params['safe_set_checkpoint']=None
+                params['val_checkpoint']=None
+                params['dyn_checkpoint']=None
+                params['gi_checkpoint']=None
+                params['constr_checkpoint']=None
+                params['cbfd_checkpoint']=None
+            elif vsn=='no2':
+                params['enc_checkpoint']='outputs/2023-04-08/02-02-17/vae.pth'#new 2 reacher#
+                params['safe_set_checkpoint']=None
+                params['val_checkpoint']=None
+                params['dyn_checkpoint']=None
+                params['gi_checkpoint']=None
+                params['constr_checkpoint']=None
+                params['cbfd_checkpoint']=None
+    '''
+    elif env=='push':
+        if dsn==1:
+            if vsn=='d1v1':
+                params['enc_checkpoint']=
+                params['safe_set_checkpoint']=
+                params['val_checkpoint']=
+                params['dyn_checkpoint']=
+                params['gi_checkpoint']=
+                params['constr_checkpoint']=
+                params['cbfd_checkpoint']=None
+            elif vsn='d1v2':
+                params['enc_checkpoint']=
+                params['safe_set_checkpoint']=
+                params['val_checkpoint']=
+                params['dyn_checkpoint']=
+                params['gi_checkpoint']=
+                params['constr_checkpoint']=
+                params['cbfd_checkpoint']=None
+            elif vsn=='no1':
+                params['enc_checkpoint']=
+                params['safe_set_checkpoint']=
+                params['val_checkpoint']=
+                params['dyn_checkpoint']=
+                params['gi_checkpoint']=
+                params['constr_checkpoint']=
+                params['cbfd_checkpoint']=
+            elif vsn=='no2':
+                params['enc_checkpoint']=
+                params['safe_set_checkpoint']=
+                params['val_checkpoint']=
+                params['dyn_checkpoint']=
+                params['gi_checkpoint']=
+                params['constr_checkpoint']=
+                params['cbfd_checkpoint']=
+        if dsn==2:
+            if vsn=='d2v1':
+                params['enc_checkpoint']=
+                params['safe_set_checkpoint']=
+                params['val_checkpoint']=
+                params['dyn_checkpoint']=
+                params['gi_checkpoint']=
+                params['constr_checkpoint']=
+                params['cbfd_checkpoint']=None
+            elif vsn='d2v2':
+                params['enc_checkpoint']=
+                params['safe_set_checkpoint']=
+                params['val_checkpoint']=
+                params['dyn_checkpoint']=
+                params['gi_checkpoint']=
+                params['constr_checkpoint']=
+                params['cbfd_checkpoint']=None
+            elif vsn=='no1':
+                params['enc_checkpoint']=
+                params['safe_set_checkpoint']=
+                params['val_checkpoint']=
+                params['dyn_checkpoint']=
+                params['gi_checkpoint']=
+                params['constr_checkpoint']=
+                params['cbfd_checkpoint']=
+            elif vsn=='no2':
+                params['enc_checkpoint']=
+                params['safe_set_checkpoint']=
+                params['val_checkpoint']=
+                params['dyn_checkpoint']=
+                params['gi_checkpoint']=
+                params['constr_checkpoint']=
+                params['cbfd_checkpoint']='''
     if params['enc_checkpoint']:
         encoder.load(params['enc_checkpoint'])#load the parameters of the VAE at specfic checkpoints!
     modules['enc'] = encoder
@@ -359,6 +497,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
         else:
             raise NotImplementedError
         if params['safe_set_checkpoint']:#if we are gonna train it separately!
+            print('params[safe_set_checkpoint]',params['safe_set_checkpoint'])#it is working as expected!
             safe_set.load(params['safe_set_checkpoint'])
         modules['ss'] = safe_set
 
@@ -397,7 +536,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
         modules['cbfd'] = cbfdot
         #print(modules['cbfd'])
     return modules
-
+'''
 def make_modulessafetylight(params, val=False, dyn=False,
                  gi=False, cbfd=False):
     from latentsafesets.modules import VanillaVAE, ValueEnsemble, \
@@ -440,7 +579,7 @@ def make_modulessafetylight(params, val=False, dyn=False,
         modules['cbfd'] = cbfdot
         #print(modules['cbfd'])
     return modules
-
+'''
 def make_modulessafetyexpensive(params, ss=False, val=False, dyn=False,
                  gi=False, constr=False,cbfd=False):
     from latentsafesets.modules import VanillaVAE, ValueEnsemble, \

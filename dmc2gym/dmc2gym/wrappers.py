@@ -149,7 +149,7 @@ class DMCWrapper(core.Env):
         self._true_action_space.seed(seed)
         self._norm_action_space.seed(seed)
         self._observation_space.seed(seed)
-    
+    '''
     def step(self, action):#the old original step
         assert self._norm_action_space.contains(action)
         action = self._convert_action(action)
@@ -280,7 +280,7 @@ class DMCWrapper(core.Env):
                 "hvd":hvd #hvd for h value difference
                 }
         return obs, reward, done, extra#that's how it originally works!
-    '''
+    
     def stepsafety2(self, action):
         assert self._norm_action_space.contains(action)
         action = self._convert_action(action)
