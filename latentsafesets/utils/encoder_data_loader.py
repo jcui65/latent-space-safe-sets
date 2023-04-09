@@ -12,7 +12,7 @@ class EncoderDataLoader:
             if params['datasetnumber']==1:
                 self.data_dir = os.path.join('','data_imagesls3', params['env'])
             elif params['datasetnumber']==2:
-                print('Enters the new dataset/dataset 2!')
+                print('Enters the new dataset/dataset 2!')#I remember seeing this when training the 0202 encoder!!
                 self.data_dir = os.path.join('','data_images', params['env'])
         else:
             self.data_dir = os.path.join('','data_images', params['env'])
