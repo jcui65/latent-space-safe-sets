@@ -1672,11 +1672,15 @@ class CEMSafeSetPolicy(Policy):
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
-                    if (not self.reduce_horizon):
+                    if self.reduce_horizon=='no':
+                        act_cbfd_thresh *= 1  # *0.8 by default
+                        #act_cbfd_thresh=min(act_cbfd_thresh,1)
+                        log.info('alpha keeps %f'%(act_cbfd_thresh))
+                    elif self.reduce_horizon=='alpha':
                         act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                         act_cbfd_thresh=min(act_cbfd_thresh,1)
                         log.info('alpha increased to %f'%(act_cbfd_thresh))
-                    else:
+                    elif self.reduce_horizon=='horizon':
                         cbfhorizon-=1
                         cbfhorizon=max(1,cbfhorizon)
                         log.info('horizon reduced to %d'%(cbfhorizon))
@@ -2012,11 +2016,15 @@ class CEMSafeSetPolicy(Policy):
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
-                    if (not self.reduce_horizon):
+                    if self.reduce_horizon=='no':
+                        act_cbfd_thresh *= 1  # *0.8 by default
+                        #act_cbfd_thresh=min(act_cbfd_thresh,1)
+                        log.info('alpha keeps %f'%(act_cbfd_thresh))
+                    elif self.reduce_horizon=='alpha':
                         act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                         act_cbfd_thresh=min(act_cbfd_thresh,1)
                         log.info('alpha increased to %f'%(act_cbfd_thresh))
-                    else:
+                    elif self.reduce_horizon=='horizon':
                         cbfhorizon-=1
                         cbfhorizon=max(1,cbfhorizon)
                         log.info('horizon reduced to %d'%(cbfhorizon))
@@ -2222,11 +2230,15 @@ class CEMSafeSetPolicy(Policy):
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
-                    if (not self.reduce_horizon):
+                    if self.reduce_horizon=='no':
+                        act_cbfd_thresh *= 1  # *0.8 by default
+                        #act_cbfd_thresh=min(act_cbfd_thresh,1)
+                        log.info('alpha keeps %f'%(act_cbfd_thresh))
+                    elif self.reduce_horizon=='alpha':
                         act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                         act_cbfd_thresh=min(act_cbfd_thresh,1)
                         log.info('alpha increased to %f'%(act_cbfd_thresh))
-                    else:
+                    elif self.reduce_horizon=='horizon':
                         cbfhorizon-=1
                         cbfhorizon=max(1,cbfhorizon)
                         log.info('horizon reduced to %d'%(cbfhorizon))
@@ -2438,11 +2450,15 @@ class CEMSafeSetPolicy(Policy):
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
                     reset_count += 1
                     act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default
-                    if (not self.reduce_horizon):
+                    if self.reduce_horizon=='no':
+                        act_cbfd_thresh *= 1  # *0.8 by default
+                        #act_cbfd_thresh=min(act_cbfd_thresh,1)
+                        log.info('alpha keeps %f'%(act_cbfd_thresh))
+                    elif self.reduce_horizon=='alpha':
                         act_cbfd_thresh *= self.cbfd_thresh_mult  # *0.8 by default
                         act_cbfd_thresh=min(act_cbfd_thresh,1)
                         log.info('alpha increased to %f'%(act_cbfd_thresh))
-                    else:
+                    elif self.reduce_horizon=='horizon':
                         cbfhorizon-=1
                         cbfhorizon=max(1,cbfhorizon)
                         log.info('horizon reduced to %d'%(cbfhorizon))
