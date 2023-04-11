@@ -11,8 +11,8 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='03-30',help='the date when the simulation started', type=str)
-@click.option('--time', default='00-36-31', help='time of the simulation', type=str)
+@click.option('--date', default='04-11',help='the date when the simulation started', type=str)
+@click.option('--time', default='02-42-21', help='time of the simulation', type=str)
 
 def main(date, time):
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
@@ -40,7 +40,7 @@ def main(date, time):
     tsrarray=np.zeros((250,))#reacher#np.zeros((1000,))#push#
     #tsrlist=[]#constraint violation rate list
     lastnum=50
-    seedlist=[1,2,3]#24,25#[1,2,3,4,5,6,7,8,9,10]#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    seedlist=[1,2,3,4,5]#[1,2,3]#24,25#[1,2,3,4,5,6,7,8,9,10]#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
 
     for seed in seedlist:
         logdir=os.path.join(logdirbeforeseed, str(seed))
@@ -155,13 +155,13 @@ def main(date, time):
     cvrcbfastd=np.std(cvrcbfa)
     print('constraint rate cbf ave',cvrcbfaave,'constraint rate cbf std',cvrcbfastd)
     pu.simple_plot(cvrcbfa, title='Constraint violation cbf rate %f'%(cvrcbfaave)+"\u00B1"+'%f'%(cvrcbfastd),
-                            file=os.path.join(logdirbeforeseed, 'violationcbf'+str(lenseed)+'rate'+date+'-'+time+'.pdf'),
+                            file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'cbf.pdf'),
                             ylabel='constraint violation cbf rate', xlabel='# seeds',nonreward=True)
     cvrcbf2aave=np.mean(cvrcbf2a)
     cvrcbf2astd=np.std(cvrcbf2a)
     print('constraint rate cbf2 ave',cvrcbf2aave,'constraint rate cbf2 std',cvrcbfastd)
     pu.simple_plot(cvrcbf2a, title='Constraint violation cbf2 rate %f'%(cvrcbf2aave)+"\u00B1"+'%f'%(cvrcbf2astd),
-                            file=os.path.join(logdirbeforeseed, 'violation2cbf'+str(lenseed)+'rate'+date+'-'+time+'.pdf'),
+                            file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'cbf2.pdf'),
                             ylabel='constraint violation cbf2 rate', xlabel='# seeds',nonreward=True)
     print('reward ave',np.mean(raa),'reward std',np.std(raa))
     print('reward last ave',np.mean(ralasta),'reward last std',np.std(ralasta))

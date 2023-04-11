@@ -49,7 +49,8 @@ if __name__ == '__main__':
         f.write('action_type: %s\t'%(params['action_type']))
         #f.write('conservativeness: %s, reward_type: %s\t'%(params['conservative'],params['reward_type']))
         f.write('conservativeness: %s, reward_type: %s, lightness: %s\n'%(params['conservative'],params['reward_type'],params['light']))
-        f.write('What I want to write: zero action, relax alpha!')
+        f.write('reduce_horizon: %r, 0 or 1: %s\n'%(params['reduce_horizon'],params['zero_one']))
+        f.write('What I want to write: ZERO action, REAL relax alpha!')
         f.close()
         utils.init_logging(logdir)#record started!
         log.info('Training safe set MPC with params...')#at the very very start

@@ -151,6 +151,8 @@ if __name__ == '__main__':
                         action,randflag = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
                     elif action_type=='zero':
                         action,randflag = policy.actzero(obs/255)
+                    elif action_type=='recovery':
+                        action,randflag = policy.actrecovery(obs/255)
                     #storch=ptu.torchify(env.state)#state torch
                     #action,tp,fp,fn,tn,tpc,fpc,fnc,tnc = policy.actcbfd(obs/255,env.state,tp,fp,fn,tn,tpc,fpc,fnc,tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdcircle(obs / 255, env.state, tp, fp, fn, tn, tpc,

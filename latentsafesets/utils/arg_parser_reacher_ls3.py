@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--traj_per_update', default=10, type=int)#2, type=int)#10 is the default value
     parser.add_argument('--num_updates', type=int, default=25)#2)#100)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
-    parser.add_argument('--repeat_times',type=int,default=1)#10)#3)#7)#2)#
+    parser.add_argument('--repeat_times',type=int,default=5)#4)#1)#10)#3)#7)#2)#
     parser.add_argument('--light',type=str,default='ls3')#'ls3' means original, no CBF#'light')#'normal')#'expensive')#'nosasfety')#no any safety measures
     parser.add_argument('--action_type',type=str,default='random')#'zero')#
     parser.add_argument('--datasetnumber',type=int,default=1)#1 for old data, 2 for new data, 3 for data 3!
