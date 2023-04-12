@@ -122,8 +122,8 @@ class AbstractTeacher(ABC):
                 action = action_input#if it not noisy, then it is just the same
             #import ipdb; ipdb.set_trace()
             action_input=np.float32(action_input)#has to be like this?#this is important!
-            next_obs, reward, done, info = self.env.step(action_input)#for reacher#63 in simple_point_bot.py
-            #next_obs, reward, done, info = self.env.stepsafety(action_input)#for pushing and for spb#63 in simple_point_bot.py
+            #next_obs, reward, done, info = self.env.step(action_input)#for reacher#63 in simple_point_bot.py
+            next_obs, reward, done, info = self.env.stepsafety(action_input)#for pushing and for spb#63 in simple_point_bot.py
             #next_obs,reward,done,info=self.env.stepsafety2(action_input)#strategy 2 for pushing!#for pushing and for spb#63 in simple_point_bot.py
             
             transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),

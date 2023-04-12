@@ -416,74 +416,75 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
                 params['gi_checkpoint']=None
                 params['constr_checkpoint']=None
                 params['cbfd_checkpoint']=None
-    '''
+    
     elif env=='push':
         if dsn==1:
             if vsn=='d1v1':
-                params['enc_checkpoint']=
-                params['safe_set_checkpoint']=
-                params['val_checkpoint']=
-                params['dyn_checkpoint']=
-                params['gi_checkpoint']=
-                params['constr_checkpoint']=
+                #params['enc_checkpoint']=
+                #params['safe_set_checkpoint']=
+                #params['val_checkpoint']=
+                #params['dyn_checkpoint']=
+                #params['gi_checkpoint']=
+                #params['constr_checkpoint']=
                 params['cbfd_checkpoint']=None
-            elif vsn='d1v2':
-                params['enc_checkpoint']=
-                params['safe_set_checkpoint']=
-                params['val_checkpoint']=
-                params['dyn_checkpoint']=
-                params['gi_checkpoint']=
-                params['constr_checkpoint']=
+            elif vsn=='d1v2':
+                #params['enc_checkpoint']=
+                #params['safe_set_checkpoint']=
+                #params['val_checkpoint']=
+                #params['dyn_checkpoint']=
+                #params['gi_checkpoint']=
+                #params['constr_checkpoint']=
                 params['cbfd_checkpoint']=None
             elif vsn=='no1':
-                params['enc_checkpoint']=
-                params['safe_set_checkpoint']=
-                params['val_checkpoint']=
-                params['dyn_checkpoint']=
-                params['gi_checkpoint']=
-                params['constr_checkpoint']=
-                params['cbfd_checkpoint']=
+                #params['enc_checkpoint']=
+                #params['safe_set_checkpoint']=
+                #params['val_checkpoint']=
+                #params['dyn_checkpoint']=
+                #params['gi_checkpoint']=
+                #params['constr_checkpoint']=
+                params['cbfd_checkpoint']=None
             elif vsn=='no2':
-                params['enc_checkpoint']=
-                params['safe_set_checkpoint']=
-                params['val_checkpoint']=
-                params['dyn_checkpoint']=
-                params['gi_checkpoint']=
-                params['constr_checkpoint']=
-                params['cbfd_checkpoint']=
+                params['enc_checkpoint']=None
+                params['safe_set_checkpoint']=None
+                params['val_checkpoint']=None
+                params['dyn_checkpoint']=None
+                params['gi_checkpoint']=None
+                params['constr_checkpoint']=None
+                params['cbfd_checkpoint']=None
         if dsn==2:
             if vsn=='d2v1':
-                params['enc_checkpoint']=
-                params['safe_set_checkpoint']=
-                params['val_checkpoint']=
-                params['dyn_checkpoint']=
-                params['gi_checkpoint']=
-                params['constr_checkpoint']=
-                params['cbfd_checkpoint']=None
-            elif vsn='d2v2':
-                params['enc_checkpoint']=
-                params['safe_set_checkpoint']=
-                params['val_checkpoint']=
-                params['dyn_checkpoint']=
-                params['gi_checkpoint']=
-                params['constr_checkpoint']=
+                #params['enc_checkpoint']=None
+                #params['safe_set_checkpoint']=None
+                #params['val_checkpoint']=None
+                #params['dyn_checkpoint']=None
+                #params['gi_checkpoint']=None
+                #params['constr_checkpoint']=None
+                #params['cbfd_checkpoint']=None
+                print('d2v1!')
+            elif vsn=='d2v2':
+                params['enc_checkpoint']=None
+                params['safe_set_checkpoint']=None
+                params['val_checkpoint']=None
+                params['dyn_checkpoint']=None
+                params['gi_checkpoint']=None
+                params['constr_checkpoint']=None
                 params['cbfd_checkpoint']=None
             elif vsn=='no1':
-                params['enc_checkpoint']=
-                params['safe_set_checkpoint']=
-                params['val_checkpoint']=
-                params['dyn_checkpoint']=
-                params['gi_checkpoint']=
-                params['constr_checkpoint']=
-                params['cbfd_checkpoint']=
+                params['enc_checkpoint']=None
+                params['safe_set_checkpoint']=None
+                params['val_checkpoint']=None
+                params['dyn_checkpoint']=None
+                params['gi_checkpoint']=None
+                params['constr_checkpoint']=None
+                params['cbfd_checkpoint']=None
             elif vsn=='no2':
-                params['enc_checkpoint']=
-                params['safe_set_checkpoint']=
-                params['val_checkpoint']=
-                params['dyn_checkpoint']=
-                params['gi_checkpoint']=
-                params['constr_checkpoint']=
-                params['cbfd_checkpoint']='''
+                params['enc_checkpoint']=None
+                params['safe_set_checkpoint']=None
+                params['val_checkpoint']=None
+                params['dyn_checkpoint']=None
+                params['gi_checkpoint']=None
+                params['constr_checkpoint']=None
+                params['cbfd_checkpoint']=None
     if params['enc_checkpoint']:
         encoder.load(params['enc_checkpoint'])#load the parameters of the VAE at specfic checkpoints!
     modules['enc'] = encoder
