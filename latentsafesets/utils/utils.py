@@ -427,7 +427,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
                 params['gi_checkpoint']=
                 params['constr_checkpoint']=
                 params['cbfd_checkpoint']=None
-            elif vsn='d1v2':
+            elif vsn=='d1v2':
                 params['enc_checkpoint']=
                 params['safe_set_checkpoint']=
                 params['val_checkpoint']=
@@ -460,7 +460,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
                 params['gi_checkpoint']=
                 params['constr_checkpoint']=
                 params['cbfd_checkpoint']=None
-            elif vsn='d2v2':
+            elif vsn=='d2v2':
                 params['enc_checkpoint']=
                 params['safe_set_checkpoint']=
                 params['val_checkpoint']=

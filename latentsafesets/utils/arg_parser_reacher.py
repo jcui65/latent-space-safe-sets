@@ -21,9 +21,9 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)#2, type=int)#10 is the default value
-    parser.add_argument('--num_updates', type=int, default=25)#2)#1)#100)#10)#200)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=50)#25)#2)#1)#100)#10)#200)#250)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
-    parser.add_argument('--repeat_times',type=int,default=5)#1)#3)#2)#10)#7)#
+    parser.add_argument('--repeat_times',type=int,default=3)#5)#1)#2)#10)#7)#
     parser.add_argument('--light',type=str,default='light')#'normal')#'expensive')#'ls3')#'ls3' means original, no CBF#'nosasfety')#no any safety measures
     parser.add_argument('--action_type',type=str,default='random')#'zero')#'recovery')#
     parser.add_argument('--datasetnumber',type=int,default=2)#1 for old data, 2 for new data, 3 for data 3!

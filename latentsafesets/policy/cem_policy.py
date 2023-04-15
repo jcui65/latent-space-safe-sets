@@ -1644,7 +1644,7 @@ class CEMSafeSetPolicy(Policy):
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         emb = self.encoder.encode(obs)#in latent space now!
-        embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
+        #embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
         embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         itr = 0#
         reset_count = 0#
@@ -1989,7 +1989,7 @@ class CEMSafeSetPolicy(Policy):
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         emb = self.encoder.encode(obs)#in latent space now!
-        embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
+        #embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
         embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         itr = 0#
         reset_count = 0#
@@ -2142,11 +2142,11 @@ class CEMSafeSetPolicy(Policy):
                     cbf_alls = self.cbfdot_function(predictions,already_embedded=True) #with the reformulated cbfd estimator
                     #print('cbf_alls.shape',cbf_alls.shape)#torch.Size([20, 1000, 5, 1])
                     #print('cbf_alls',cbf_alls)
-                    cbf_alls4=cbf_alls[:,:,0:self.plan_hor-1,:]
+                    cbf_alls4=cbf_alls[:,:,0:cbfhorizon-1,:]#cbf_alls[:,:,0:self.plan_hor-1,:]#
                     #print('cbf_alls4.shape', cbf_alls4.shape)#torch.Size([20, 1000, 4, 1])
                     cbf_initalls4=torch.cat((cbf_init,cbf_alls4),dim=-2)
                     #print('cbf_initalls.shape', cbf_initalls.shape)#torch.Size([20, 1000, 5, 1])
-                    cbfdots_alls=cbf_alls-cbf_initalls4#the mean is also subject to change
+                    cbfdots_alls=cbf_alls[:,:,0:cbfhorizon,:]-cbf_initalls4#cbf_alls-cbf_initalls4#the mean is also subject to change
                     cbfdots_alls = cbfdots_alls.reshape(cbfdots_alls.shape[0], cbfdots_alls.shape[1],cbfdots_alls.shape[2])  #
                     #print('cbfdots_alls.shape',cbfdots_alls.shape)#torch.Size([20, 1000, 5])
                     #print('cbfdots_alls', cbfdots_alls)  #
@@ -2203,7 +2203,7 @@ class CEMSafeSetPolicy(Policy):
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         emb = self.encoder.encode(obs)#in latent space now!
-        embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
+        #embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
         embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         itr = 0#
         reset_count = 0#
@@ -2356,11 +2356,11 @@ class CEMSafeSetPolicy(Policy):
                     cbf_alls = self.cbfdot_function(predictions,already_embedded=True) #with the reformulated cbfd estimator
                     #print('cbf_alls.shape',cbf_alls.shape)#torch.Size([20, 1000, 5, 1])
                     #print('cbf_alls',cbf_alls)
-                    cbf_alls4=cbf_alls[:,:,0:self.plan_hor-1,:]
+                    cbf_alls4=cbf_alls[:,:,0:cbfhorizon-1,:]#cbf_alls[:,:,0:self.plan_hor-1,:]#
                     #print('cbf_alls4.shape', cbf_alls4.shape)#torch.Size([20, 1000, 4, 1])
                     cbf_initalls4=torch.cat((cbf_init,cbf_alls4),dim=-2)
                     #print('cbf_initalls.shape', cbf_initalls.shape)#torch.Size([20, 1000, 5, 1])
-                    cbfdots_alls=cbf_alls-cbf_initalls4#the mean is also subject to change
+                    cbfdots_alls=cbf_alls[:,:,0:cbfhorizon,:]-cbf_initalls4#cbf_alls-cbf_initalls4#the mean is also subject to change
                     cbfdots_alls = cbfdots_alls.reshape(cbfdots_alls.shape[0], cbfdots_alls.shape[1],cbfdots_alls.shape[2])  #
                     #print('cbfdots_alls.shape',cbfdots_alls.shape)#torch.Size([20, 1000, 5])
                     #print('cbfdots_alls', cbfdots_alls)  #
@@ -2422,7 +2422,7 @@ class CEMSafeSetPolicy(Policy):
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         emb = self.encoder.encode(obs)#in latent space now!
-        embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
+        #embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
         embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         itr = 0#
         reset_count = 0#
@@ -2583,11 +2583,11 @@ class CEMSafeSetPolicy(Policy):
                     cbf_alls = self.cbfdot_function(predictions,already_embedded=True) #with the reformulated cbfd estimator
                     #print('cbf_alls.shape',cbf_alls.shape)#torch.Size([20, 1000, 5, 1])
                     #print('cbf_alls',cbf_alls)
-                    cbf_alls4=cbf_alls[:,:,0:self.plan_hor-1,:]
+                    cbf_alls4=cbf_alls[:,:,0:cbfhorizon-1,:]#cbf_alls[:,:,0:self.plan_hor-1,:]#
                     #print('cbf_alls4.shape', cbf_alls4.shape)#torch.Size([20, 1000, 4, 1])
                     cbf_initalls4=torch.cat((cbf_init,cbf_alls4),dim=-2)
                     #print('cbf_initalls.shape', cbf_initalls.shape)#torch.Size([20, 1000, 5, 1])
-                    cbfdots_alls=cbf_alls-cbf_initalls4#the mean is also subject to change
+                    cbfdots_alls=cbf_alls[:,:,0:cbfhorizon,:]-cbf_initalls4#cbf_alls-cbf_initalls4#the mean is also subject to change
                     cbfdots_alls = cbfdots_alls.reshape(cbfdots_alls.shape[0], cbfdots_alls.shape[1],cbfdots_alls.shape[2])  #
                     #print('cbfdots_alls.shape',cbfdots_alls.shape)#torch.Size([20, 1000, 5])
                     #print('cbfdots_alls', cbfdots_alls)  #
@@ -2646,7 +2646,7 @@ class CEMSafeSetPolicy(Policy):
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         emb = self.encoder.encode(obs)#in latent space now!
-        embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
+        #embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
         embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         itr = 0#
         reset_count = 0#
@@ -2742,11 +2742,11 @@ class CEMSafeSetPolicy(Policy):
                     cbf_alls = self.cbfdot_function(predictions,already_embedded=True) #with the reformulated cbfd estimator
                     #print('cbf_alls.shape',cbf_alls.shape)#torch.Size([20, 1000, 5, 1])
                     #print('cbf_alls',cbf_alls)
-                    cbf_alls4=cbf_alls[:,:,0:self.plan_hor-1,:]
+                    cbf_alls4=cbf_alls[:,:,0:cbfhorizon-1,:]#cbf_alls[:,:,0:self.plan_hor-1,:]#
                     #print('cbf_alls4.shape', cbf_alls4.shape)#torch.Size([20, 1000, 4, 1])
                     cbf_initalls4=torch.cat((cbf_init,cbf_alls4),dim=-2)
                     #print('cbf_initalls.shape', cbf_initalls.shape)#torch.Size([20, 1000, 5, 1])
-                    cbfdots_alls=cbf_alls-cbf_initalls4#the mean is also subject to change
+                    cbfdots_alls=cbf_alls[:,:,0:cbfhorizon,:]-cbf_initalls4#cbf_alls-cbf_initalls4#the mean is also subject to change
                     cbfdots_alls = cbfdots_alls.reshape(cbfdots_alls.shape[0], cbfdots_alls.shape[1],cbfdots_alls.shape[2])  #
                     #print('cbfdots_alls.shape',cbfdots_alls.shape)#torch.Size([20, 1000, 5])
                     #print('cbfdots_alls', cbfdots_alls)  #

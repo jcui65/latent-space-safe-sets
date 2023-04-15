@@ -260,18 +260,34 @@ class CEMSafeSetPolicyls3(Policy):
                 num_constraint_satisfying = sum(values > -1e5)#no any constraints violation
                 iter_num_elites = min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
                 #what if I change this into num_constraint_satisfying+2?
-                if num_constraint_satisfying<2:#== 0:# it is definitely a bug not to include the case where num_constraint_satisfying=1!
-                    reset_count += 1
-                    act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
-                    log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))
-                    if reset_count > self.safe_set_thresh_mult_iters:
-                        self.mean = None
-                        log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
-                        randflag=1
-                        return 0*self.env.action_space.sample(),randflag##really 0 action!NO MPC is implemented!
-                    itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
-                    self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
-                    continue
+                if self.zero_one=='zero':
+                    if num_constraint_satisfying == 0:#<2:#this is critical in avoiding bugs#it is definitely a bug not to include the case where num_constraint_satisfying=1!
+                        reset_count += 1
+                        act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
+                        #log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))#just 0!
+                        if reset_count > self.safe_set_thresh_mult_iters:
+                            self.mean = None
+                            log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
+                            randflag=1
+                            return 0*self.env.action_space.sample(),randflag##really random action!NO MPC is implemented!
+
+                        itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
+                        self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
+                        continue
+                if self.zero_one=='one':
+                    if num_constraint_satisfying <2:#== 0:#this is critical in avoiding bugs#it is definitely a bug not to include the case where num_constraint_satisfying=1!
+                        reset_count += 1
+                        act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
+                        log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))
+                        if reset_count > self.safe_set_thresh_mult_iters:
+                            self.mean = None
+                            log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
+                            randflag=1
+                            return 0*self.env.action_space.sample(),randflag##really random action!NO MPC is implemented!
+
+                        itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
+                        self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
+                        continue
                 # Sort
                 sortid = values.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
                 actions_sorted = action_samples[sortid]
@@ -371,69 +387,70 @@ class CEMSafeSetPolicyls3(Policy):
                 num_constraint_satisfying = sum(values > -1e5)#no any constraints violation
                 iter_num_elites = min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
                 #what if I change this into num_constraint_satisfying+2?
-                if num_constraint_satisfying<2:#== 0:# it is definitely a bug not to include the case where num_constraint_satisfying=1!
-                    reset_count += 1
-                    act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
-                    log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))
-                    if reset_count > self.safe_set_thresh_mult_iters:
-                        self.mean = None
-                        log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
-                        randflag=1
-                        #return 0*self.env.action_space.sample(),randflag##really 0 action!NO MPC is implemented!
-                        itrrecovery = 0#start from 0
-                        while itrrecovery < self.max_iters:#5
-                            if itrrecovery == 0:
-                                # Action samples dim (num_candidates, planning_hor, d_act)
-                                if self.mean is None:#right after reset
-                                    action_samples = self._sample_actions_random()#1000*5 2d array
+                if self.zero_one=='zero':
+                    if num_constraint_satisfying== 0:#<2:# it is definitely a bug not to include the case where num_constraint_satisfying=1!
+                        reset_count += 1
+                        act_ss_thresh *= self.safe_set_thresh_mult#*0.8 by default, and it is a scalar
+                        #log.info('num_constraint_satisfying: %d'%(num_constraint_satisfying))
+                        if reset_count > self.safe_set_thresh_mult_iters:
+                            self.mean = None
+                            log.info('no trajectory candidates satisfy constraints! The safety measure is doing its job? Picking random actions!')
+                            randflag=1
+                            #return 0*self.env.action_space.sample(),randflag##really 0 action!NO MPC is implemented!
+                            itrrecovery = 0#start from 0
+                            while itrrecovery < self.max_iters:#5
+                                if itrrecovery == 0:
+                                    # Action samples dim (num_candidates, planning_hor, d_act)
+                                    if self.mean is None:#right after reset
+                                        action_samples = self._sample_actions_random()#1000*5 2d array
+                                    else:
+                                        num_random = int(self.random_percent * self.popsize)#sample 1000 trajectories
+                                        num_dist = self.popsize - num_random#=0 when random_percent=1
+                                        action_samples_dist = self._sample_actions_normal(self.mean, self.std, n=num_dist)#uniformly random from last iter ation
+                                        action_samples_random = self._sample_actions_random(num_random)#completely random within the action limit!
+                                        action_samples = torch.cat((action_samples_dist, action_samples_random), dim=0)
                                 else:
-                                    num_random = int(self.random_percent * self.popsize)#sample 1000 trajectories
-                                    num_dist = self.popsize - num_random#=0 when random_percent=1
-                                    action_samples_dist = self._sample_actions_normal(self.mean, self.std, n=num_dist)#uniformly random from last iter ation
-                                    action_samples_random = self._sample_actions_random(num_random)#completely random within the action limit!
-                                    action_samples = torch.cat((action_samples_dist, action_samples_random), dim=0)
-                            else:
-                                # Chop off the numer of elites so we don't use constraint violating trajectories
-                                iter_num_elites = self.num_elites#min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
-                                #what if I change this into num_constraint_satisfying+2?
-                                # Sort
-                                #sortid = values.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
-                                sortid = sss.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
-                                actions_sorted = action_samples[sortid]
-                                elites = actions_sorted[-iter_num_elites:]#get those elite trajectories
-                                # Refitting to Best Trajs
-                                self.mean, self.std = elites.mean(0), elites.std(0)#you get not none self.mean and self.std, so that it would be a good starting point for the next iteration!
-                                #import ipdb#it seems that they are lucky to run into the following case
+                                    # Chop off the numer of elites so we don't use constraint violating trajectories
+                                    iter_num_elites = self.num_elites#min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
+                                    #what if I change this into num_constraint_satisfying+2?
+                                    # Sort
+                                    #sortid = values.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
+                                    sortid = sss.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
+                                    actions_sorted = action_samples[sortid]
+                                    elites = actions_sorted[-iter_num_elites:]#get those elite trajectories
+                                    # Refitting to Best Trajs
+                                    self.mean, self.std = elites.mean(0), elites.std(0)#you get not none self.mean and self.std, so that it would be a good starting point for the next iteration!
+                                    #import ipdb#it seems that they are lucky to run into the following case
 
-                                action_samples = self._sample_actions_normal(self.mean, self.std)
-                                #print('action_samples', action_samples)#it becomes nan!
+                                    action_samples = self._sample_actions_normal(self.mean, self.std)
+                                    #print('action_samples', action_samples)#it becomes nan!
 
-                            if itrrecovery < self.max_iters - 1:#why the ensemble param in dynamics is 5! For MPC!
-                                # dimension (num_models, num_candidates, planning_hor, d_latent)
-                                #print('emb.shape',emb.shape)# torch.Size([1, 32])#print('action_samples.shape',action_samples.shape)#torch.Size([1000, 5, 2])
-                                predictions = self.dynamics_model.predict(emb, action_samples, already_embedded=True)
-                                num_models, num_candidates, planning_hor, d_latent = predictions.shape#the possible H sequence of all candidates' all trials
-                                first_states = predictions[:, :, 0, :].reshape((num_models * num_candidates, d_latent))#the 20000*32 comes out!
-                                #last_states = predictions[:, :, -1, :].reshape((num_models * num_candidates, d_latent))#the 20000*32 comes out!
-                                #all_values = self.value_function.get_value(last_states, already_embedded=True)
-                                all_sss=self.safe_set.safe_set_probability(first_states, already_embedded=True)#sss means safe sets
-                                #nans = torch.isnan(all_values)#should get it from the cbfd function!
-                                #all_values[nans] = -1e5
-                                nansss = torch.isnan(all_sss)#should get it from the cbfd function!
-                                all_sss[nansss] = -1e4
-                                #values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
-                                sss,indices=torch.min(all_sss.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
-                                #line 7 in algorithm 1 in the PETS paper!#this min may have some robustness effect!
-                                #values = values.squeeze()
-                                sss=sss.squeeze()
-                            itrrecovery += 1#CEM Evolution method
-                            #print('itrrecovery',itrrecovery)
-                        # Return the best action
-                        action = actions_sorted[-1][0]#the best one
-                        return action.detach().cpu().numpy(),randflag
-                    itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
-                    self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
-                    continue
+                                if itrrecovery < self.max_iters - 1:#why the ensemble param in dynamics is 5! For MPC!
+                                    # dimension (num_models, num_candidates, planning_hor, d_latent)
+                                    #print('emb.shape',emb.shape)# torch.Size([1, 32])#print('action_samples.shape',action_samples.shape)#torch.Size([1000, 5, 2])
+                                    predictions = self.dynamics_model.predict(emb, action_samples, already_embedded=True)
+                                    num_models, num_candidates, planning_hor, d_latent = predictions.shape#the possible H sequence of all candidates' all trials
+                                    first_states = predictions[:, :, 0, :].reshape((num_models * num_candidates, d_latent))#the 20000*32 comes out!
+                                    #last_states = predictions[:, :, -1, :].reshape((num_models * num_candidates, d_latent))#the 20000*32 comes out!
+                                    #all_values = self.value_function.get_value(last_states, already_embedded=True)
+                                    all_sss=self.safe_set.safe_set_probability(first_states, already_embedded=True)#sss means safe sets
+                                    #nans = torch.isnan(all_values)#should get it from the cbfd function!
+                                    #all_values[nans] = -1e5
+                                    nansss = torch.isnan(all_sss)#should get it from the cbfd function!
+                                    all_sss[nansss] = -1e4
+                                    #values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
+                                    sss,indices=torch.min(all_sss.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
+                                    #line 7 in algorithm 1 in the PETS paper!#this min may have some robustness effect!
+                                    #values = values.squeeze()
+                                    sss=sss.squeeze()
+                                itrrecovery += 1#CEM Evolution method
+                                #print('itrrecovery',itrrecovery)
+                            # Return the best action
+                            action = actions_sorted[-1][0]#the best one
+                            return action.detach().cpu().numpy(),randflag
+                        itr = 0#let's start over with itr=0 in this case!#that is why it always stops at iteration 0 when error occurs!
+                        self.mean, self.std = None, None#it may stay at zeroth iteration for many iterations!
+                        continue
                 # Sort
                 sortid = values.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
                 actions_sorted = action_samples[sortid]
