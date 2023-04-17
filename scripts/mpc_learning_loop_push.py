@@ -49,6 +49,7 @@ if __name__ == '__main__':
         f.write('action_type: %s\t'%(params['action_type']))
         f.write('conservativeness: %s, reward_type: %s, lightness: %s\t'%(params['conservative'],params['reward_type'],params['light']))
         f.write('push_cbf_strategy: %d\n'%(params['push_cbf_strategy']))
+        f.write('reduce_horizon: %s, 0 or 1: %s\n'%(params['reduce_horizon'],params['zero_one']))
         f.write('What I want to write:             ')
         f.close()
         utils.init_logging(logdir)#record started!
@@ -346,7 +347,7 @@ if __name__ == '__main__':
             std_rewards.append(std_rew)
             log.info('Iteration %d average reward: %.4f' % (i, mean_rew))
             pu.simple_plot(avg_rewards, std=std_rewards, title='Average Rewards',
-                        file=os.path.join(logdir, 'rewards%1.5f.pdf'%(np.mean(constr_viols))),
+                        file=os.path.join(logdir, 'rewards%dthepoch%1.5f.pdf'%(i,np.mean(constr_viols))),
                         ylabel='Average Reward', xlabel='# Training updates')
 
             logger.log_tabular('Epoch', i)

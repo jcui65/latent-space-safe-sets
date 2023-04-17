@@ -2684,6 +2684,59 @@ class CEMSafeSetPolicy(Policy):
                             return self.env.action_space.sample(),randflag#for fair comparison#
                         elif self.action_type=='zero':
                             return 0*self.env.action_space.sample(),randflag#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#
+                        elif self.action_type=='recovery':
+                            #do CEM just to max the barrier function value
+                            itrrecovery = 0#start from 0
+                            while itrrecovery < self.max_iters:#5
+                                if itrrecovery == 0:
+                                    # Action samples dim (num_candidates, planning_hor, d_act)
+                                    if self.mean is None:#right after reset
+                                        action_samples = self._sample_actions_random()#1000*5 2d array
+                                    else:
+                                        num_random = int(self.random_percent * self.popsize)#sample 1000 trajectories
+                                        num_dist = self.popsize - num_random#=0 when random_percent=1
+                                        action_samples_dist = self._sample_actions_normal(self.mean, self.std, n=num_dist)#uniformly random from last iter ation
+                                        action_samples_random = self._sample_actions_random(num_random)#completely random within the action limit!
+                                        action_samples = torch.cat((action_samples_dist, action_samples_random), dim=0)
+                                else:
+                                    # Chop off the numer of elites so we don't use constraint violating trajectories
+                                    iter_num_elites = self.num_elites#min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
+                                    #what if I change this into num_constraint_satisfying+2?
+                                    # Sort
+                                    #sortid = values.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
+                                    sortid = cbfs.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
+                                    actions_sorted = action_samples[sortid]
+                                    elites = actions_sorted[-iter_num_elites:]#get those elite trajectories
+                                    # Refitting to Best Trajs
+                                    self.mean, self.std = elites.mean(0), elites.std(0)#you get not none self.mean and self.std, so that it would be a good starting point for the next iteration!
+                                    #import ipdb#it seems that they are lucky to run into the following case
+
+                                    action_samples = self._sample_actions_normal(self.mean, self.std)
+                                    #print('action_samples', action_samples)#it becomes nan!
+
+                                if itrrecovery < self.max_iters - 1:#why the ensemble param in dynamics is 5! For MPC!
+                                    # dimension (num_models, num_candidates, planning_hor, d_latent)
+                                    #print('emb.shape',emb.shape)# torch.Size([1, 32])#print('action_samples.shape',action_samples.shape)#torch.Size([1000, 5, 2])
+                                    predictions = self.dynamics_model.predict(emb, action_samples, already_embedded=True)
+                                    num_models, num_candidates, planning_hor, d_latent = predictions.shape#the possible H sequence of all candidates' all trials
+                                    first_states = predictions[:, :, 0, :].reshape((num_models * num_candidates, d_latent))#the 20000*32 comes out!
+                                    #last_states = predictions[:, :, -1, :].reshape((num_models * num_candidates, d_latent))#the 20000*32 comes out!
+                                    #all_values = self.value_function.get_value(last_states, already_embedded=True)
+                                    all_cbfs=self.cbfdot_function(first_states, already_embedded=True)
+                                    #nans = torch.isnan(all_values)#should get it from the cbfd function!
+                                    #all_values[nans] = -1e5
+                                    nanscbf = torch.isnan(all_cbfs)#should get it from the cbfd function!
+                                    all_cbfs[nanscbf] = -1e4
+                                    #values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
+                                    cbfs,indices=torch.min(all_cbfs.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
+                                    #line 7 in algorithm 1 in the PETS paper!
+                                    #values = values.squeeze()
+                                    cbfs=cbfs.squeeze()
+                                itrrecovery += 1#CEM Evolution method
+                                #print('itrrecovery',itrrecovery)
+                            # Return the best action
+                            action = actions_sorted[-1][0]#the best one
+                            return action.detach().cpu().numpy(),randflag
                         #return self.env.action_space.sample()#for fair comparison with LS3#0*self.env.action_space.sample()#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!
                     itr = 0#that is why it always stops at iteration 0 when error occurs!
                     self.mean, self.std = None, None
