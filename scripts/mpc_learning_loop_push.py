@@ -49,6 +49,7 @@ if __name__ == '__main__':
         f.write('action_type: %s\t'%(params['action_type']))
         f.write('conservativeness: %s, reward_type: %s, lightness: %s\t'%(params['conservative'],params['reward_type'],params['light']))
         f.write('push_cbf_strategy: %d\n'%(params['push_cbf_strategy']))
+        f.write('reduce_horizon: %s, 0 or 1: %s\n'%(params['reduce_horizon'],params['zero_one']))
         f.write('What I want to write:             ')
         f.close()
         utils.init_logging(logdir)#record started!

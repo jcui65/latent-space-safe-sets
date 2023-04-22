@@ -11,7 +11,7 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='04-07',help='the date when the simulation started', type=str)
+@click.option('--date', default='04-16',help='the date when the simulation started', type=str)
 @click.option('--time', default='00-36-31', help='time of the simulation', type=str)
 def main(date, time):
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
@@ -30,7 +30,7 @@ def main(date, time):
     print('logdirbeforeseed',logdirbeforeseed)
     srlist=[]#success rate list
     ralist=[]#reward average list
-    fh=1000#500#fh means five hundred
+    fh=500#1000#fh means five hundred
     rfarray=np.zeros((fh,))#np.zeros((1000,))#push#np.zeros((250,))#reacher
     tsrarray=np.zeros((fh,))#np.zeros((1000,))#reacher#np.zeros((1000,))#push#
     ralastlist=[]#reward average last list
