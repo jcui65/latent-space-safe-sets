@@ -162,6 +162,8 @@ if __name__ == '__main__':
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     
+                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#,conservative,reward_type)#
+                    '''
                     if conservative=='conservative' and reward_type=='sparse':
                         #print('conservative and sparse!')#you get this right!
                         action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
@@ -176,7 +178,7 @@ if __name__ == '__main__':
                         action,randflag= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
                     elif conservative=='average' and reward_type=='dense':
                         action,randflag= policy.actcbfdsquarelatentplanareacheronestdnogoaldense(obs / 255)#, env.state)#
-                    
+                    '''
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!

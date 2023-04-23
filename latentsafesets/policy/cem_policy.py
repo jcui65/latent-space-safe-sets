@@ -88,8 +88,8 @@ class CEMSafeSetPolicy(Policy):
         self.init_var = np.tile(np.square(self.ac_ub - self.ac_lb) / 16, [self.plan_hor])#how it is being used?
         self.action_type=params['action_type']
         self.reduce_horizon=params['reduce_horizon']
-        #self.reward_type=params['reward_type']
-        #self.conservative=params['conservative']
+        self.reward_type=params['reward_type']
+        self.conservative=params['conservative']
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1635,7 +1635,7 @@ class CEMSafeSetPolicy(Policy):
         action = actions_sorted[-1][0]#the best one
         return action.detach().cpu().numpy(), tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
-    def actcbfdsquarelatentplanareacher(self, obs):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
+    def actcbfdsquarelatentplanareacher(self, obs):#,conservative,reward_type):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
         """
         Returns the action that this controller would take at time t given observation obs.
         Arguments:obs: The current observation. Cannot be a batch
@@ -1776,91 +1776,14 @@ class CEMSafeSetPolicy(Policy):
                 nans = torch.isnan(all_values)
                 all_values[nans] = -1e5
                 values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
-                '''
-                storch=ptu.torchify(state)#state torch
-                se=storch+action_samples#se means state estimated#shape(1000,5,2)#se1=stateevolve
-                #the square part
-                xmove=0#-25#30#
-                ymove=0#-45#-40#-35#-33#-30#-25#
-                lux = 75#105#50#
-                luy = 55#40#
-                width = 25#20#
-                height = 40# 50#
-                walls = [((lux + xmove, luy + ymove), (lux + width + xmove, luy + height + ymove))]  #
-                # I devide the map into 8 regions clockwise: left up, middle up, right up, right middle, right down, middle down, left down, left middle
-                rd1h = torch.where((se[:, :, 0] <= walls[0][0][0]) * (se[:, :, 1] <= walls[0][0][1]),
-                                   se[:, :, 0] - walls[0][0][0], se[:, :, 0])
-                # Thus, rd1h means relative distance region 1 horizontal, where region 1 means left up of the centeral obstacle
-                rd1v = torch.where((se[:, :, 0] <= walls[0][0][0]) * (se[:, :, 1] <= walls[0][0][1]),
-                                   se[:, :, 1] - walls[0][0][1], se[:, :, 1])
-                # and consequently, rd1v means relative distance region 1 vertical, which gets the relative distance in the vertical directions
-                rd1 = torch.concat(
-                    (rd1h.reshape(rd1h.shape[0], rd1h.shape[1], 1), rd1v.reshape(rd1v.shape[0], rd1v.shape[1], 1)),
-                    dim=2)
-                # we concatenate them to recover the 2-dimensional coordinates
-                rd2h = torch.where((rd1[:, :, 0] > walls[0][0][0]) * (rd1[:, :, 0] <= walls[0][1][0]) * (
-                            rd1[:, :, 1] <= walls[0][0][1]),
-                                   0 * rd1[:, :, 0], rd1[:, :, 0])  # region 2 is the middle up of the centeral obstacle
-                rd2v = torch.where((rd1[:, :, 0] > walls[0][0][0]) * (rd1[:, :, 0] <= walls[0][1][0]) * (
-                            rd1[:, :, 1] <= walls[0][0][1]),
-                                   rd1[:, :, 1] - walls[0][0][1], rd1[:, :, 1])
-                rd2 = torch.concat(
-                    (rd2h.reshape(rd2h.shape[0], rd2h.shape[1], 1), rd2v.reshape(rd2v.shape[0], rd2v.shape[1], 1)),
-                    dim=2)
-                rd3condition = (rd2[:, :, 0] > walls[0][1][0]) * (
-                            rd2[:, :, 1] <= walls[0][0][1])  # this condition is to see if it is in region 3
-                rd3h = torch.where(rd3condition, rd2[:, :, 0] - walls[0][1][0], rd2[:, :, 0])  # h means horizontal
-                rd3v = torch.where(rd3condition, rd2[:, :, 1] - walls[0][0][1], rd2[:, :, 1])  # v means vertical
-                rd3 = torch.concat(
-                    (rd3h.reshape(rd3h.shape[0], rd3h.shape[1], 1), rd3v.reshape(rd3v.shape[0], rd3v.shape[1], 1)),
-                    dim=2)
-                rd4condition = (rd3[:, :, 0] > walls[0][1][0]) * (rd3[:, :, 1] > walls[0][0][1]) * (
-                            rd3[:, :, 1] <= walls[0][1][1])
-                rd4h = torch.where(rd4condition, rd3[:, :, 0] - walls[0][1][0], rd3[:, :, 0])  # h means horizontal
-                rd4v = torch.where(rd4condition, 0 * rd3[:, :, 1], rd3[:, :, 1])  # v means vertical
-                rd4 = torch.concat(
-                    (rd4h.reshape(rd4h.shape[0], rd4h.shape[1], 1), rd4v.reshape(rd4v.shape[0], rd4v.shape[1], 1)),
-                    dim=2)
-                rd5condition = (rd4[:, :, 0] > walls[0][1][0]) * (rd4[:, :, 1] > walls[0][1][1])
-                rd5h = torch.where(rd5condition, rd4[:, :, 0] - walls[0][1][0], rd4[:, :, 0])  # h means horizontal
-                rd5v = torch.where(rd5condition, rd4[:, :, 1] - walls[0][1][1], rd4[:, :, 1])  # v means vertical
-                rd5 = torch.concat(
-                    (rd5h.reshape(rd5h.shape[0], rd5h.shape[1], 1), rd5v.reshape(rd5v.shape[0], rd5v.shape[1], 1)),
-                    dim=2)
-                rd6condition = (rd5[:, :, 0] <= walls[0][1][0]) * (rd5[:, :, 0] > walls[0][0][0]) * (
-                            rd5[:, :, 1] > walls[0][1][1])
-                rd6h = torch.where(rd6condition, 0 * rd5[:, :, 0], rd5[:, :, 0])  # h means horizontal
-                rd6v = torch.where(rd6condition, rd5[:, :, 1] - walls[0][1][1], rd5[:, :, 1])  # v means vertical
-                rd6 = torch.concat(
-                    (rd6h.reshape(rd6h.shape[0], rd6h.shape[1], 1), rd6v.reshape(rd6v.shape[0], rd6v.shape[1], 1)),
-                    dim=2)
-                rd7condition = (rd6[:, :, 0] <= walls[0][0][0]) * (rd6[:, :, 1] > walls[0][1][1])
-                rd7h = torch.where(rd7condition, rd6[:, :, 0] - walls[0][0][0], rd6[:, :, 0])  # h means horizontal
-                rd7v = torch.where(rd7condition, rd6[:, :, 1] - walls[0][1][1], rd6[:, :, 1])  # v means vertical
-                rd7 = torch.concat(
-                    (rd7h.reshape(rd7h.shape[0], rd7h.shape[1], 1), rd7v.reshape(rd7v.shape[0], rd7v.shape[1], 1)),
-                    dim=2)
-                rd8condition = (rd7[:, :, 0] <= walls[0][0][0]) * (rd7[:, :, 1] <= walls[0][1][1]) * (
-                            rd7[:, :, 1] > walls[0][0][1])
-                rd8h = torch.where(rd8condition, rd7[:, :, 0] - walls[0][0][0], rd7[:, :, 0])  # h means horizontal
-                rd8v = torch.where(rd8condition, 0 * rd7[:, :, 1], rd7[:, :, 1])  # v means vertical
-                rd8s = torch.concat(
-                    (rd8h.reshape(rd8h.shape[0], rd8h.shape[1], 1), rd8v.reshape(rd8v.shape[0], rd8v.shape[1], 1)),
-                    dim=2)  # dim: (1000,5,2)
-                rdns = torch.norm(rd8s, dim=2)  # rdn for relative distance norm
-                rdnvs = rdns < 6#5#15  # rdnv for rdn violator
-                rdnvis = torch.sum(rdnvs, dim=1)  # rdn violator indices# print('rdnvi', rdnvi)
-                rdnvis = rdnvis.reshape(rdnvis.shape[0], 1)
-                rdnvcs = rdns < 1e-8#10  # rdnv for rdn violator critical
-                rdnvcis = torch.sum(rdnvcs, dim=1)  # rdn violator critical indices# print('rdnvci', rdnvci)
-                rdnvcis = rdnvcis.reshape(rdnvis.shape[0], 1)# print(rdn.shape)#torch.Size([1000, 5])
-                #cbfs = rdns ** 2 - 15 ** 2  # 13**2#20:30#don't forget the square!# Note that this is also used in the online training afterwards
-                #acbfs = -cbfs * act_cbfd_thresh  # acbf means alpha cbf, the minus class k function#0.8 will be replaced later#don't forget the negative sign!
-                #rdas = torch.concat((rd8s, action_samples),
-                                   #dim=2)  # check if it is correct!#rda: relative distance+action will be thrown later into the cbf dot network
-                #print('action_samples.shape',action_samples.shape)
-                #rdas=torch.concat((embrepeat, action_samples),dim=2)
-                '''
+                if self.reward_type=='dense':
+                    for i in range(planning_hor-1):
+                        statesi = predictions[:, :, -1-i-1, :].reshape((num_models * num_candidates, d_latent))#the last state under the action sequence#the 20000*32 comes out!
+                        all_valuesi = self.value_function.get_value(statesi, already_embedded=True)#all values from 1000 candidates*20 particles
+                        nansi = torch.isnan(all_valuesi)
+                        all_valuesi[nansi] = -1e5
+                        valuesi = torch.mean(all_valuesi.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
+                        values+=valuesi#to make it dense
                 # Blow up cost for trajectories that are not constraint satisfying and/or don't end up
                 #   in the safe set
                 if not self.ignore_constraints:#Do I add the CBF term here?#to see the constraint condition of 1000 trajs
@@ -1904,63 +1827,29 @@ class CEMSafeSetPolicy(Policy):
                     #cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0),
                                                # the acbfs is subject to change
                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
-                    lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements
-                    #print('lhse.shape',lhse.shape)
-                    rhse,rhsi=torch.max(acbfs, dim=0)#rhsi means right hand side indices
-                    #print('rhse.shape', rhse.shape)
-                    cbfdots_violss = torch.sum(( lhse< rhse),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
-                    #print('cbfdots_violss',cbfdots_violss)
+                    if self.conservative=='conservative':
+                        lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements
+                        #print('lhse.shape',lhse.shape)
+                        rhse,rhsi=torch.max(acbfs, dim=0)#rhsi means right hand side indices
+                        #print('rhse.shape', rhse.shape)
+                        cbfdots_violss = torch.sum(( lhse< rhse),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
+                        #print('cbfdots_violss',cbfdots_violss)
+                    elif self.conservative=='onestd':
+                        cbfstd,cbfmean=torch.std_mean(cbfdots_alls, dim=0)
+                        cbfmeanmstd=cbfmean-cbfstd#cbfmean minus 1 std
+                        acbfstd,acbfmean=torch.std_mean(acbfs,dim=0)
+                        acbfmeanpstd=acbfmean+acbfstd#acbfmean plus 1 std
+                        cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd,# the acbfs is subject to change
+                                                dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
+                    elif self.conservative=='average':
+                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0),# the acbfs is subject to change
+                                                dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction
                     cbfdots_violss = torch.zeros((num_candidates, 1),
                                                  device=ptu.TORCH_DEVICE)  # no constraint violators!
                 #self.ignore_safe_set=True#Including 18:47 Aug 4th as well as 15:14 Aug 5th
                 #if torch.max(rdnvis)>0 or torch.max(cbfdots_violss)>0 or torch.max(rdnvic)>0 or torch.max(cbfdots_violsc)>0:##
-                '''
-                if torch.max(rdnvis) > 0 or torch.max(cbfdots_violss) > 0:  ##
-                    rdnvimasks = rdnvis > 0.5
-                    cbfdots_violsmasks = cbfdots_violss > 0.5
-                    rdnvnotimasks = rdnvis< 0.5
-                    cbfdots_notviolsmasks = cbfdots_violss < 0.5
-                    tpmasks = rdnvimasks * cbfdots_violsmasks
-                    fpmasks = rdnvnotimasks * cbfdots_violsmasks
-                    fnmasks = rdnvimasks * cbfdots_notviolsmasks
-                    tnmasks = rdnvnotimasks * cbfdots_notviolsmasks
-                    tpcounts = torch.sum(tpmasks)
-                    fpcounts = torch.sum(fpmasks)
-                    fncounts = torch.sum(fnmasks)
-                    tncounts = torch.sum(tnmasks)
-                    tp += tpcounts
-                    fp += fpcounts
-                    fn += fncounts
-                    tn += tncounts
-
-                    rdnvcicmasks = rdnvcis > 0.5
-                    rdnvnotcimasks = rdnvcis < 0.5
-                    tpcmasks = rdnvcicmasks * cbfdots_violsmasks
-                    fpcmasks = rdnvnotcimasks * cbfdots_violsmasks
-                    fncmasks = rdnvcicmasks * cbfdots_notviolsmasks
-                    tncmasks = rdnvnotcimasks * cbfdots_notviolsmasks
-                    tpccounts = torch.sum(tpcmasks)
-                    fpccounts = torch.sum(fpcmasks)
-                    fnccounts = torch.sum(fncmasks)
-                    tnccounts = torch.sum(tncmasks)
-                    tpc += tpccounts
-                    fpc += fpccounts
-                    fnc += fnccounts
-                    tnc += tnccounts
-                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
-                    tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                else:
-                    tp = tp
-                    fp = fp
-                    fn = fn
-                    tn = tn+rdnvis.shape[0]
-                    tpc = tpc
-                    fpc = fpc
-                    fnc = fnc
-                    tnc = tnc + rdnvcis.shape[0]
-                '''
                 #cbfdots_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)  # no constraint violators!#for testing!
                 if not self.ignore_safe_set:
                     safe_set_all = self.safe_set.safe_set_probability(last_states, already_embedded=True)#get the prediction for the safety of the last state
@@ -1969,9 +1858,12 @@ class CEMSafeSetPolicy(Policy):
                                                 dim=0) < act_ss_thresh#(1000,1)
                 else:#ignore safe set constraints
                     safe_set_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
-                goal_preds = self.goal_indicator(predictions, already_embedded=True)#the prob of being goal at those states#Do I add the CBF term here?(20,1000,5)
-                goal_states = torch.sum(torch.mean(goal_preds, dim=0) > self.goal_thresh, dim=1)#sum over planning horizon#f_G in the paper(1000,1)
-                values = values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
+                
+                values = values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 
+                if self.reward_type=='sparse':
+                    goal_preds = self.goal_indicator(predictions, already_embedded=True)#the prob of being goal at those states#Do I add the CBF term here?(20,1000,5)
+                    goal_states = torch.sum(torch.mean(goal_preds, dim=0) > self.goal_thresh, dim=1)#sum over planning horizon#f_G in the paper(1000,1)
+                    values = values + goal_states#equation 2 in paper!
                 #values = 10*values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
                 #values = 100*values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
                 values = values.squeeze()#all those violators, assign them with big cost of -1e5
