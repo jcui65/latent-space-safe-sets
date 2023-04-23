@@ -223,43 +223,51 @@ class CBFdotlatentplanaTrainer(Trainer):
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
 
     def update(self, replay_buffer, update_dir):
-        log.info('Beginning cbf dot update optimization!')
-
-        for _ in trange(self.params['cbfd_update_iters']):
-            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
-            #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
-            #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
-            if self.params['env']=='push' and self.params['push_cbf_strategy']==2:
-                obs, rdn, hvn = out_dict['obs'], out_dict['rdnef'], out_dict['hvnef']  # 0 or 1
+        if self.params['train_cbf']=='no':
+            log.info('No episodic cbf dot update optimization!')
+        else:
+            if self.params['train_cbf']=='no2':
+                self.params['cbfd_lr']=0
+                log.info('No episodic cbf dot update optimization but show loss on new data!')
             else:
-                obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
-            #rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
-            #rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
-            #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
-            #print('rdo.shape',rdo.shape)#(256, 2)
-            #print('action.shape',action.shape)#(256, 2)
-            #rda = np.concatenate((rdo, action),axis=1)
-            #rdal = np.concatenate((obs, action), axis=1)
-            #print('rda.shape',rda.shape)#(256, 4)
-            #loss, info = self.constr.update(next_obs, constr, already_embedded=True)
-            #loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
-            #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
-            loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #
-            self.loss_plotter.add_data(info)
+                log.info('Beginning cbf dot update optimization!')
+            
+            #log.info('cbfd_lr: %f'%(self.params['cbfd_lr']))
+            for _ in trange(self.params['cbfd_update_iters']):
+                out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+                #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
+                #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
+                if self.params['env']=='push' and self.params['push_cbf_strategy']==2:
+                    obs, rdn, hvn = out_dict['obs'], out_dict['rdnef'], out_dict['hvnef']  # 0 or 1
+                else:
+                    obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
+                #rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
+                #rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
+                #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
+                #print('rdo.shape',rdo.shape)#(256, 2)
+                #print('action.shape',action.shape)#(256, 2)
+                #rda = np.concatenate((rdo, action),axis=1)
+                #rdal = np.concatenate((obs, action), axis=1)
+                #print('rda.shape',rda.shape)#(256, 4)
+                #loss, info = self.constr.update(next_obs, constr, already_embedded=True)
+                #loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
+                #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
+                loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #
+                self.loss_plotter.add_data(info)
 
-        log.info('Creating cbf dot function heatmap')
-        self.loss_plotter.plot()
-        self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)#this is using plan a
-        #self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
-        #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased.pdf" ), replay_buffer, coeff=1)
-        #self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
-        self.plotlatent(os.path.join(update_dir, "cbfdlatent.pdf"), replay_buffer)
-        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-11.pdf"), replay_buffer,
-                                coeff=1)  # a few lines later
-        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-13.pdf"), replay_buffer,coeff=1/3)  # a few lines later
-        self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer,
-                                coeff=1 / 4)  # a few lines later
-        #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
+            log.info('Creating cbf dot function heatmap')
+            self.loss_plotter.plot()
+            self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)#this is using plan a
+            #self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
+            #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased.pdf" ), replay_buffer, coeff=1)
+            #self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
+            self.plotlatent(os.path.join(update_dir, "cbfdlatent.pdf"), replay_buffer)
+            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-11.pdf"), replay_buffer,
+                                    coeff=1)  # a few lines later
+            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-13.pdf"), replay_buffer,coeff=1/3)  # a few lines later
+            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer,
+                                    coeff=1 / 4)  # a few lines later
+            #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
 
     def plot(self, file, replay_buffer):
         out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
