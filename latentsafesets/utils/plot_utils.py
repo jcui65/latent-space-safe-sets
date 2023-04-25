@@ -264,7 +264,9 @@ def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, t
     
     values = cbfd.cbfdots(obs, already_embedded=True).squeeze()#not spb?
     obs = ptu.to_numpy(cbfd.encoder.decode(ptu.torchify(obs)))
+    #print('obs.shape',obs.shape)
     sort_ind = np.argsort(values)
+    #print('len(sort_ind)',len(sort_ind))
     eachline=8
     low_ind = sort_ind[:eachline]#the lowest five among 256
     #print('low_ind',low_ind)
@@ -284,24 +286,35 @@ def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, t
     high_obs = obs[high_ind]
     mid_vals = values[mid_ind]
     mid_obs = obs[mid_ind]
+    batchline=int(values.shape[0]/eachline)
+    #print('batchline',batchline)
+    c4=4
+    fig, axs = plt.subplots(c4, eachline)
+    for b in range(batchline):
+        c=b%4
+        for i in range(eachline):
 
-    fig, axs = plt.subplots(3, eachline)
+            #print('the sequence: ', b*eachline+i)
+            #print('sorted: ',sort_ind[b*eachline+i])
+            axs[c][i].imshow(obs[sort_ind[b*eachline+i]].squeeze().transpose((1, 2, 0)))
+            axs[c][i].set_title('%3.4f' % values[sort_ind[b*eachline+i]])
+            axs[c][i].set_axis_off()
 
-    for i in range(eachline):
-        axs[0][i].imshow(high_obs[i].squeeze().transpose((1, 2, 0)))
-        axs[0][i].set_title('%3.4f' % high_vals[i])
-        axs[0][i].set_axis_off()
+            #axs[1][i].imshow(mid_obs[i].squeeze().transpose((1, 2, 0)))
+            #axs[1][i].set_title('%3.4f' % mid_vals[i])
+            #axs[1][i].set_axis_off()
 
-        axs[1][i].imshow(mid_obs[i].squeeze().transpose((1, 2, 0)))
-        axs[1][i].set_title('%3.4f' % mid_vals[i])
-        axs[1][i].set_axis_off()
-
-        axs[2][i].imshow(low_obs[i].squeeze().transpose((1, 2, 0)))
-        axs[2][i].set_title('%3.4f' % low_vals[i])
-        axs[2][i].set_axis_off()
-
-    plt.savefig(file)
-    plt.close()
+            #axs[2][i].imshow(low_obs[i].squeeze().transpose((1, 2, 0)))
+            #axs[2][i].set_title('%3.4f' % low_vals[i])
+            #axs[2][i].set_axis_off()
+        #print('file',file)#outputs/2023-04-25/13-46-31/1/initial_train/cbfd_start.pdf
+        if c==3:
+            filem4=file[:-4]
+            d=(b+1)*eachline
+            filem4d=filem4+str(d)+'.pdf'
+            plt.savefig(filem4d)
+            plt.close()
+            fig, axs = plt.subplots(c4, eachline)
     
     '''
     #print('entering the other one!')
