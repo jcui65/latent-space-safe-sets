@@ -90,6 +90,9 @@ class CEMSafeSetPolicy(Policy):
         self.reduce_horizon=params['reduce_horizon']
         self.reward_type=params['reward_type']
         self.conservative=params['conservative']
+        #print('reward_type: ',self.reward_type)
+        #print('conservativeness: ',self.conservative)
+        self.current_robust=params['current_robust']
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1643,9 +1646,21 @@ class CEMSafeSetPolicy(Policy):
         """
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
-        emb = self.encoder.encode(obs)#in latent space now!
+        if self.current_robust=='no':
+            emb = self.encoder.encode(obs)#in latent space now!
+            embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
+        elif self.current_robust=='weak':
+            emb=self.encoder.encode(obs)
+            embrepeat20=emb.repeat(1, self.popsize, 1, 1)
+            for i in range(self.n_particles-1):
+                embi=self.encoder.encode(obs)
+                embrepeati=embi.repeat(1, self.popsize, 1, 1)
+                emb+=embi
+                embrepeat20=torch.vstack((embrepeat20,embrepeati))
+            emb=emb/self.n_particles#the average
+            #embrepeat20=
         #embrepeat=emb.repeat(self.popsize,self.plan_hor,1)#emb.repeat(1000,5,1), with new shape (1000,5,32)#1000 and 5 should subject to change#print('embrepeat.shape',embrepeat.shape)
-        embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
+        
         itr = 0#
         reset_count = 0#
         act_ss_thresh = self.safe_set_thresh#initially 0.8
@@ -1777,6 +1792,7 @@ class CEMSafeSetPolicy(Policy):
                 all_values[nans] = -1e5
                 values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
                 if self.reward_type=='dense':
+                    #log.info('dense reward!')
                     for i in range(planning_hor-1):
                         statesi = predictions[:, :, -1-i-1, :].reshape((num_models * num_candidates, d_latent))#the last state under the action sequence#the 20000*32 comes out!
                         all_valuesi = self.value_function.get_value(statesi, already_embedded=True)#all values from 1000 candidates*20 particles
@@ -1789,7 +1805,7 @@ class CEMSafeSetPolicy(Policy):
                 if not self.ignore_constraints:#Do I add the CBF term here?#to see the constraint condition of 1000 trajs
                     constraints_all = torch.sigmoid(self.constraint_function(predictions, already_embedded=True))#all the candidates#each in the model
                     constraint_viols = torch.sum(torch.max(constraints_all, dim=0)[0] >= self.constraint_thresh, dim=1)#those that violate the constraints#if constraint_viols>=1, then game over!
-                else:#ignore the constraints
+                else:#ignore the constraints#the [0] above is because of max return two things: value and index. [0] takes the first thing, which is value
                     constraint_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)#no constraint violators!
                 #self.ignore_cbfdots=True#just for 10:57 at Aug 4th
                 if not self.ignore_cbfdots:#Do I add the CBF term here?#to see the constraint condition of 1000 trajs
@@ -1828,8 +1844,9 @@ class CEMSafeSetPolicy(Policy):
                                                # the acbfs is subject to change
                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     if self.conservative=='conservative':
+                        #log.info('conservative!')#it is correct!
                         lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements
-                        #print('lhse.shape',lhse.shape)
+                        #print('lhse.shape',lhse.shape)#(1000,5)
                         rhse,rhsi=torch.max(acbfs, dim=0)#rhsi means right hand side indices
                         #print('rhse.shape', rhse.shape)
                         cbfdots_violss = torch.sum(( lhse< rhse),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#

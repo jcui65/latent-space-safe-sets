@@ -327,7 +327,7 @@ class ReacherConstraintTeacher(AbstractTeacher):
         goal1 = np.array((np.pi * .53, 0.7 * np.pi))
         goal2 = np.array((np.pi, -0.7 * np.pi))
         goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))
-        act = goal - angle
+        act = goal - angle#all unsafe demos are similar! Is it good?
         # act = np.random.normal((self.direction, 0), 1)
         act = np.clip(act, -1, 1)
         return act

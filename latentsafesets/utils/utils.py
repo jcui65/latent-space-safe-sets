@@ -391,7 +391,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
                 params['dyn_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/dyn.pth'#really new reacher
                 params['gi_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/gi.pth'#really new reacher
                 params['constr_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/constr.pth'#really new reacher
-                params['cbfd_checkpoint']='outputs/2023-04-23/13-21-39/cbfd.pth'#50000 epochs of pretraining#really new reacher#'outputs/2023-04-09/01-55-20/1/initial_train/cbfd.pth'#really new reacher
+                params['cbfd_checkpoint']='outputs/2023-04-09/01-55-20/1/initial_train/cbfd.pth'#really new reacher'outputs/2023-04-23/17-51-53/cbfd_10000.pth'#10000 epochs again#'outputs/2023-04-23/17-51-53/cbfd.pth'#50000 epochs again#None#'outputs/2023-04-23/13-21-39/cbfd.pth'#50000 epochs of pretraining#really new reacher#
             elif vsn=='d2v2':
                 params['enc_checkpoint']='outputs/2023-04-08/02-02-17/vae.pth'#new 2 reacher#
                 params['safe_set_checkpoint']='outputs/2023-04-08/12-42-19/1/initial_train/ss.pth'#new 2 reacher#
@@ -486,6 +486,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
                 params['cbfd_checkpoint']='''
     if params['enc_checkpoint']:
         encoder.load(params['enc_checkpoint'])#load the parameters of the VAE at specfic checkpoints!
+        print('params[enc_checkpoint]',params['enc_checkpoint'])#it is working as expected!
     modules['enc'] = encoder
 
     if ss:

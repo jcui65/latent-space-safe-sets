@@ -128,6 +128,42 @@ class PETSDynamics(nn.Module, EncodedModule):
             running_emb = next_emb#next time step!
         return predicted_emb
 
+    def predict_robust(self, obs, act_seq, already_embedded=False):
+        """
+        Given the current obs, predict sequences of observations for each action sequence
+        in act_seq for each model in self.dynamics_models#(there are altogether 20 or 5 models, right?)
+
+        This corresponds to the TS-1 in the PETS paper#ref 43 in the LS3 paper!#choose different models every time
+        :param obs: Tensor, dimension (d_latent) if already embedded or (*d_obs)
+        :param act_seq: Tensor, dimension (num_candidates, planning_hor, d_act)#here it is (1000,5,2)
+        :param already_embedded: Whether or not obs is already embedded in the latent space
+        :return: Final obs prediction, dimension (n_particles, num_candidates, planning_hor, d_latent)
+        """#(20,1000,5,32)
+        if already_embedded:
+            emb = obs
+        else:
+            emb = self.encoder.encode(obs).detach()
+
+        (num_candidates, plan_hor, d_act) = act_seq.shape#(1000,5,2)
+
+        predicted_emb = torch.zeros((self.n_particles, num_candidates, plan_hor, self.d_latent))\
+            .to(ptu.TORCH_DEVICE)#GPU
+        running_emb = emb.repeat((num_candidates * self.n_particles, 1))#20000!(20000,32)
+        for t in range(plan_hor):#H=5
+            act = act_seq[:, t, :]#shape (1000,2)
+            #print('t',t,'act',act)#when t=0 act=nan! the problem is from outside!
+            act_tiled = act.repeat((self.n_particles, 1))#([20000,32])?
+            model_ind = np.random.randint(0, self.n_models)#5
+            model = self.models[model_ind]#randomly choose AMONG 5 models WITHIN HORIZON#it is TS-1
+            #print('running_emb.shape',running_emb.shape)#torch.Size([20000, 32])
+            #print('act_tiled.shape',act_tiled.shape)#torch.Size([20000, 2])
+            next_emb = model.get_next_emb(running_emb, act_tiled)#propogate
+            #print('next_emb.shape', next_emb.shape)#torch.Size([20000, 32])
+            predicted_emb[:, :, t, :] = next_emb.reshape((self.n_particles, num_candidates, self.d_latent))
+            #predicted_emb should have shape (20,1000,5,32)
+            running_emb = next_emb#next time step!
+        return predicted_emb
+
     def step(self):
         self.optimizer.step()
 

@@ -63,6 +63,7 @@ def add_controller_args(parser):
     parser.add_argument('--conservative', type=str, default='average')#'conservative')#
     parser.add_argument('--reward_type', type=str, default='sparse')#'dense')#
     parser.add_argument('--zero_one',type=str,default='zero')#'one')#
+    parser.add_argument('--current_robust',type=str,default='no')#'weak')#'medium')#'cbf')#'allmodules')#
 
 def add_encoder_args(parser):
     # Latent embedding params
@@ -208,7 +209,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_batch_size', type=int, default=256)
     parser.add_argument('--cbfd_thresh', type=float, default=0.2,
                         help='Threshold for an obs to be considered in violation of cbf dots')
-    parser.add_argument('--cbfd_init_iters', type=int, default=40000,#10000,#1,#to test RLSA#2000,#4001,#20000,#40000,#80000,#640000,#320000,#200000,#10000,#30000,#160000,#100000,#1000,#
+    parser.add_argument('--cbfd_init_iters', type=int, default=50000,#10000,#1,#to test RLSA#2000,#4001,#20000,#40000,#80000,#640000,#320000,#200000,#10000,#30000,#160000,#100000,#1000,#
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
