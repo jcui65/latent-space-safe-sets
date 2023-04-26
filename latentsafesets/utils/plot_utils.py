@@ -311,7 +311,7 @@ def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, t
         if c==3:
             filem4=file[:-4]
             d=(b+1)*eachline
-            filem4d=filem4+str(d)+'.pdf'
+            filem4d=filem4+'-'+str(d)+'.pdf'
             plt.savefig(filem4d)
             plt.close()
             fig, axs = plt.subplots(c4, eachline)

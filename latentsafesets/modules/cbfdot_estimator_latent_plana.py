@@ -37,14 +37,18 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             lr=0
         print('learning rate: %f'%(lr))#it is 0 if 'no2'!!!
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr)#,weight_decay=0.0001)#0.001)#0.1)#0.01)#1.0)#
-
+        self.mean=params['mean']
     def forward(self, obs, already_embedded=False):
         """
         Returns inputs to sigmoid for probabilities
         """
         #print('obs.shape',obs.shape)
         if not already_embedded:
-            embedding = self.encoder.encode(obs).detach()#workaround#currently I am in the state space
+            #embedding = self.encoder.encode(obs).detach()#workaround#currently I am in the state space
+            if self.mean=='sample':
+                embedding = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                embedding = self.encoder.encodemean(obs).detach()
         else:
             embedding = obs
         #print('embedding.shape',embedding.shape)#torch.Size([1000,5,4])#torch.Size([256,4])#torch.Size([180,4])#
@@ -88,7 +92,11 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         #logits = self(obs,already_embedded)#self(obs, action)#
         #probs = logits#torch.sigmoid(logits)#
         if not already_embedded:
-            embedding = self.encoder.encode(obs).detach()#workaround#currently I am in the state space
+            #embedding = self.encoder.encode(obs).detach()#workaround#currently I am in the state space
+            if self.mean=='sample':
+                embedding = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                embedding = self.encoder.encodemean(obs).detach()
         else:
             embedding = obs
         #print('embedding', embedding)

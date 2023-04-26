@@ -386,12 +386,20 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
         if dsn==2:
             if vsn=='d2v1':
                 params['enc_checkpoint']='outputs/2023-04-05/19-29-19/vae.pth'#new reacher#
-                params['safe_set_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/ss.pth'#really new reacher#
-                params['val_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/val.pth'#really new reacher
-                params['dyn_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/dyn.pth'#really new reacher
-                params['gi_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/gi.pth'#really new reacher
-                params['constr_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/constr.pth'#really new reacher
-                params['cbfd_checkpoint']='outputs/2023-04-09/01-55-20/1/initial_train/cbfd.pth'#really new reacher'outputs/2023-04-23/17-51-53/cbfd_10000.pth'#10000 epochs again#'outputs/2023-04-23/17-51-53/cbfd.pth'#50000 epochs again#None#'outputs/2023-04-23/13-21-39/cbfd.pth'#50000 epochs of pretraining#really new reacher#
+                if params['mean']=='sample':
+                    params['safe_set_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/ss.pth'#really new reacher#
+                    params['val_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/val.pth'#really new reacher
+                    params['dyn_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/dyn.pth'#really new reacher
+                    params['gi_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/gi.pth'#really new reacher
+                    params['constr_checkpoint']='outputs/2023-04-07/19-43-49/1/initial_train/constr.pth'#really new reacher
+                    params['cbfd_checkpoint']='outputs/2023-04-09/01-55-20/1/initial_train/cbfd.pth'#really new reacher#'outputs/2023-04-23/17-51-53/cbfd_10000.pth'#10000 epochs again#'outputs/2023-04-23/17-51-53/cbfd.pth'#50000 epochs again#None#'outputs/2023-04-23/13-21-39/cbfd.pth'#50000 epochs of pretraining#really new reacher#
+                elif params['mean']=='mean':
+                    params['safe_set_checkpoint']='outputs/2023-04-26/00-04-53/1/initial_train/ss.pth'#mean reacher#
+                    params['val_checkpoint']='outputs/2023-04-26/00-04-53/1/initial_train/val.pth'#mean reacher
+                    params['dyn_checkpoint']='outputs/2023-04-26/00-04-53/1/initial_train/dyn.pth'#mean reacher
+                    params['gi_checkpoint']='outputs/2023-04-26/00-04-53/1/initial_train/gi.pth'#mean reacher
+                    params['constr_checkpoint']='outputs/2023-04-26/00-04-53/1/initial_train/constr.pth'#mean reacher
+                    params['cbfd_checkpoint']='outputs/2023-04-26/00-04-53/1/initial_train/cbfd_10000.pth'#mean reacher
             elif vsn=='d2v2':
                 params['enc_checkpoint']='outputs/2023-04-08/02-02-17/vae.pth'#new 2 reacher#
                 params['safe_set_checkpoint']='outputs/2023-04-08/12-42-19/1/initial_train/ss.pth'#new 2 reacher#

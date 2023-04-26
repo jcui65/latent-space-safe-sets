@@ -28,6 +28,7 @@ class PETSDynamics(nn.Module, EncodedModule):
         self.normalize_delta = params['dyn_normalize_delta']#False, but what is it?#Now I know that it is for predicting delta s/z rather than s/z
         self.n_particles = params['n_particles']#20
         self.trained = False
+        self.mean=params['mean']#
 
         # Dynamics args
         self.n_models = params['dyn_n_models']#5#it is the B in the original paper!
@@ -62,8 +63,12 @@ class PETSDynamics(nn.Module, EncodedModule):
         act = ptu.torchify(act)
 
         if not already_embedded:
-            emb = self.encoder.encode(obs)
-            next_emb = self.encoder.encode(next_obs)
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs)
+                next_emb = self.encoder.encode(next_obs)
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs)
+                next_emb = self.encoder.encodemean(next_obs)
         else:
             emb = obs
             next_emb = next_obs
@@ -106,7 +111,10 @@ class PETSDynamics(nn.Module, EncodedModule):
         if already_embedded:
             emb = obs
         else:
-            emb = self.encoder.encode(obs).detach()
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs).detach()
 
         (num_candidates, plan_hor, d_act) = act_seq.shape#(1000,5,2)
 
@@ -142,7 +150,10 @@ class PETSDynamics(nn.Module, EncodedModule):
         if already_embedded:
             emb = obs
         else:
-            emb = self.encoder.encode(obs).detach()
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs).detach()
 
         (num_candidates, plan_hor, d_act) = act_seq.shape#(1000,5,2)
 
@@ -333,8 +344,12 @@ class PETSDynamics2(nn.Module, EncodedModule):
         act = ptu.torchify(act)
 
         if not already_embedded:
-            emb = self.encoder.encode(obs)
-            next_emb = self.encoder.encode(next_obs)
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs)
+                next_emb = self.encoder.encode(next_obs)
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs)
+                next_emb = self.encoder.encodemean(next_obs)
         else:
             emb = obs
             next_emb = next_obs
@@ -377,7 +392,10 @@ class PETSDynamics2(nn.Module, EncodedModule):
         if already_embedded:
             emb = obs
         else:
-            emb = self.encoder.encode(obs).detach()
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs).detach()
 
         (num_candidates, plan_hor, d_act) = act_seq.shape#(1000,5,2)
 

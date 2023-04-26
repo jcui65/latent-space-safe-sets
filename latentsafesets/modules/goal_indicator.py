@@ -24,6 +24,7 @@ class GoalIndicator(nn.Module, EncodedModule):
         self.targ_update_counter = 0
         self.loss_func = torch.nn.BCEWithLogitsLoss()
         self.trained = False
+        self.mean=params['mean']
 
         self.net = GenericNet(self.d_latent, 1, params['gi_n_hidden'],
                               params['gi_hidden_size']) \
@@ -37,7 +38,11 @@ class GoalIndicator(nn.Module, EncodedModule):
         Returns inputs to sigmoid for probabilities
         """
         if not already_embedded:
-            embedding = self.encoder.encode(obs).detach()
+            #embedding = self.encoder.encode(obs).detach()
+            if self.mean=='sample':
+                embedding = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                embedding = self.encoder.encodemean(obs).detach()
         else:
             embedding = obs
         log_probs = self.net(embedding)

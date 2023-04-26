@@ -18,7 +18,7 @@ class ValueEnsemble(nn.Module, EncodedModule):
 
         self.n_models = params['val_n_models']#default 5
         self.reduction = params['val_reduction']#'mean'
-
+        self.mean=params['mean']
         self.models = nn.ModuleList([
             ValueFunction(encoder, params) for _ in range(self.n_models)
         ])#5 value functions?
@@ -40,7 +40,11 @@ class ValueEnsemble(nn.Module, EncodedModule):
         if already_embedded:
             emb = obs
         else:
-            emb = self.encoder.encode(obs).detach()
+            #emb = self.encoder.encode(obs).detach()
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs).detach()
         out = torch.cat([
             model(emb, True)[None] for model in self.models#5 of them
         ])
@@ -78,8 +82,12 @@ class ValueEnsemble(nn.Module, EncodedModule):
             emb = obs
             next_emb = next_obs
         else:
-            emb = self.encoder.encode(obs).detach()
-            next_emb = self.encoder.encode(next_obs).detach()
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs).detach()
+                next_emb = self.encoder.encode(next_obs).detach()
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs).detach()
+                next_emb = self.encoder.encodemean(next_obs).detach()
 
         loss = torch.tensor(0., device=ptu.TORCH_DEVICE)
         for i, model in list(enumerate(self.models)):#there are 5 of them!
@@ -99,7 +107,12 @@ class ValueEnsemble(nn.Module, EncodedModule):
         if already_embedded:
             emb = obs
         else:
-            emb = self.encoder.encode(obs).detach()
+            #emb = self.encoder.encode(obs).detach()
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs).detach()
+            
 
         loss = torch.tensor(0., device=ptu.TORCH_DEVICE)
         for i, model in list(enumerate(self.models)):
@@ -115,8 +128,14 @@ class ValueEnsemble(nn.Module, EncodedModule):
             emb = obs
             next_emb = next_obs
         else:
-            emb = self.encoder.encode(obs).detach()
-            next_emb = self.encoder.encode(next_obs).detach()
+            #emb = self.encoder.encode(obs).detach()
+            #next_emb = self.encoder.encode(next_obs).detach()
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs).detach()
+                next_emb = self.encoder.encode(next_obs).detach()
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs).detach()
+                next_emb = self.encoder.encodemean(next_obs).detach()
 
         loss = torch.tensor(0., device=ptu.TORCH_DEVICE)
         for i, model in list(enumerate(self.models)):

@@ -23,6 +23,7 @@ class ValueFunction(nn.Module, EncodedModule):
         self.targ_update_counter = 0#what is this?
         self.loss_func = torch.nn.SmoothL1Loss()#designate the loss function
         self.trained = False
+        self.mean=params['mean']
 
         self.value_net = GenericNet(self.d_latent, 1, params['val_n_hidden'],#default 3
                                     params['val_hidden_size']).to(ptu.TORCH_DEVICE)
@@ -37,7 +38,12 @@ class ValueFunction(nn.Module, EncodedModule):
 
     def forward(self, obs, already_embedded=False):
         if not already_embedded:
-            embedding = self.encoder.encode(obs).detach()
+            #embedding = self.encoder.encode(obs).detach()
+            if self.mean=='sample':
+                embedding = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                embedding = self.encoder.encodemean(obs).detach()
+
         else:
             embedding = obs
         val = self.value_net(embedding)
@@ -81,8 +87,14 @@ class ValueFunction(nn.Module, EncodedModule):
 
     def loss(self, obs, rews, next_obs, dones, already_embedded=False):
         if not already_embedded:
-            emb = self.encoder.encode(obs).detach()#latent state
-            next_emb = self.encoder.encode(next_obs).detach()
+            #emb = self.encoder.encode(obs).detach()#latent state
+            #next_emb = self.encoder.encode(next_obs).detach()
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs).detach()
+                next_emb = self.encoder.encode(next_obs).detach()
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs).detach()
+                next_emb = self.encoder.encodemean(next_obs).detach()
         else:
             emb = obs#latent state
             next_emb = next_obs
@@ -108,7 +120,11 @@ class ValueFunction(nn.Module, EncodedModule):
         :return: the loss
         """
         if not already_embedded:
-            emb = self.encoder.encode(obs).detach()
+            #emb = self.encoder.encode(obs).detach()
+            if self.mean=='sample':
+                emb = self.encoder.encode(obs).detach()
+            elif self.mean=='mean':
+                emb = self.encoder.encodemean(obs).detach()
         else:
             emb = obs
 

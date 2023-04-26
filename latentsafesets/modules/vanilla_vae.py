@@ -42,6 +42,13 @@ class VanillaVAE(nn.Module):
         encoding = mu + std * samples
         return encoding.detach()
 
+    def encodemean(self, inputs):
+        mu, log_std = self(inputs)# forward
+        #std = torch.exp(log_std)#this is just the standard deviation
+        #samples = torch.empty(mu.shape).normal_(mean=0, std=1).to(ptu.TORCH_DEVICE)#reparameterization trick
+        encoding = mu# + std * samples
+        return encoding.detach()
+
     def decode(self, inputs):
         return torch.clamp(self.decoder(inputs), 0., 1.)
 

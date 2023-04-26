@@ -18,6 +18,7 @@ class PETSDynamicsTrainer(Trainer):
         self.ensemble = params['dyn_n_models']#5 by default
 
         self.env_name = params['env']#spb/reacher/push
+        
 
     def initial_train(self, replay_buffer, update_dir):#update_dir is the folder ended in initial_train
         if self.dynamics.trained:

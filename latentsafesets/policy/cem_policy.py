@@ -93,6 +93,7 @@ class CEMSafeSetPolicy(Policy):
         #print('reward_type: ',self.reward_type)
         #print('conservativeness: ',self.conservative)
         self.current_robust=params['current_robust']
+        self.dhz=params['dhz']
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1647,7 +1648,10 @@ class CEMSafeSetPolicy(Policy):
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         if self.current_robust=='no':
-            emb = self.encoder.encode(obs)#in latent space now!
+            emb = self.encoder.encode(obs)#in latent space now!it is 32 dimensional!
+            #print('emb',emb)
+            #print('emb max',torch.max(emb))
+            #print('emb min',torch.min(emb))
             embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         elif self.current_robust=='weak':
             emb=self.encoder.encode(obs)
@@ -1784,6 +1788,14 @@ class CEMSafeSetPolicy(Policy):
             if itr < self.max_iters - 1:#why the ensemble param in dynamics is 5! For MPC!
                 # dimension (num_models, num_candidates, planning_hor, d_latent)
                 predictions = self.dynamics_model.predict(emb, action_samples, already_embedded=True)#(20,1000,5,32)
+                #prediction0=predictions[:,0,:,:]
+                #p0sm=torch.std_mean(prediction0,dim=0)#p0sm for prediction 0 std mean
+                #print('p0s0',p0sm[0][0],'max',torch.max(p0sm[0][0]),'min',torch.min(p0sm[0][0]))
+                #print('p0m0',p0sm[1][0],'max',torch.max(p0sm[1][0]),'min',torch.min(p0sm[1][0]))
+                #print('p0s1',p0sm[0][1],'max',torch.max(p0sm[0][1]),'min',torch.min(p0sm[0][1]))
+                #print('p0m1',p0sm[1][1],'max',torch.max(p0sm[1][1]),'min',torch.min(p0sm[1][1]))
+                #print('p0s2',p0sm[0][2],'max',torch.max(p0sm[0][2]),'min',torch.min(p0sm[0][2]))
+                #print('p0m2',p0sm[1][2],'max',torch.max(p0sm[1][2]),'min',torch.min(p0sm[1][2]))
                 num_models, num_candidates, planning_hor, d_latent = predictions.shape#the possible H sequence of all candidates' all trials
                 last_states = predictions[:, :, -1, :].reshape(
                     (num_models * num_candidates, d_latent))#the last state under the action sequence#the 20000*32 comes out!
@@ -1849,17 +1861,17 @@ class CEMSafeSetPolicy(Policy):
                         #print('lhse.shape',lhse.shape)#(1000,5)
                         rhse,rhsi=torch.max(acbfs, dim=0)#rhsi means right hand side indices
                         #print('rhse.shape', rhse.shape)
-                        cbfdots_violss = torch.sum(( lhse< rhse),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
+                        cbfdots_violss = torch.sum(( lhse< rhse+self.dhz),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
                         #print('cbfdots_violss',cbfdots_violss)
                     elif self.conservative=='onestd':
-                        cbfstd,cbfmean=torch.std_mean(cbfdots_alls, dim=0)
+                        cbfstd,cbfmean=torch.std_mean(cbfdots_alls, dim=0)#this std is not the std of the latent state prediction error!
                         cbfmeanmstd=cbfmean-cbfstd#cbfmean minus 1 std
                         acbfstd,acbfmean=torch.std_mean(acbfs,dim=0)
                         acbfmeanpstd=acbfmean+acbfstd#acbfmean plus 1 std
-                        cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd,# the acbfs is subject to change
+                        cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd+self.dhz,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     elif self.conservative=='average':
-                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0),# the acbfs is subject to change
+                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0)+self.dhz,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction
