@@ -14,7 +14,7 @@ from latentsafesets.modules import VanillaVAE, PETSDynamics, ValueFunction, Cons
 import torch
 import numpy as np
 import gym
-
+from torch.autograd.functional import jacobian
 import logging
 
 log = logging.getLogger('cem')
@@ -94,6 +94,7 @@ class CEMSafeSetPolicy(Policy):
         #print('conservativeness: ',self.conservative)
         self.current_robust=params['current_robust']
         self.dhz=params['dhz']
+        self.dhdmax=params['dhdmax']
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1672,6 +1673,8 @@ class CEMSafeSetPolicy(Policy):
         #print('env.state',state)
         randflag=0#this is the flag to show if a random action is finally being chosen!
         cbfhorizon=self.plan_hor
+        sigmaz=0.13985#0.23
+        dz=1*sigmaz*torch.ones((self.d_latent), device=ptu.TORCH_DEVICE)#2*sigmaz*torch.ones((self.d_latent), device=ptu.TORCH_DEVICE)#3*sigmaz*torch.ones((self.d_latent), device=ptu.TORCH_DEVICE)#
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -1830,10 +1833,42 @@ class CEMSafeSetPolicy(Policy):
                                                         #already_embedded=True)  # all the candidates#torch.sigmoid()#each in the model#(20,1000,5)
                     cbf_init = self.cbfdot_function(embrepeat20, already_embedded=True)#should have dim (20,1000,1,32) to (20,1000,1,1)
                     #print('cbf_init.shape',cbf_init.shape)#torch.Size([20, 1000, 1, 1])
+                    #cbf_init.backward(torch.ones_like(cbf_init))
+                    #dz = embrepeat20.grad#
+                    scft=lambda emb: self.cbfdot_function(emb, already_embedded=True)#self cbfdot function true
+                    #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+                    #jno=jacobian(selfforwardtrue,next_obs,create_graph=True)#jno means jacobian next_obs
+                    jce=jacobian(scft,emb,create_graph=True)#jacobian cbf vs embedding#jce=jacobian(scft,embrepeat20,create_graph=True)#jacobian cbf vs embedding
+                    #print("zgrad shape :", jce.shape)#(1,1,1,32)
+                    #print('dz[0,0,0]',jce[0,0,0])#will it be 32d as expected? Yes!
+                    jces=jce.squeeze()
+                    #print("zgrads shape :", jces.shape)#(32)
+                    #print('dzs',jces)
+                    jcesa=torch.abs(jces)
+                    dhd=torch.dot(jcesa,dz)#delta h due to dynamics error
+                    #print('dhd',dhd)
+                    log.info('dhd: %f'%(dhd.item()))
+                    dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
+                    #print('dz',dz[0])
+                    #embs=emb.squeeze()
+                    #print('embs',embs)
+                    #print('emb.shape',emb.shape)#(1,32)
+                    #print('embs.shape',embs.shape)#(32)
+                    #print('emb max',torch.max(emb))
+                    #print('emb min',torch.min(emb))
                     cbf_alls = self.cbfdot_function(predictions,already_embedded=True) #with the reformulated cbfd estimator
                     #print('cbf_alls.shape',cbf_alls.shape)#torch.Size([20, 1000, 5, 1])
                     #print('cbf_alls',cbf_alls)
                     cbf_alls4=cbf_alls[:,:,0:cbfhorizon-1,:]#[:,:,0:self.plan_hor-1,:]#
+                    p0=predictions[0]
+                    #print('p0shape',p0.shape)#(1000,3,32)#
+                    #for nc in range(predictions.shape[1]):
+                        #for ho in range(cbfhorizon-1):#one step less!
+                            #p0ncho=p0[nc,ho]
+                            #jcep0ncho=jacobian(scft,p0ncho)#jacobian(scft,p0,create_graph=True)#
+                            #print("zgradp shape :", jcep0ncho.shape)#torch.Size([1, 32])#zgradp shape : torch.Size([1000, 3, 1, 1000, 3, 32])
+                            #print('dzp0ncho',jcep0ncho)#will it be 32d as expected? It is (1000,3,32)!#
+                    #print('dzp',jcep)
                     #print('cbf_alls4.shape', cbf_alls4.shape)#torch.Size([20, 1000, 4, 1])
                     cbf_initalls4=torch.cat((cbf_init,cbf_alls4),dim=-2)#if cbfhorizon-1=0, it should be fine
                     #print('cbf_initalls.shape', cbf_initalls.shape)#torch.Size([20, 1000, 5, 1])
@@ -1871,7 +1906,7 @@ class CEMSafeSetPolicy(Policy):
                         cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd+self.dhz,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     elif self.conservative=='average':
-                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0)+self.dhz,# the acbfs is subject to change
+                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0)+self.dhz+dhd,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction
