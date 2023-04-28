@@ -5,5 +5,5 @@ from .gi_trainer import GoalIndicatorTrainer
 from .pets_dynamics_trainer import PETSDynamicsTrainer, PETSDynamicsTrainer2
 from .trainer import Trainer
 from .safe_set_trainer import SafeSetTrainer
-from .mpc_trainer import MPCTrainer
-from .cbfdot_trainer import CBFdotTrainer, CBFdotlatentplanaTrainer
+from .cbfdot_trainer import CBFdotlatentplanaTrainer#CBFdotTrainer, 
+from .mpc_trainer import MPCTrainer#it seems that it should be put in the last line!!!
