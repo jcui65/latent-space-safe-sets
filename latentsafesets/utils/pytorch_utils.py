@@ -1,10 +1,10 @@
 import torch
 import numpy as np
-#TORCH_DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+TORCH_DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 #TORCH_DEVICE = torch.device('cuda:1') if torch.cuda.is_available() else torch.device('cpu')
-TORCH_DEVICE = torch.device('cuda:2') if torch.cuda.is_available() else torch.device('cpu')
+#TORCH_DEVICE = torch.device('cuda:2') if torch.cuda.is_available() else torch.device('cpu')
 #TORCH_DEVICE = torch.device('cuda:3') if torch.cuda.is_available() else torch.device('cpu')
-
+print('TORCH_DEVICE',TORCH_DEVICE)
 def torchify(x):
     if type(x) is not torch.Tensor and type(x) is not np.ndarray:
         x = np.array(x)
