@@ -1,4 +1,4 @@
-from latentsafesets.rl_trainers import VAETrainer, SafeSetTrainer, Trainer, ValueTrainer, ConstraintTrainer, GoalIndicatorTrainer, PETSDynamicsTrainer, PETSDynamicsTrainer2#, CBFdotTrainer
+from latentsafesets.rl_trainers import VAETrainer, SafeSetTrainer, Trainer, ValueTrainer, ConstraintTrainer, GoalIndicatorTrainer, PETSDynamicsTrainer,CBFdotlatentplanaTrainer, PETSDynamicsTrainer2#, CBFdotTrainer
 
 from latentsafesets.utils import LossPlotter, EncoderDataLoader
 
