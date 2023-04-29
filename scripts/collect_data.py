@@ -2,15 +2,17 @@ import sys
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 
-from latentsafesets.utils.arg_parser import parse_args
+#from latentsafesets.utils.arg_parser import parse_args
+from latentsafesets.utils.arg_parser_reacher import parse_args
 import latentsafesets.utils as utils
 from latentsafesets.utils.teacher import ConstraintTeacher, ReacherTeacher,\
     ReacherConstraintTeacher, StrangeTeacher, PushTeacher, OutburstPushTeacher, \
-    SimplePointBotTeacher
+    SimplePointBotTeacher, ReacherConstraintdense1Teacher, ReacherConstraintdense2Teacher
 import latentsafesets.utils.plot_utils as pu
-
+import sympy
 import logging
 import os
+import numpy as np
 log = logging.getLogger("collect")
 
 
@@ -19,7 +21,7 @@ env_teachers = {#it is a dictionary, right?
         SimplePointBotTeacher, ConstraintTeacher, StrangeTeacher
     ],
     'reacher': [
-        ReacherTeacher, ReacherConstraintTeacher, StrangeTeacher
+        ReacherTeacher,ReacherConstraintdense1Teacher,ReacherConstraintdense2Teacher,StrangeTeacher#ReacherConstraintTeacher,
     ],
     'push': [
         PushTeacher, OutburstPushTeacher
@@ -56,8 +58,58 @@ def generate_teacher_demo_datasafety(env, data_dir, teacher, n=100, noisy=False,
         raise RuntimeError("Directory %s already exists." % file)#not good code writing
     teacher = teacher(env, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
     demonstrations = []#an empty list
+    #ro=0.04#0.05-1
     for i in range(n):
-        traj = teacher.generate_trajectorysafety()#line 33 in teacher.py#100 transitions
+        print('data_dir',data_dir)
+        if data_dir=='ReacherConstraintdense1' or data_dir=='ReacherConstraintdense2':
+            #print('teacherenter',teacher)
+            angled=np.pi/2 - 1.5*np.pi*i/n#d means desired
+            if data_dir=='ReacherConstraintdense1':
+                radius=0.045#0.05#0.04#
+            else:
+                radius=0.12
+            xinc=radius*np.cos(angled)
+            yinc=radius*np.sin(angled)
+            xbase=-0.13*np.sqrt(0.75)
+            ybase=0.065
+            xtotal=xbase+xinc
+            ytotal=ybase+yinc
+            t1,t4=sympy.symbols("t1,t4", real=True)
+            length=0.12
+            eq1=sympy.Eq(length*(sympy.cos(t4)+sympy.cos(t1)),xtotal)#-0.13*np.sqrt(0.75))#-0.169705)#
+            eq2=sympy.Eq(length*(sympy.sin(t4)+sympy.sin(t1)),ytotal)#0.065)#0.169705)#
+            solt=sympy.solve([eq1, eq2])
+            #print('x',x)#print('y',y)#print('solt[0]',solt[0])#print('solt[1]',solt[1])
+            s0=solt[0]#
+            s1=solt[1]
+            #print('s0',s0)#print('s1',s1)print('s0t4',s0[t4])
+            s0t1=s0[t1]
+            s0t2=s0[t4]-s0[t1]
+            if s0t1<-np.pi:
+                s0t1+=2*np.pi
+            elif s0t1>np.pi:
+                s0t1-=2*np.pi
+            #print('s0t1',s0t1)
+            if s0t2<-np.pi:
+                s0t2+=2*np.pi
+            elif s0t2>np.pi:
+                s0t2-=2*np.pi
+            #print('s0t2',s0t2)#print('s1t1',s1[t1])
+            s1t1=s1[t1]
+            s1t2=s1[t4]-s1[t1]
+            if s1t1<-np.pi:
+                s1t1+=2*np.pi
+            elif s1t1>np.pi:
+                s1t1-=2*np.pi
+            #print('s1t1',s1t1)
+            if s1t2<-np.pi:
+                s1t2+=2*np.pi
+            elif s1t2>np.pi:
+                s1t2-=2*np.pi
+            #print('s1t2',s1t2)#print('s1t1',s1[t1])
+            traj = teacher.generate_trajectorysafety_dense(xa=s0t1,ya=s0t2,xa2=s1t1,ya2=s1t2,angled=angled)
+        else:
+            traj = teacher.generate_trajectorysafety()#line 33 in teacher.py#100 transitions
         reward = sum([frame['reward'] for frame in traj])#traj is a list of dictionaries
         #why not directly use rtg[0]?
         print('Trajectory %d, Reward %d' % (i, reward))

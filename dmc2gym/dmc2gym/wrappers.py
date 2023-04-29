@@ -64,7 +64,7 @@ class DMCWrapper(core.Env):
 
         # create task
         self._env = suite.load(
-            domain_name=domain_name,#for example, if I want to load reach, then this domain_name will be reacher
+            domain_name=domain_name,#for example, if I want to load reacher, then this domain_name will be reacher
             task_name=task_name,
             task_kwargs=task_kwargs,
             visualize_reward=visualize_reward,

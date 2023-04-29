@@ -4,8 +4,8 @@ import sys
 #sys.path.insert(1, '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets')
 sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 import latentsafesets.utils as utils
-from latentsafesets.utils.arg_parser import parse_args
-
+#from latentsafesets.utils.arg_parser import parse_args
+from latentsafesets.utils.arg_parser_reacher import parse_args
 import os
 from PIL import Image
 from tqdm import tqdm
