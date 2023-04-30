@@ -344,8 +344,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
     import latentsafesets.utils.pytorch_utils as ptu
 
     modules = {}
-
-    encoder = VanillaVAE(params)#initialize/instantiate the VAE
+    
     env=params['env']
     dsn=params['datasetnumber']
     vsn=params['vaesnumber']
@@ -492,6 +491,7 @@ def make_modulessafety(params, ss=False, val=False, dyn=False,
                 params['gi_checkpoint']=
                 params['constr_checkpoint']=
                 params['cbfd_checkpoint']='''
+    encoder = VanillaVAE(params)#initialize/instantiate the VAE
     if params['enc_checkpoint']:
         encoder.load(params['enc_checkpoint'])#load the parameters of the VAE at specfic checkpoints!
         print('params[enc_checkpoint]',params['enc_checkpoint'])#it is working as expected!
