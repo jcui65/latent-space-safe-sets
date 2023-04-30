@@ -1792,7 +1792,7 @@ class CEMSafeSetPolicy(Policy):
                 # dimension (num_models, num_candidates, planning_hor, d_latent)
                 predictions = self.dynamics_model.predict(emb, action_samples, already_embedded=True)#(20,1000,5,32)
                 #prediction0=predictions[:,0,:,:]
-                #p0sm=torch.std_mean(prediction0,dim=0)#p0sm for prediction 0 std mean
+                #p0sm=torch.std_mean(prediction0,dim=0)#p0sm for prediction 0 std mean over 20 particles!
                 #print('p0s0',p0sm[0][0],'max',torch.max(p0sm[0][0]),'min',torch.min(p0sm[0][0]))
                 #print('p0m0',p0sm[1][0],'max',torch.max(p0sm[1][0]),'min',torch.min(p0sm[1][0]))
                 #print('p0s1',p0sm[0][1],'max',torch.max(p0sm[0][1]),'min',torch.min(p0sm[0][1]))
@@ -1847,7 +1847,11 @@ class CEMSafeSetPolicy(Policy):
                     jcesa=torch.abs(jces)
                     dhd=torch.dot(jcesa,dz)#delta h due to dynamics error
                     #print('dhd',dhd)
-                    log.info('dhd: %f'%(dhd.item()))
+                    if itr==1:
+                        ji=jces.item()#jces item
+                        log.info('j16:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[0],ji[1],ji[2],ji[3],ji[4],ji[5],ji[6],ji[7],ji[8],ji[9],ji[10],ji[11],ji[12],ji[13],ji[14],ji[15]))
+                        log.info('j32:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[16],ji[17],ji[18],ji[19],ji[20],ji[21],ji[22],ji[23],ji[24],ji[25],ji[26],ji[27],ji[28],ji[29],ji[30],ji[31]))
+                        log.info('dhd: %f'%(dhd.item()))
                     dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
                     #print('dz',dz[0])
                     #embs=emb.squeeze()
