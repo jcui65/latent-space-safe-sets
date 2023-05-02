@@ -96,6 +96,7 @@ class CEMSafeSetPolicy(Policy):
         self.dhz=params['dhz']
         self.dhdmax=params['dhdmax']
         self.idea=params['idea']
+        self.noofsigma=params['noofsigma']
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1673,7 +1674,7 @@ class CEMSafeSetPolicy(Policy):
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
         #print('env.state',state)
         randflag=0#this is the flag to show if a random action is finally being chosen!
-        cbfhorizon=1#just a try#self.plan_hor#
+        cbfhorizon=self.plan_hor#1#just a try#
         sigmaz=0.13855#1.8#0.13985#1.5#0.23
         dz=2*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#1*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#3*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#
         while itr < self.max_iters:#5
@@ -1845,14 +1846,14 @@ class CEMSafeSetPolicy(Policy):
                     jces=jce.squeeze()
                     #print("zgrads shape :", jces.shape)#(32)
                     #print('dzs',jces)
-                    jcesa=torch.abs(jces)
+                    jcesa=torch.abs(jces)#just as an approximation
                     #print('dzsa',jcesa)
                     dhd=torch.dot(jcesa,dz)#delta h due to dynamics error
                     #print('dhd',dhd)
                     if itr==1:
                         ji=jces.detach().cpu().numpy()#.item()#jces item
-                        log.info('j16:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[0],ji[1],ji[2],ji[3],ji[4],ji[5],ji[6],ji[7],ji[8],ji[9],ji[10],ji[11],ji[12],ji[13],ji[14],ji[15]))
-                        log.info('j32:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[16],ji[17],ji[18],ji[19],ji[20],ji[21],ji[22],ji[23],ji[24],ji[25],ji[26],ji[27],ji[28],ji[29],ji[30],ji[31]))
+                        #log.info('j16:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[0],ji[1],ji[2],ji[3],ji[4],ji[5],ji[6],ji[7],ji[8],ji[9],ji[10],ji[11],ji[12],ji[13],ji[14],ji[15]))
+                        #log.info('j32:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[16],ji[17],ji[18],ji[19],ji[20],ji[21],ji[22],ji[23],ji[24],ji[25],ji[26],ji[27],ji[28],ji[29],ji[30],ji[31]))
                         log.info('dhd: %f'%(dhd.item()))
                     dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
                     dhd=dhd.repeat(predictions.shape[1],cbfhorizon)
@@ -1868,6 +1869,7 @@ class CEMSafeSetPolicy(Policy):
                     #print('cbf_alls',cbf_alls)
                     cbf_alls4=cbf_alls[:,:,0:cbfhorizon-1,:]#[:,:,0:self.plan_hor-1,:]#
                     if self.idea=='vanilla_var':
+                        '''
                         predict1=predictions[:, :, 0, :]#torch.mean(predictions,dim=2)#it should be (20,1000,32)
                         stdp1,meanp1=torch.std_mean(predict1,dim=0)#it should be (1000,32)
                         #print('mean1pshape',mean1p.shape)#should be (1000,32)
@@ -1881,16 +1883,16 @@ class CEMSafeSetPolicy(Policy):
                             #print("zgradp old shape :", jce1pncho.shape)#(1,32)
                             #jce1pncho=jce1pncho.squeeze()
                             #print('dzp0ncho',jce1pncho)#will it be 32d as expected? It is (1000,3,32)!#
-                        
-                        dhd3a = torch.empty(size=( predict1.shape[1],cbfhorizon))#(1000,h)#a for array, 3 for 3 sigma
+                        '''
+                        dhdsa = torch.empty(size=(predictions.shape[1],cbfhorizon))#(1000,h)#a for array, 3 for 3 sigma
                         #for i in range(len(items)):
                             #x[i] = calc_result
                         for h in range(cbfhorizon):
                             predicth=predictions[:, :, h, :]#20,1000,32
+                            stdph,meanph=torch.std_mean(predicth,dim=0)#it should be (1000,32)
                             for nc in range(predicth.shape[1]):#1000#nc means number of constraints
-                                stdph,meanph=torch.std_mean(predicth,dim=0)#it should be (1000,32)
-                                jcepnc=jcep[nc]#32 dimensional
-                                jcepnca=torch.abs(jcepnc)#it will be 32 dimensional
+                                #jcepnc=jcep[nc]#32 dimensional
+                                #jcepnca=torch.abs(jcepnc)#it will be 32 dimensional
                                 #print("zgradp new shape :", jce1pncho.shape)#torch.Size([32])#zgradp shape : torch.Size([1000, 3, 1, 1000, 3, 32])
                                 #print('dzp0nchoa',jce1pnchoa)#will it be 32d as expected? It is (1000,3,32)!#
                                 stdphnc=stdph[nc]#32 dimensional
@@ -1901,10 +1903,12 @@ class CEMSafeSetPolicy(Policy):
                                 #log.info('dhd2nc: %f'%(dhd2nc.item()))#it should be smaller than dhd?
                                 #dhd2ncs=torch.dot(jcesa,2*std1pnc)#delta h due to dynamics error
                                 #log.info('dhd2ncs: %f'%(dhd2ncs.item()))#it should be smaller than dhd?#always smaller than dhd2nc?
-                                dhd3nc=torch.dot(jcepnca,3*stdphnc)#a scalar#delta h due to dynamics error
-                                #log.info('dhd3nc: %f'%(dhd3nc.item()))#it should be smaller than dhd?
-                                dhd3a[nc,h]=dhd3nc
-                        dhd=dhd3a
+                                #dhd3nc=torch.dot(jcepnca,3*stdphnc)#a scalar#delta h due to dynamics error
+                                dhdsnc=torch.dot(jcesa,self.noofsigma*stdphnc)#a scalar#s for simga#delta h due to dynamics error
+                                if nc==1 and h==0:#don't log too much
+                                    log.info('dhd'+str(self.noofsigma)+'nc: %f'%(dhdsnc.item()))#it should be smaller than dhd?
+                                dhdsa[nc,h]=dhdsnc
+                        dhd=dhdsa
                         device=ptu.TORCH_DEVICE
                         dhd=dhd.to(device)
                         #dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
