@@ -1887,10 +1887,13 @@ class CEMSafeSetPolicy(Policy):
                         dhdsa = torch.empty(size=(predictions.shape[1],cbfhorizon))#(1000,h)#a for array, 3 for 3 sigma
                         #for i in range(len(items)):
                             #x[i] = calc_result
+                        stdp,meanp=torch.std_mean(predictions,dim=0)#it should be (1000,3,32) 
                         for h in range(cbfhorizon):
-                            predicth=predictions[:, :, h, :]#20,1000,32
-                            stdph,meanph=torch.std_mean(predicth,dim=0)#it should be (1000,32)
-                            for nc in range(predicth.shape[1]):#1000#nc means number of constraints
+                            #predicth=predictions[:, :, h, :]#20,1000,32
+                            #stdph,meanph=torch.std_mean(predicth,dim=0)#it should be (1000,32)
+                            stdph=stdp[:,h,:]#should be (1000,32)
+                            meanph=meanp[:,h,:]#should be (1000,32)
+                            for nc in range(predictions.shape[1]):#1000#nc means number of constraints
                                 #jcepnc=jcep[nc]#32 dimensional
                                 #jcepnca=torch.abs(jcepnc)#it will be 32 dimensional
                                 #print("zgradp new shape :", jce1pncho.shape)#torch.Size([32])#zgradp shape : torch.Size([1000, 3, 1, 1000, 3, 32])
