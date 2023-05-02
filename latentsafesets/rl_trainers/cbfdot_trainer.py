@@ -301,7 +301,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             
             #log.info('cbfd_lr: %f'%(self.params['cbfd_lr']))
             for _ in trange(self.params['cbfd_update_iters']):
-                out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+                out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#random shuffling is done in this step!
                 #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
                 #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
                 if self.params['env']=='push' and self.params['push_cbf_strategy']==2:

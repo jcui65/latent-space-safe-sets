@@ -52,7 +52,7 @@ class EncodedReplayBuffer:
 
                 if data is None:
                     data = np.zeros((self.size, *new_data.shape))#then fill one by one
-                data[self._index] = new_data#now fill one by one
+                data[self._index] = new_data#now fill one by one#this is the data of this key!
                 self.data[key] = data#the value of self.data[key] is a np array#the way to init a value in a dict
 
         self._index = (self._index + 1) % self.size#no more no less, just 10k pieces of data#a queue like dagger

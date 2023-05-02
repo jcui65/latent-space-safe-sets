@@ -139,12 +139,12 @@ def load_trajectories(num_traj, file):#data/simplepointbot
 
     return trajectories#that is a sequence/buffer/pool of trajs including images
 
-def load_trajectories_relative(num_traj, file):#data/simplepointbot
+def load_trajectories_relative(num_traj, file):#data/simplepointbot#num_traj is the num of traj in each folder!
     log.info('Loading trajectories from %s' % file)#data/SimplePointBot
 
     if not os.path.exists(file):
         raise RuntimeError("Could not find directory %s." % file)
-    trajectories = []
+    trajectories = []#num_traj is the data_count!
     iterator = range(num_traj) if num_traj <= 200 else trange(num_traj)
     for i in iterator:#50
         if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json
