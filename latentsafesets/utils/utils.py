@@ -178,7 +178,7 @@ def load_replay_buffer(params, encoder=None, first_only=False):#it doesn't have 
         if params['light']=='ls3':
             if params['datasetnumber']==1:
                 real_dir = os.path.join('', 'datals3',directory)  #old data!#',directory)  #new data!#
-            elif params['datasetnumber']==2:
+            elif params['datasetnumber']==2 or params['datasetnumber']==3:
                 real_dir = os.path.join('', 'data',directory)  #new data!#ls3',directory)  #old data!#
         else:
             real_dir = os.path.join('', 'data',directory)  #

@@ -14,6 +14,9 @@ class EncoderDataLoader:
             elif params['datasetnumber']==2:
                 print('Enters the new dataset/dataset 2!')#I remember seeing this when training the 0202 encoder!!
                 self.data_dir = os.path.join('','data_images', params['env'])
+            elif params['datasetnumber']==3:#dataset 3 is the dense safety data set!
+                print('Enters the new dataset/dataset 3!')#I remember seeing this when training the 0202 encoder!!
+                self.data_dir = os.path.join('','data_images', params['env'])
         else:
             self.data_dir = os.path.join('','data_images', params['env'])
         #self.data_dir = os.path.join('', 'data_images_relative', params['env'])#for using relative image
