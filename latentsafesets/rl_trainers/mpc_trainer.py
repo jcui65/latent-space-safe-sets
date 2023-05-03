@@ -218,6 +218,6 @@ class MPCTrainer(Trainer):
         for trainer in self.trainers:
             #trainer.update(replay_buffer, update_dir)
             if type(trainer)!=CBFdotlatentplanaTrainer:
-                trainer.initial_train(replay_buffer, update_dir)
+                trainer.update(replay_buffer, update_dir)
             else:
-                trainer.initial_train(replay_buffer, update_dir,replay_buffer_unsafe)
+                trainer.update(replay_buffer, update_dir,replay_buffer_unsafe)
