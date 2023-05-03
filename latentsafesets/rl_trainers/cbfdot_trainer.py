@@ -240,20 +240,20 @@ class CBFdotlatentplanaTrainer(Trainer):
         self.cbfd =cbfd
         self.loss_plotter = loss_plotter
         self.env = env
-
+        self.batchsize=int(self.params['cbfd_batch_size']/2)
         self.env_name = params['env']
 
-    def initial_train(self, replay_buffer, update_dir):
+    def initial_train(self, replay_buffer, update_dir,replay_buffer_unsafe):
         if self.cbfd.trained:
-            self.plot(os.path.join(update_dir, "cbfd_start.pdf"), replay_buffer)
-            self.plotlatent(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer)
+            self.plot(os.path.join(update_dir, "cbfd_start.pdf"), replay_buffer,replay_buffer_unsafe)
+            self.plotlatent(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer,replay_buffer_unsafe)
             return
 
         log.info('Beginning cbfdot initial optimization')
 
-        self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)#if not spb, then don't plot
+        self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer,replay_buffer_unsafe)#if not spb, then don't plot
         for i in range(self.params['cbfd_init_iters']):#10000
-            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
+            out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
             obs=out_dict['obs']
             #obs = out_dict['obs_relative']
             #print('obs',obs)
@@ -263,10 +263,15 @@ class CBFdotlatentplanaTrainer(Trainer):
                 rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
             else:
                 rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
-            #rda=np.concatenate((rdo,action),axis=1)
-            #rdal = np.concatenate((obs, action), axis=1)#l for latent
-            #print('rdal',rdal)
-            #print('rdal.shape',rdal.shape)# (256, 34)
+            #print('hvn.shape',hvn.shape)
+            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+            obsus=out_dictus['obs']#us means unsafe
+            rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
+            obs=np.vstack((obs,obsus))
+            hvn=np.vstack((hvn,hvnus))
+            shuffleind=np.random.permutation(obs.shape[0])
+            obs=obs[shuffleind]
+            hvn=hvn[shuffleind]
             #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
             #loss, info = self.cbfd.update(obs,action, hvd, already_embedded=True)  #
             loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #
@@ -277,19 +282,19 @@ class CBFdotlatentplanaTrainer(Trainer):
             if i % self.params['plot_freq'] == 0:
                 log.info('Creating cbfdot function heatmap')
                 self.loss_plotter.plot()
-                self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer)
-                self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer)#nothing is plotted if not spb
-                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,
+                self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer,replay_buffer_unsafe)
+                self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer,replay_buffer_unsafe)#nothing is plotted if not spb
+                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,replay_buffer_unsafe,
                                         coeff=1)  # a few lines later
-                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,coeff=1/3)  # a few lines later
-                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-14.pdf" % i), replay_buffer,
+                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,replay_buffer_unsafe,coeff=1/3)  # a few lines later
+                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-14.pdf" % i), replay_buffer,replay_buffer_unsafe,
                                         coeff=1 / 4)  # a few lines later
             if i % self.params['checkpoint_freq'] == 0 and i > 0:
                 self.cbfd.save(os.path.join(update_dir, 'cbfd_%d.pth' % i))
 
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
 
-    def update(self, replay_buffer, update_dir):
+    def update(self, replay_buffer, update_dir,replay_buffer_unsafe):
         if self.params['train_cbf']=='no':
             log.info('No episodic cbf dot update optimization!')
         else:
@@ -301,7 +306,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             
             #log.info('cbfd_lr: %f'%(self.params['cbfd_lr']))
             for _ in trange(self.params['cbfd_update_iters']):
-                out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#random shuffling is done in this step!
+                out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#random shuffling is done in this step!
                 #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
                 #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
                 if self.params['env']=='push' and self.params['push_cbf_strategy']==2:
@@ -311,11 +316,18 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
                 #rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
                 #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
-                #print('rdo.shape',rdo.shape)#(256, 2)
-                #print('action.shape',action.shape)#(256, 2)
-                #rda = np.concatenate((rdo, action),axis=1)
-                #rdal = np.concatenate((obs, action), axis=1)
-                #print('rda.shape',rda.shape)#(256, 4)
+                #print('obsold.shape',obs.shape)
+                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+                obsus=out_dictus['obs']#us means unsafe
+                rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
+                obs=np.vstack((obs,obsus))
+                #print('obsnew.shape',obs.shape)
+                #print('hvnold.shape',hvn.shape)
+                hvn=np.vstack((hvn,hvnus))
+                #print('hvnnew.shape',hvn.shape)
+                shuffleind=np.random.permutation(obs.shape[0])
+                obs=obs[shuffleind]
+                hvn=hvn[shuffleind]
                 #loss, info = self.constr.update(next_obs, constr, already_embedded=True)
                 #loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
                 #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
@@ -324,56 +336,71 @@ class CBFdotlatentplanaTrainer(Trainer):
 
             log.info('Creating cbf dot function heatmap')
             self.loss_plotter.plot()
-            self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer)#this is using plan a
+            self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer,replay_buffer_unsafe)#this is using plan a
             #self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased.pdf" ), replay_buffer, coeff=1)
             #self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
-            self.plotlatent(os.path.join(update_dir, "cbfdlatent.pdf"), replay_buffer)
-            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-11.pdf"), replay_buffer,
+            self.plotlatent(os.path.join(update_dir, "cbfdlatent.pdf"), replay_buffer,replay_buffer_unsafe)
+            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-11.pdf"), replay_buffer,replay_buffer_unsafe,
                                     coeff=1)  # a few lines later
-            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-13.pdf"), replay_buffer,coeff=1/3)  # a few lines later
-            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer,
+            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-13.pdf"), replay_buffer,replay_buffer_unsafe,coeff=1/3)  # a few lines later
+            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer,replay_buffer_unsafe,
                                     coeff=1 / 4)  # a few lines later
             #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
 
-    def plot(self, file, replay_buffer):
-        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+    def plot(self, file, replay_buffer,replay_buffer_unsafe):
+        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
+        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+        next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']  # rdo = out_dict['rdo']
         pu.visualize_cbfdot(next_obs, self.cbfd,
                              file,
                              env=self.env)
 
-    def plotconly(self, file, replay_buffer):
-        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+    def plotconly(self, file, replay_buffer,replay_buffer_unsafe):
+        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         next_obs = out_dict['next_obs']
         rdo = out_dict['rdo']
+        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+        next_obs=np.vstack((next_obs,next_obsus))
         pu.visualize_cbfdotconly(next_obs, self.cbfd,
                              file,
                              env=self.env)
 
 
-    def plotlatentunbiased(self, file, replay_buffer,coeff):
-        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+    def plotlatentunbiased(self, file, replay_buffer,replay_buffer_unsafe,coeff):
+        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         next_obs = out_dict['next_obs']
         #next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
+        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+        next_obs=np.vstack((next_obs,next_obsus))
         pu.visualize_cbfdotlatentunbiased(next_obs, self.cbfd,
                              file,
                              env=self.env,coeff=coeff)
 
-    def plotlatentgroundtruth(self, file, replay_buffer):
-        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+    def plotlatentgroundtruth(self, file, replay_buffer,replay_buffer_unsafe):
+        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         next_obs = out_dict['next_obs']
+        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+        next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdotlatentgroundtruth(next_obs, self.cbfd,
                              file,
                              env=self.env)
 
-    def plotlatent(self, file, replay_buffer):
-        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+    def plotlatent(self, file, replay_buffer,replay_buffer_unsafe):
+        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         next_obs = out_dict['next_obs']
+        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+        next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdotlatent(next_obs, self.cbfd,

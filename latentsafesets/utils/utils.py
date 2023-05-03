@@ -202,8 +202,8 @@ def load_replay_buffer(params, encoder=None, first_only=False):#it doesn't have 
     return replay_buffer
     #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
 
-def load_replay_buffer_unsafedemo(params, encoder=None, first_only=False):#it doesn't have traj parameter!
-    log.info('Loading data')
+def load_replay_buffer_unsafe(params, encoder=None, first_only=False):#it doesn't have traj parameter!
+    log.info('Loading data unsafe demonstration!')
     trajectories = []#SimplePointBot or SimplePointBotConstraints
     for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe 50 & obstacle 50
         #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
@@ -220,7 +220,7 @@ def load_replay_buffer_unsafedemo(params, encoder=None, first_only=False):#it do
                 print('wahoo')
                 break
 
-    log.info('Populating replay buffer')#find correspondence in the cmd output
+    log.info('Populating replay buffer unsafe demonstration!')#find correspondence in the cmd output
 
     # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
     random.shuffle(trajectories)
