@@ -116,7 +116,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         loss.backward()
         self.step()
 
-        return loss.item(), {'cbfd': loss.item()}
+        return loss.item(), {'cbfd': loss.item()}#the first term is already the item
 
     def loss(self, next_obs, constr, already_embedded=False):
         #next_obs=torch.autograd.Variable(next_obs,requires_grad=True)

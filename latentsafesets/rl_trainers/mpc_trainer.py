@@ -218,6 +218,7 @@ class MPCTrainer(Trainer):
         for trainer in self.trainers:
             #trainer.update(replay_buffer, update_dir)
             if type(trainer)!=CBFdotlatentplanaTrainer:
-                trainer.update(replay_buffer, update_dir)
+                trainer.update(replay_buffer, update_dir)#pay attention to the details!
             else:
-                trainer.update(replay_buffer, update_dir,replay_buffer_unsafe)
+                episodiccbfdhz=trainer.update(replay_buffer, update_dir,replay_buffer_unsafe)
+        return episodiccbfdhz

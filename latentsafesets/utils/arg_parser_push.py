@@ -221,6 +221,12 @@ def add_cbfd_args(parser):
     parser.add_argument('--train_cbf', type=str, default='yes')#'no2')#'no')#
     parser.add_argument('--dhz',type=float,default=0.0126)#0.0015)#
     parser.add_argument('--dhdmax',type=float,default=0.05)#0.044)#0.005)#
+    parser.add_argument('--idea',type=str,default='union_bound')#'vanilla_var')#'pca')#'gamma')#
+    parser.add_argument('--noofsigma',type=float,default=3.0)#2.0)#
+    parser.add_argument('--unsafebuffer',type=str,default='no')#'yes')#
+    parser.add_argument('--cbf_thresh_mult_iters', type=int, default=3)#5)#8)#16)#16 is crazy, but fails#
+    parser.add_argument('--reducerocbfhd',type=str,default='yes')
+    parser.add_argument('--dynamic_dhz',type=str,default='no')#'yes')#
     parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-04-27/00-52-54/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#push#'outputs/2023-04-02/01-42-26/1/initial_train/cbfd.pth')#push strategy 2#None)#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
     # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.

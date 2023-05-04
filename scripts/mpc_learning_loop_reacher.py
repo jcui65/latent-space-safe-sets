@@ -126,7 +126,9 @@ if __name__ == '__main__':
         conservative=params['conservative']
         #print('conservative',conservative)
         action_type=params['action_type']
+        cbfalpha=0.2#exponential averaging for CBF
         for i in range(num_updates):#default 25 in spb
+            log.info('current dhz: %f'%(params['dhz']))
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
             update_rewards = []
@@ -361,8 +363,12 @@ if __name__ == '__main__':
 
             # Update models
 
-            trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?
-
+            episodiccbfdhz=trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?
+            if params['dynamic_dhz']=='yes':
+                dhzoriginal=params['dhz']
+                log.info('old dhz: %f'%(dhzoriginal))
+                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
+            log.info('new dhz: %f'%(params['dhz']))
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
             np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)

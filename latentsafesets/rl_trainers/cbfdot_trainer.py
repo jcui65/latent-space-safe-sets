@@ -303,9 +303,9 @@ class CBFdotlatentplanaTrainer(Trainer):
                 log.info('No episodic cbf dot update optimization but show loss on new data!')
             else:
                 log.info('Beginning cbf dot update optimization!')
-            
+            dhzepochave=0
             #log.info('cbfd_lr: %f'%(self.params['cbfd_lr']))
-            for _ in trange(self.params['cbfd_update_iters']):
+            for _ in trange(self.params['cbfd_update_iters']):#512
                 out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#random shuffling is done in this step!
                 #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
                 #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
@@ -331,9 +331,16 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #loss, info = self.constr.update(next_obs, constr, already_embedded=True)
                 #loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
                 #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
-                loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #
+                loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)
-
+                dhzepochave+=np.sqrt(min(loss,10))#over 10 is too crazy!
+            dhzepochave=dhzepochave/self.params['cbfd_update_iters']
+            dhzepochave=dhzepochave/1000
+            log.info('the average dhz of this epochs: %f'%(dhzepochave))
+            if self.params['dynamic_dhz']=='yes':
+                deal=min(dhzepochave,0.00164)#will it work as expected?deal for dhz epoch ave legit
+            else:
+                deal=dhzepochave
             log.info('Creating cbf dot function heatmap')
             self.loss_plotter.plot()
             self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer,replay_buffer_unsafe)#this is using plan a
@@ -347,6 +354,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer,replay_buffer_unsafe,
                                     coeff=1 / 4)  # a few lines later
             #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
+            return deal
 
     def plot(self, file, replay_buffer,replay_buffer_unsafe):
         out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)

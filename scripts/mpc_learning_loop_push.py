@@ -85,6 +85,12 @@ if __name__ == '__main__':
         #replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
         #replay_buffer2 = utils.load_replay_buffer_relative(params, encoder2)  # around line 123 in utils.py
         #replay_buffer = utils.load_replay_buffer_relative_expensive2(params, encoder, encoder2)  # around line 123 in utils.py
+        if params['unsafebuffer']=='yes':
+            replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
+            log.info('unsafe buffer!')
+        else:
+            replay_buffer_unsafe=replay_buffer
+            log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
         trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
 
         trainer.initial_train(replay_buffer)#initialize all the parts!

@@ -207,7 +207,7 @@ def load_replay_buffer_unsafe(params, encoder=None, first_only=False):#it doesn'
     trajectories = []#SimplePointBot or SimplePointBotConstraints
     for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe 50 & obstacle 50
         #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
-        if directory=='ReacherConstraintdense1' or directory=='ReacherConstraintdense2':
+        if directory=='ReacherConstraintdense1' or directory=='ReacherConstraintdense2' or directory=='PushOutbursts2':
             if params['light']=='ls3':
                 if params['datasetnumber']==1:
                     real_dir = os.path.join('', 'datals3',directory)  #old data!#',directory)  #new data!#
