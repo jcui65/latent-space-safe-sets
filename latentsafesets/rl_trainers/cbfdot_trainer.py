@@ -268,7 +268,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             obsus=out_dictus['obs']#us means unsafe
             rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
             obs=np.vstack((obs,obsus))
-            hvn=np.vstack((hvn,hvnus))
+            hvn=np.concatenate((hvn,hvnus))
             shuffleind=np.random.permutation(obs.shape[0])
             obs=obs[shuffleind]
             hvn=hvn[shuffleind]
@@ -323,7 +323,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                 obs=np.vstack((obs,obsus))
                 #print('obsnew.shape',obs.shape)
                 #print('hvnold.shape',hvn.shape)
-                hvn=np.vstack((hvn,hvnus))
+                hvn=np.concatenate((hvn,hvnus))
                 #print('hvnnew.shape',hvn.shape)
                 shuffleind=np.random.permutation(obs.shape[0])
                 obs=obs[shuffleind]

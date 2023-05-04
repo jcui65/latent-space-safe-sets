@@ -58,7 +58,7 @@ class CEMSafeSetPolicy(Policy):
         self.safe_set_thresh = params['safe_set_thresh']#0.8
         self.safe_set_thresh_mult = params['safe_set_thresh_mult']#0.8
         self.safe_set_thresh_mult_iters = params['safe_set_thresh_mult_iters']#5
-
+        self.cbf_thresh_mult_iters=params['cbf_thresh_mult_iters']#3
         self.cbfd_thresh=params['cbfdot_thresh']
         self.cbfd_thresh_mult = params['cbfdot_thresh_mult']  # 0.8
 
@@ -1708,7 +1708,7 @@ class CEMSafeSetPolicy(Policy):
                         cbfhorizon-=1
                         cbfhorizon=max(1,cbfhorizon)
                         log.info('horizon reduced to %d'%(cbfhorizon))
-                    if reset_count > self.safe_set_thresh_mult_iters:
+                    if reset_count > self.cbf_thresh_mult_iters:#self.safe_set_thresh_mult_iters:#
                         self.mean = None
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
@@ -1851,7 +1851,7 @@ class CEMSafeSetPolicy(Policy):
                     dhd=torch.dot(jcesa,dz)#delta h due to dynamics error
                     #print('dhd',dhd)
                     if itr==1:
-                        ji=jces.detach().cpu().numpy()#.item()#jces item
+                        #ji=jces.detach().cpu().numpy()#.item()#jces item
                         #log.info('j16:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[0],ji[1],ji[2],ji[3],ji[4],ji[5],ji[6],ji[7],ji[8],ji[9],ji[10],ji[11],ji[12],ji[13],ji[14],ji[15]))
                         #log.info('j32:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[16],ji[17],ji[18],ji[19],ji[20],ji[21],ji[22],ji[23],ji[24],ji[25],ji[26],ji[27],ji[28],ji[29],ji[30],ji[31]))
                         log.info('dhd: %f'%(dhd.item()))
@@ -1884,15 +1884,15 @@ class CEMSafeSetPolicy(Policy):
                             #jce1pncho=jce1pncho.squeeze()
                             #print('dzp0ncho',jce1pncho)#will it be 32d as expected? It is (1000,3,32)!#
                         '''
-                        dhdsa = torch.empty(size=(predictions.shape[1],cbfhorizon))#(1000,h)#a for array, 3 for 3 sigma
+                        dhdsa = torch.zeros(size=(predictions.shape[1],cbfhorizon))#torch.empty(size=(predictions.shape[1],cbfhorizon))#(1000,h)#a for array, 3 for 3 sigma
                         #for i in range(len(items)):
                             #x[i] = calc_result
-                        stdp,meanp=torch.std_mean(predictions,dim=0)#it should be (1000,3,32) 
+                        #stdp,meanp=torch.std_mean(predictions,dim=0)#it should be (1000,3,32) 
                         for h in range(cbfhorizon):
-                            #predicth=predictions[:, :, h, :]#20,1000,32
-                            #stdph,meanph=torch.std_mean(predicth,dim=0)#it should be (1000,32)
-                            stdph=stdp[:,h,:]#should be (1000,32)
-                            meanph=meanp[:,h,:]#should be (1000,32)
+                            predicth=predictions[:, :, h, :]#20,1000,32
+                            stdph,meanph=torch.std_mean(predicth,dim=0)#it should be (1000,32)
+                            #stdph=stdp[:,h,:]#should be (1000,32)
+                            #meanph=meanp[:,h,:]#should be (1000,32)
                             for nc in range(predictions.shape[1]):#1000#nc means number of constraints
                                 #jcepnc=jcep[nc]#32 dimensional
                                 #jcepnca=torch.abs(jcepnc)#it will be 32 dimensional
