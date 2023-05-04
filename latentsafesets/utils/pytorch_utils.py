@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 #TORCH_DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-TORCH_DEVICE = torch.device('cuda:1') if torch.cuda.is_available() else torch.device('cpu')
-#TORCH_DEVICE = torch.device('cuda:2') if torch.cuda.is_available() else torch.device('cpu')
+#TORCH_DEVICE = torch.device('cuda:1') if torch.cuda.is_available() else torch.device('cpu')
+TORCH_DEVICE = torch.device('cuda:2') if torch.cuda.is_available() else torch.device('cpu')
 #TORCH_DEVICE = torch.device('cuda:3') if torch.cuda.is_available() else torch.device('cpu')
 
 def torchify(x):

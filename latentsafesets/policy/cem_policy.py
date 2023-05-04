@@ -97,6 +97,7 @@ class CEMSafeSetPolicy(Policy):
         self.dhdmax=params['dhdmax']
         self.idea=params['idea']
         self.noofsigma=params['noofsigma']
+        self.reducerocbfhd=params['reducerocbfhd']
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1888,7 +1889,11 @@ class CEMSafeSetPolicy(Policy):
                         #for i in range(len(items)):
                             #x[i] = calc_result
                         #stdp,meanp=torch.std_mean(predictions,dim=0)#it should be (1000,3,32) 
-                        for h in range(cbfhorizon):
+                        if self.reducerocbfhd=='yes':
+                            rocbfhd=1#robust output cbf horizon dynamics
+                        else:
+                            rocbfhd=cbfhorizon
+                        for h in range(rocbfhd):#not necessarily the full length of cbfhorizon!
                             predicth=predictions[:, :, h, :]#20,1000,32
                             stdph,meanph=torch.std_mean(predicth,dim=0)#it should be (1000,32)
                             #stdph=stdp[:,h,:]#should be (1000,32)
