@@ -366,9 +366,9 @@ if __name__ == '__main__':
             episodiccbfdhz=trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
-                log.info('old dhz: %f'%(dhzoriginal))
+                #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
                 params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
-            log.info('new dhz: %f'%(params['dhz']))
+            log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
             np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)

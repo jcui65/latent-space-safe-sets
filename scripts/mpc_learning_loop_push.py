@@ -93,7 +93,8 @@ if __name__ == '__main__':
             log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
         trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
 
-        trainer.initial_train(replay_buffer)#initialize all the parts!
+        #trainer.initial_train(replay_buffer)#initialize all the parts!
+        trainer.initial_train(replay_buffer,replay_buffer_unsafe)#initialize all the parts!
 
         log.info("Creating policy")
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
@@ -126,11 +127,13 @@ if __name__ == '__main__':
         #print('conservative',conservative)
         action_type=params['action_type']
         for i in range(num_updates):#default 25 in spb
+            #log.info('current dhz: %f'%(params['dhz']))I think there is no need to update
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
             update_rewards = []
 
             # Collect Data
+            cbfalpha=0.2#exponential averaging for CBF
             for j in range(traj_per_update):#default 10 in spb
                 log.info("Collecting trajectory %d for update %d" % (j, i))
                 transitions = []
@@ -375,8 +378,13 @@ if __name__ == '__main__':
 
             # Update models
 
-            trainer.update(replay_buffer, i)#online training, right?
-
+            #trainer.update(replay_buffer, i)#online training, right?
+            episodiccbfdhz=trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?
+            if params['dynamic_dhz']=='yes':
+                dhzoriginal=params['dhz']
+                #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
+                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
+            log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
             np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)

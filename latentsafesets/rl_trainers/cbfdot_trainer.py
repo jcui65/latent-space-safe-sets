@@ -333,7 +333,10 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
                 loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)
-                dhzepochave+=np.sqrt(min(loss,10))#over 10 is too crazy!
+                if self.env_name=='reacher':
+                    dhzepochave+=np.sqrt(min(loss,10))#over 10 is too crazy!
+                else:
+                    dhzepochave+=np.sqrt(loss)#over 10 is too crazy!
             dhzepochave=dhzepochave/self.params['cbfd_update_iters']
             dhzepochave=dhzepochave/1000
             log.info('the average dhz of this epochs: %f'%(dhzepochave))
