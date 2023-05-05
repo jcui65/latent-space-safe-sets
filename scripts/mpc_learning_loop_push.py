@@ -27,7 +27,9 @@ if __name__ == '__main__':
     params = parse_args()#get the parameters from parse_args, see arg_parser.py
     # Misc preliminaries
     repeattimes=params['repeat_times']
+    initdhz=params['dhz']
     for m in range(repeattimes):
+        params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23
         log = logging.getLogger("main")#some logging stuffs
         seed=params['seed']
