@@ -334,14 +334,17 @@ class CBFdotlatentplanaTrainer(Trainer):
                 loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)
                 if self.env_name=='reacher':
-                    dhzepochave+=np.sqrt(min(loss,10))#over 10 is too crazy!
+                    dhzepochave+=np.sqrt(loss)#faithfully record it!#np.sqrt(min(loss,10))#over 10 is too crazy!
                 else:
-                    dhzepochave+=np.sqrt(loss)#over 10 is too crazy!
+                    dhzepochave+=np.sqrt(loss)#
             dhzepochave=dhzepochave/self.params['cbfd_update_iters']
             dhzepochave=dhzepochave/1000
             log.info('the average dhz of this epochs: %f'%(dhzepochave))
             if self.params['dynamic_dhz']=='yes':
-                deal=min(dhzepochave,0.00164)#will it work as expected?deal for dhz epoch ave legit
+                if self.env_name=='reacher':
+                    deal=min(dhzepochave,1*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
+                else:
+                    deal=min(dhzepochave,1*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
             else:
                 deal=dhzepochave
             log.info('Creating cbf dot function heatmap')
