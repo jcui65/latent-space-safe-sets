@@ -98,7 +98,7 @@ class CEMSafeSetPolicy(Policy):
         self.idea=params['idea']
         self.noofsigma=params['noofsigma']
         self.reducerocbfhd=params['reducerocbfhd']
-        self.sample=params['mean']#
+        self.sample=params['mean']#self.mean has been occupied for other uses!#
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1654,10 +1654,13 @@ class CEMSafeSetPolicy(Policy):
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         if self.current_robust=='no':
             #emb = self.encoder.encode(obs)#in latent space now!it is 32 dimensional!
-            if self.sample=='sample':
+            if self.sample=='sample':#self.mean has been occupied for other uses!
                 emb=self.encoder.encode(obs)
             elif self.sample=='mean':
                 emb=self.encoder.encodemean(obs)
+                #embtest=self.encoder.encodemean(obs)
+                #embdiff=(emb-embtest)*1000000000
+                #print('embdiff',embdiff)
             #print('emb',emb)
             #print('emb max',torch.max(emb))
             #print('emb min',torch.min(emb))

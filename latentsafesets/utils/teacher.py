@@ -438,7 +438,7 @@ class ReacherConstraintdense1Teacher(AbstractTeacher):#
         act = np.clip(act, -1, 1)
         return act
 
-    def _expert_control_dense_lip(self, state, i,xa,ya,xa2,ya2,angled,action_limit=0.01):#xa, ya means x angle, y angle
+    def _expert_control_dense_lip(self, state, i,xa,ya,xa2,ya2,angled,action_limit=0.1):#xa, ya means x angle, y angle
         angle = state[:2]
         #print('angle',angle)
         xaf=float(xa);yaf=float(ya);xa2f=float(xa2);ya2f=float(ya2)#f for float!
@@ -447,14 +447,14 @@ class ReacherConstraintdense1Teacher(AbstractTeacher):#
         goal2 = np.array((xa2f,ya2f))#np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
         #print('goal2',goal2)
         if angled>=0:
-            if i<30:
+            if i<30*5:
                 goal=np.array((np.pi/6,np.pi*5.2/6))#initial points!
-            elif i<55:
+            elif i<55*5:
                 goal=np.array((np.pi/6,np.pi*4/6))#initial points!
             else:
                 goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min   
         elif angled<=-np.pi/2:
-            if i<30:
+            if i<30*5:
                 goal=np.array((np.pi*5/6,np.pi/2))
             else:
                 goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
@@ -507,7 +507,7 @@ class ReacherConstraintdense2Teacher(AbstractTeacher):
         act = np.clip(act, -1, 1)
         return act
 
-    def _expert_control_dense_lip(self, state, i,xa,ya,xa2,ya2,angled,action_limit=0.01):
+    def _expert_control_dense_lip(self, state, i,xa,ya,xa2,ya2,angled,action_limit=0.1):
         angle = state[:2]
         xaf=float(xa);yaf=float(ya);xa2f=float(xa2);ya2f=float(ya2)#f for float!
         goal1 = np.array((xaf,yaf))#np.array((np.pi * .53, 0.7 * np.pi))

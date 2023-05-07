@@ -91,7 +91,7 @@ if __name__ == '__main__':
             replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
             log.info('unsafe buffer!')
         else:
-            replay_buffer_unsafe=replay_buffer
+            replay_buffer_unsafe=replay_buffer#not loading new buffer!
             log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
         trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
 
@@ -156,6 +156,7 @@ if __name__ == '__main__':
                 action_rand=False
                 constr_viol_cbf = False
                 constr_viol_cbf2 = False
+                
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]

@@ -238,12 +238,12 @@ if __name__ == '__main__':
                 action_rand=False
                 constr_viol_cbf = False
                 constr_viol_cbf2 = False
-                
+                params['horizon']=500
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]
                     state=env.current_state
-                    print('self.current_state',env.current_state)#it is an 8-dimensional vector
+                    #print('self.current_state',env.current_state)#it is an 8-dimensional vector
                     #if env.state is None:
                         #action = teacher.env.action_space.sample().astype(np.float64)#sample between -3 and 3
                     #else:#I think the control is usually either -3 or +3
@@ -375,8 +375,8 @@ if __name__ == '__main__':
                     log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
                     
                     #the evaluation phase ended
-                    if done:
-                        break
+                    #if done:#when calculating lipschitz constant, I want it to be 500 steps, so disable this part
+                        #break
                 transitions[-1]['done'] = 1#change the last transition to success/done!
                 traj_reward = sum(traj_rews)#total reward, should be >=-100/-150
                 #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints
