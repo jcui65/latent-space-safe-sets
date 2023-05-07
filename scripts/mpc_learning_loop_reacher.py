@@ -284,9 +284,13 @@ if __name__ == '__main__':
                     #Now, I should do the evaluation!
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
-                    embeval = encoder.encode(obseval)#in latent space now!
-                    #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
-                    embeval2 = encoder.encode(obseval)#in latent space now!
+                    if params['mean']=='sample':
+                        embeval = encoder.encode(obseval)#in latent space now!
+                        #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
+                        embeval2 = encoder.encode(obseval)#in latent space now!
+                    elif params['mean']=='mean':
+                        embeval = encoder.encodemean(obseval)#in latent space now!
+                        embeval2 = encoder.encodemean(obseval)#in latent space now!
                     embdiff100000=(embeval-embeval2)*100000
                     print('embdiff100000',embdiff100000)
                     #embdiffmax,ind=torch.max(embdiff)
