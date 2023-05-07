@@ -22,11 +22,13 @@ from datetime import datetime
 #provides a capability to “pretty-print” arbitrary Python data structures in a form that can be used as input to the interpreter
 #log = logging.getLogger("main")#some logging stuff
 
+from latentsafesets.utils.teacher import ReacherConstraintdense1Teacher, ReacherConstraintdense2Teacher
+import sympy
 
 if __name__ == '__main__':
     params = parse_args()#get the parameters from parse_args, see arg_parser.py
     # Misc preliminaries
-    repeattimes=params['repeat_times']
+    repeattimes=1#params['repeat_times']#
     initdhz=params['dhz']
     for m in range(repeattimes):
         params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
@@ -135,6 +137,72 @@ if __name__ == '__main__':
             os.makedirs(update_dir)#mkdir!
             update_rewards = []
 
+
+            teacher = teacher(env, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
+            demonstrations = []#an empty list
+            #ro=0.04#0.05-1
+            for i in range(n):
+                print('data_dir',data_dir)
+                if data_dir=='ReacherConstraintdense1' or data_dir=='ReacherConstraintdense2':
+                    #print('teacherenter',teacher)
+                    angled=-np.pi + 1.5*np.pi*i/n##np.pi/2 - 1.5*np.pi*i/n#d means desired
+                    if data_dir=='ReacherConstraintdense1':
+                        radius=0.045#0.05#0.04#
+                    else:
+                        radius=0.12
+                    xinc=radius*np.cos(angled)
+                    yinc=radius*np.sin(angled)
+                    xbase=-0.13*np.sqrt(0.75)
+                    ybase=0.065
+                    xtotal=xbase+xinc
+                    ytotal=ybase+yinc
+                    t1,t4=sympy.symbols("t1,t4", real=True)
+                    length=0.12
+                    eq1=sympy.Eq(length*(sympy.cos(t4)+sympy.cos(t1)),xtotal)#-0.13*np.sqrt(0.75))#-0.169705)#
+                    eq2=sympy.Eq(length*(sympy.sin(t4)+sympy.sin(t1)),ytotal)#0.065)#0.169705)#
+                    solt=sympy.solve([eq1, eq2])
+                    #print('x',x)#print('y',y)#print('solt[0]',solt[0])#print('solt[1]',solt[1])
+                    s0=solt[0]#
+                    s1=solt[1]
+                    #print('s0',s0)#print('s1',s1)print('s0t4',s0[t4])
+                    s0t1=s0[t1]
+                    s0t2=s0[t4]-s0[t1]
+                    if s0t1<-np.pi:
+                        s0t1+=2*np.pi
+                    elif s0t1>np.pi:
+                        s0t1-=2*np.pi
+                    #print('s0t1',s0t1)
+                    if s0t2<-np.pi:
+                        s0t2+=2*np.pi
+                    elif s0t2>np.pi:
+                        s0t2-=2*np.pi
+                    #print('s0t2',s0t2)#print('s1t1',s1[t1])
+                    s1t1=s1[t1]
+                    s1t2=s1[t4]-s1[t1]
+                    if s1t1<-np.pi:
+                        s1t1+=2*np.pi
+                    elif s1t1>np.pi:
+                        s1t1-=2*np.pi
+                    #print('s1t1',s1t1)
+                    if s1t2<-np.pi:
+                        s1t2+=2*np.pi
+                    elif s1t2>np.pi:
+                        s1t2-=2*np.pi
+                    #print('s1t2',s1t2)#print('s1t1',s1[t1])
+                    traj = teacher.generate_trajectorysafety_dense(xa=s0t1,ya=s0t2,xa2=s1t1,ya2=s1t2,angled=angled)
+                else:
+                    traj = teacher.generate_trajectorysafety()#line 33 in teacher.py#100 transitions
+                reward = sum([frame['reward'] for frame in traj])#traj is a list of dictionaries
+                #why not directly use rtg[0]?
+                print('Trajectory %d, Reward %d' % (i, reward))
+                demonstrations.append(traj)#traj is one piece of trajectories
+                utils.save_trajectory(traj, file, i)#86 in utils.py#save 1 traj having 100 steps
+
+                if i < 50 and logdir is not None:
+                    pu.make_movie(traj, os.path.join(logdir, '%s_%d.gif' % (data_dir, i)))#do I add relative here or in other place?
+
+
+
             # Collect Data
             for j in range(traj_per_update):#default 10 in spb
                 log.info("Collecting trajectory %d for update %d" % (j, i))
@@ -165,47 +233,9 @@ if __name__ == '__main__':
                     #elif action_type=='zero':
                         #action = policy.actzero(obs/255)
                     #storch=ptu.torchify(env.state)#state torch
-                    #action,tp,fp,fn,tn,tpc,fpc,fnc,tnc = policy.actcbfd(obs/255,env.state,tp,fp,fn,tn,tpc,fpc,fnc,tnc)
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdcircle(obs / 255, env.state, tp, fp, fn, tn, tpc,
-                                                                                #fpc, fnc, tnc)
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarecircle(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                            #fn, tn, tpc, fpc, fnc, tnc)
                     
-                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#,conservative,reward_type)#
-                    '''
-                    if conservative=='conservative' and reward_type=='sparse':
-                        #print('conservative and sparse!')#you get this right!
-                        action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                            #fn, tn, tpc, fpc, fnc, tnc)
-                    elif conservative=='average' and reward_type=='sparse':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
-                    elif conservative=='onestd' and reward_type=='sparse':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheronestd(obs / 255)#, env.state)#
-                    elif conservative=='conservative' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
-                    elif conservative=='average' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
-                    elif conservative=='average' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheronestdnogoaldense(obs / 255)#, env.state)#
-                    '''
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
-                                                                                            #fn, tn, tpc, fpc, fnc, tnc)
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs_relative / 255, env.state, tp,
-                                                                                                #fp,fn, tn, tpc, fpc, fnc, tnc)
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs_relative / 255, env.state, tp, fp,
-                                                                                            #fn, tn, tpc, fpc, fnc, tnc)#not finished yet!                                                                             
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive(obs / 255, env.state, tp,
-                                                                                                #fp,#forever banned! forever obsolete
-                                                                                                #fn, tn, tpc, fpc, fnc, tnc)
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanaexpensive2(obs / 255, env.state, tp,
-                                                                                                #fp,fn, tn, tpc, fpc, fnc, tnc,obs_relative/255)
-                    #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplanb(obs_relative / 255, env.state, tp,
-                                                                                                #fp,
-                                                                                                #fn, tn,
-                                                                                                #tpc, fpc, fnc, tnc)
+                    #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#,conservative,reward_type)#
+
                     # the CEM (candidates, elites, etc.) is in here
                     #next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
                     next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
@@ -285,12 +315,6 @@ if __name__ == '__main__':
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                     embeval = encoder.encode(obseval)#in latent space now!
-                    #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
-                    embeval2 = encoder.encode(obseval)#in latent space now!
-                    embdiff100000=(embeval-embeval2)*100000
-                    print('embdiff100000',embdiff100000)
-                    #embdiffmax,ind=torch.max(embdiff)
-                    #print('embdiffmax',embdiffmax)
                     #print('emb.shape',emb.shape)#torch.Size([1, 32])
                     #cbfdot_function.predict()
                     cbfpredict = cbfdot_function(embeval,already_embedded=True)#
