@@ -90,12 +90,14 @@ if __name__ == '__main__':
         #replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
         #replay_buffer2 = utils.load_replay_buffer_relative(params, encoder2)  # around line 123 in utils.py
         #replay_buffer = utils.load_replay_buffer_relative_expensive2(params, encoder, encoder2)  # around line 123 in utils.py
+
         if params['unsafebuffer']=='yes':
             replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
             log.info('unsafe buffer!')
         else:
             replay_buffer_unsafe=replay_buffer
             log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
+
         trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
 
         trainer.initial_train(replay_buffer,replay_buffer_unsafe)#initialize all the parts!
@@ -132,62 +134,27 @@ if __name__ == '__main__':
         action_type=params['action_type']
         cbfalpha=0.2#exponential averaging for CBF
         for i in range(num_updates):#default 25 in spb
+            if i==0:
+                teacher=ReacherConstraintdense1Teacher(env,noisy=False)
+            elif i==1:
+                teacher=ReacherConstraintdense2Teacher(env,noisy=False)
             log.info('current dhz: %f'%(params['dhz']))
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
             update_rewards = []
 
 
-            teacher = teacher(env, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
+            #teacher = teacher(env)#, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
+            '''
             demonstrations = []#an empty list
             #ro=0.04#0.05-1
-            for i in range(n):
+            for i in range(n):#50/250
                 print('data_dir',data_dir)
                 if data_dir=='ReacherConstraintdense1' or data_dir=='ReacherConstraintdense2':
                     #print('teacherenter',teacher)
-                    angled=-np.pi + 1.5*np.pi*i/n##np.pi/2 - 1.5*np.pi*i/n#d means desired
-                    if data_dir=='ReacherConstraintdense1':
-                        radius=0.045#0.05#0.04#
-                    else:
-                        radius=0.12
-                    xinc=radius*np.cos(angled)
-                    yinc=radius*np.sin(angled)
-                    xbase=-0.13*np.sqrt(0.75)
-                    ybase=0.065
-                    xtotal=xbase+xinc
-                    ytotal=ybase+yinc
-                    t1,t4=sympy.symbols("t1,t4", real=True)
-                    length=0.12
-                    eq1=sympy.Eq(length*(sympy.cos(t4)+sympy.cos(t1)),xtotal)#-0.13*np.sqrt(0.75))#-0.169705)#
-                    eq2=sympy.Eq(length*(sympy.sin(t4)+sympy.sin(t1)),ytotal)#0.065)#0.169705)#
-                    solt=sympy.solve([eq1, eq2])
-                    #print('x',x)#print('y',y)#print('solt[0]',solt[0])#print('solt[1]',solt[1])
-                    s0=solt[0]#
-                    s1=solt[1]
-                    #print('s0',s0)#print('s1',s1)print('s0t4',s0[t4])
-                    s0t1=s0[t1]
-                    s0t2=s0[t4]-s0[t1]
-                    if s0t1<-np.pi:
-                        s0t1+=2*np.pi
-                    elif s0t1>np.pi:
-                        s0t1-=2*np.pi
-                    #print('s0t1',s0t1)
-                    if s0t2<-np.pi:
-                        s0t2+=2*np.pi
-                    elif s0t2>np.pi:
-                        s0t2-=2*np.pi
-                    #print('s0t2',s0t2)#print('s1t1',s1[t1])
-                    s1t1=s1[t1]
-                    s1t2=s1[t4]-s1[t1]
-                    if s1t1<-np.pi:
-                        s1t1+=2*np.pi
-                    elif s1t1>np.pi:
-                        s1t1-=2*np.pi
-                    #print('s1t1',s1t1)
-                    if s1t2<-np.pi:
-                        s1t2+=2*np.pi
-                    elif s1t2>np.pi:
-                        s1t2-=2*np.pi
+                    
+
+
                     #print('s1t2',s1t2)#print('s1t1',s1[t1])
                     traj = teacher.generate_trajectorysafety_dense(xa=s0t1,ya=s0t2,xa2=s1t1,ya2=s1t2,angled=angled)
                 else:
@@ -200,11 +167,58 @@ if __name__ == '__main__':
 
                 if i < 50 and logdir is not None:
                     pu.make_movie(traj, os.path.join(logdir, '%s_%d.gif' % (data_dir, i)))#do I add relative here or in other place?
-
+            '''
 
 
             # Collect Data
             for j in range(traj_per_update):#default 10 in spb
+
+
+                angled=-np.pi + 1.5*np.pi*i/traj_per_update#n#here n is traj_per_update##np.pi/2 - 1.5*np.pi*i/n#d means desired
+                if type(teacher)==ReacherConstraintdense1Teacher:#'ReacherConstraintdense1':
+                    radius=0.045#0.05#0.04#
+                else:
+                    radius=0.12
+                xinc=radius*np.cos(angled)
+                yinc=radius*np.sin(angled)
+                xbase=-0.13*np.sqrt(0.75)
+                ybase=0.065
+                xtotal=xbase+xinc
+                ytotal=ybase+yinc
+                t1,t4=sympy.symbols("t1,t4", real=True)
+                length=0.12
+                eq1=sympy.Eq(length*(sympy.cos(t4)+sympy.cos(t1)),xtotal)#-0.13*np.sqrt(0.75))#-0.169705)#
+                eq2=sympy.Eq(length*(sympy.sin(t4)+sympy.sin(t1)),ytotal)#0.065)#0.169705)#
+                solt=sympy.solve([eq1, eq2])
+                #print('x',x)#print('y',y)#print('solt[0]',solt[0])#print('solt[1]',solt[1])
+                s0=solt[0]#
+                s1=solt[1]
+                #print('s0',s0)#print('s1',s1)print('s0t4',s0[t4])
+                s0t1=s0[t1]
+                s0t2=s0[t4]-s0[t1]
+                if s0t1<-np.pi:
+                    s0t1+=2*np.pi
+                elif s0t1>np.pi:
+                    s0t1-=2*np.pi
+                #print('s0t1',s0t1)
+                if s0t2<-np.pi:
+                    s0t2+=2*np.pi
+                elif s0t2>np.pi:
+                    s0t2-=2*np.pi
+                #print('s0t2',s0t2)#print('s1t1',s1[t1])
+                s1t1=s1[t1]
+                s1t2=s1[t4]-s1[t1]
+                if s1t1<-np.pi:
+                    s1t1+=2*np.pi
+                elif s1t1>np.pi:
+                    s1t1-=2*np.pi
+                #print('s1t1',s1t1)
+                if s1t2<-np.pi:
+                    s1t2+=2*np.pi
+                elif s1t2>np.pi:
+                    s1t2-=2*np.pi
+
+
                 log.info("Collecting trajectory %d for update %d" % (j, i))
                 transitions = []
 
@@ -212,7 +226,7 @@ if __name__ == '__main__':
                 #obs,obs_relative = np.array(env.reset()) #can I do this? # the obs seems to be the observation as image rather than obstacle
                 policy.reset()#self.mean, self.std = None, None
                 done = False
-
+                #state = None
                 # Maintain ground truth info for plotting purposes
                 #movie_traj = [{'obs': obs.reshape((-1, 3, 64, 64))[0]}]#a dict
                 movie_traj = [{'obs': obs.reshape((-1, 3, 64, 64))[0]}]  # a dict
@@ -224,18 +238,35 @@ if __name__ == '__main__':
                 action_rand=False
                 constr_viol_cbf = False
                 constr_viol_cbf2 = False
-
+                
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]
-                    #if action_type=='random':
-                        #action = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
-                    #elif action_type=='zero':
-                        #action = policy.actzero(obs/255)
-                    #storch=ptu.torchify(env.state)#state torch
-                    
-                    #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#,conservative,reward_type)#
+                    state=env.current_state
+                    print('self.current_state',env.current_state)#it is an 8-dimensional vector
+                    #if env.state is None:
+                        #action = teacher.env.action_space.sample().astype(np.float64)#sample between -3 and 3
+                    #else:#I think the control is usually either -3 or +3
+                        #action = self._expert_control_dense(state, i,xa,ya,xa2,ya2,angled).astype(np.float64)
+                    action=teacher._expert_control_dense_lip(state,k,xa=s0t1,ya=s0t2,xa2=s1t1,ya2=s1t2,angled=angled).astype(np.float64)
+                    action=np.float32(action)#has to be like this?#this is important!
+                    '''
+                    if self.noisy:
+                        action_input = np.random.normal(action, self.noise_std)
+                        action_input = np.clip(action_input, self.ac_low, self.ac_high)
+                        #action_input = np.clip(action_input, self.ac_low + 1e-6, self.ac_high - 1e-6)
+                    else:
+                        action_input = action
 
+                    if store_noisy:
+                        action = action_input#if it not noisy, then it is just the same
+                    #import ipdb; ipdb.set_trace()
+                    action_input=np.float32(action_input)#has to be like this?#this is important!
+
+                    next_obs, reward, done, info = env.step(action_input)#which one?
+                    #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#,conservative,reward_type)#
+                    '''
+                    randflag=0
                     # the CEM (candidates, elites, etc.) is in here
                     #next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
                     next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
@@ -314,7 +345,12 @@ if __name__ == '__main__':
                     #Now, I should do the evaluation!
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
-                    embeval = encoder.encode(obseval)#in latent space now!
+                    #embeval = encoder.encode(obseval)#in latent space now!
+                    if params['mean']=='sample':
+                        embeval = encoder.encode(obseval)#in latent space now!#even
+                    elif params['mean']=='mean':
+                        embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
+                        #embeval2 = encoder.encodemean(obseval)#in latent space now!
                     #print('emb.shape',emb.shape)#torch.Size([1, 32])
                     #cbfdot_function.predict()
                     cbfpredict = cbfdot_function(embeval,already_embedded=True)#

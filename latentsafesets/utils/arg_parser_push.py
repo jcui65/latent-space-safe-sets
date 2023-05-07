@@ -12,7 +12,7 @@ import os
 def parse_args():
     parser = argparse.ArgumentParser(description='CEM Learning Args')
     parser.add_argument('--env', type=str, default='spb')
-    parser.add_argument('--seed', type=int, default=2, help='Random seed')#1, help='Random seed')#4, help='Random seed')#-1, help='Random seed')#
+    parser.add_argument('--seed', type=int, default=1, help='Random seed')#2, help='Random seed')#4, help='Random seed')#-1, help='Random seed')#
     parser.add_argument('--log_freq', type=int, default=100,
                         help='How frequently to log updates')
     parser.add_argument('--plot_freq', type=int, default=500,#2000,#1000,#
@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument('--traj_per_update', default=10, type=int)
     parser.add_argument('--num_updates', type=int, default=100)#25)#1)#10)#200)#2)#250)#50)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
-    parser.add_argument('--repeat_times',type=int,default=2)#3)#1)#7)#
+    parser.add_argument('--repeat_times',type=int,default=3)#2)#1)#7)#
     parser.add_argument('--light',type=str,default='light')#'normal')#'expensive')#'ls3')#'ls3' means original, no CBF#'nosasfety')#no any safety measures
     parser.add_argument('--action_type',type=str,default='random')#'zero')#
     parser.add_argument('--push_cbf_strategy',type=int,default=1)#2)#

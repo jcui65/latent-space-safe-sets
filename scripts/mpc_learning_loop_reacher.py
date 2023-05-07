@@ -287,12 +287,12 @@ if __name__ == '__main__':
                     if params['mean']=='sample':
                         embeval = encoder.encode(obseval)#in latent space now!#even
                         #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
-                        embeval2 = encoder.encode(obseval)#in latent space now!
+                        #embeval2 = encoder.encode(obseval)#in latent space now!
                     elif params['mean']=='mean':
                         embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
-                        embeval2 = encoder.encodemean(obseval)#in latent space now!
-                    embdiff100000=(embeval-embeval2)*100000
-                    print('embdiff100000',embdiff100000)
+                        #embeval2 = encoder.encodemean(obseval)#in latent space now!
+                    #embdiff100000=(embeval-embeval2)*100000
+                    #print('embdiff100000',embdiff100000)#just for testing!!!
                     #embdiffmax,ind=torch.max(embdiff)
                     #print('embdiffmax',embdiffmax)
                     #print('emb.shape',emb.shape)#torch.Size([1, 32])
@@ -307,7 +307,7 @@ if __name__ == '__main__':
                         fp+=1
                     elif (cbfpredict<0) and (cbfgt<0):
                         tp+=1
-                    tncvalue=0.05**2-0.055**2+1e-4#for reacher!#0.05**2-0.06**2+1e-4#0.3**2-0.4**2+1e-3#FOR PUSHING!#
+                    tncvalue=0.05**2-0.06**2+1e-4#for reacher!#0.05**2-0.06**2+1e-4#0.3**2-0.4**2+1e-3#FOR PUSHING!#
                     if (cbfpredict>=0) and (cbfgt>=tncvalue):
                         tnc+=1
                     elif (cbfpredict>=0) and (cbfgt<tncvalue):

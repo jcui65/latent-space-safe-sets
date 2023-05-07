@@ -466,6 +466,7 @@ class ReacherConstraintdense1Teacher(AbstractTeacher):#
         act = np.clip(act, -action_limit, action_limit)
         return act
 
+
     def reset(self):
         self.direction = self.direction * -1
 
@@ -504,6 +505,38 @@ class ReacherConstraintdense2Teacher(AbstractTeacher):
         act = goal - angle#all unsafe demos are similar! Is it good?
         # act = np.random.normal((self.direction, 0), 1)
         act = np.clip(act, -1, 1)
+        return act
+
+    def _expert_control_dense_lip(self, state, i,xa,ya,xa2,ya2,angled,action_limit=0.01):
+        angle = state[:2]
+        xaf=float(xa);yaf=float(ya);xa2f=float(xa2);ya2f=float(ya2)#f for float!
+        goal1 = np.array((xaf,yaf))#np.array((np.pi * .53, 0.7 * np.pi))
+        goal2 = np.array((xa2f,ya2f))#np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
+        p2=65#60
+        if angled>=0:
+            if i<25:
+                goal=np.array((np.pi/6,np.pi*5.2/6))
+            elif i<45:
+                goal=np.array((np.pi/6,np.pi*4/6))  
+            elif i < p2:
+                #goal = np.array((xa, ya))
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        elif angled<=-np.pi/2:
+            if i<30:
+                goal=np.array((np.pi*5/6,np.pi/2))
+            elif i < p2:
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        else:
+            if i < p2:
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        if i>=p2:
+            goal3 = np.array((1.61961612328942,1.99675550940415))#np.array((np.pi * .53, 0.7 * np.pi))#central position
+            goal4 = np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
+            goal = min(goal3, goal4, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        act = goal - angle#all unsafe demos are similar! Is it good?
+        # act = np.random.normal((self.direction, 0), 1)
+        #act = np.clip(act, -1, 1)
+        act = np.clip(act, -action_limit, action_limit)
         return act
 
     def reset(self):
