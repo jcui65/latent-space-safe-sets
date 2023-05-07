@@ -238,7 +238,7 @@ if __name__ == '__main__':
                 action_rand=False
                 constr_viol_cbf = False
                 constr_viol_cbf2 = False
-                params['horizon']=500
+                params['horizon']=400#500
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]
@@ -336,6 +336,7 @@ if __name__ == '__main__':
                     obs = next_obs#don't forget this step!
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                     #obs_relative = next_obs_relative  # don't forget this step!
+                    oldcviol=constr_viol
                     constr_viol = constr_viol or info['constraint']#a way to update constr_viol#either 0 or 1
                     constr_viol_cbf = constr_viol_cbf or constr_cbf#a way to update constr_viol#either 0 or 1
                     constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1
@@ -377,6 +378,8 @@ if __name__ == '__main__':
                     #the evaluation phase ended
                     #if done:#when calculating lipschitz constant, I want it to be 500 steps, so disable this part
                         #break
+                    if (oldcviol and constr_viol)==1:#one step buffer/hold
+                        break
                 transitions[-1]['done'] = 1#change the last transition to success/done!
                 traj_reward = sum(traj_rews)#total reward, should be >=-100/-150
                 #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints
