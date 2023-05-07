@@ -98,6 +98,7 @@ class CEMSafeSetPolicy(Policy):
         self.idea=params['idea']
         self.noofsigma=params['noofsigma']
         self.reducerocbfhd=params['reducerocbfhd']
+        self.sample=params['mean']#
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1652,16 +1653,27 @@ class CEMSafeSetPolicy(Policy):
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         if self.current_robust=='no':
-            emb = self.encoder.encode(obs)#in latent space now!it is 32 dimensional!
+            #emb = self.encoder.encode(obs)#in latent space now!it is 32 dimensional!
+            if self.sample=='sample':
+                emb=self.encoder.encode(obs)
+            elif self.sample=='mean':
+                emb=self.encoder.encodemean(obs)
             #print('emb',emb)
             #print('emb max',torch.max(emb))
             #print('emb min',torch.min(emb))
             embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         elif self.current_robust=='weak':
-            emb=self.encoder.encode(obs)
+            if self.sample=='sample':
+                emb=self.encoder.encode(obs)
+            elif self.sample=='mean':
+                emb=self.encoder.encodemean(obs)
             embrepeat20=emb.repeat(1, self.popsize, 1, 1)
             for i in range(self.n_particles-1):
-                embi=self.encoder.encode(obs)
+                #embi=self.encoder.encode(obs)
+                if self.sample=='sample':
+                    embi=self.encoder.encode(obs)
+                elif self.sample=='mean':
+                    embi=self.encoder.encodemean(obs)
                 embrepeati=embi.repeat(1, self.popsize, 1, 1)
                 emb+=embi
                 embrepeat20=torch.vstack((embrepeat20,embrepeati))
