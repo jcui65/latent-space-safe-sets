@@ -240,7 +240,7 @@ class CBFdotlatentplanaTrainer(Trainer):
         self.cbfd =cbfd
         self.loss_plotter = loss_plotter
         self.env = env
-        self.batchsize=int(self.params['cbfd_batch_size']/2)
+        self.batchsize=self.params['cbfd_batch_size']#int(self.params['cbfd_batch_size']/2)#
         self.env_name = params['env']
 
     def initial_train(self, replay_buffer, update_dir,replay_buffer_unsafe):
@@ -257,21 +257,22 @@ class CBFdotlatentplanaTrainer(Trainer):
             obs=out_dict['obs']
             #obs = out_dict['obs_relative']
             #print('obs',obs)
-            print('obs.shape',obs.shape)
+            #print('obs.shape',obs.shape)
             #rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']#0 or 1
             if self.params['env']=='push' and self.params['push_cbf_strategy']==2:
                 rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
             else:
                 rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
             #print('hvn.shape',hvn.shape)
-            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
-            obsus=out_dictus['obs']#us means unsafe
-            rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
-            obs=np.vstack((obs,obsus))
-            hvn=np.concatenate((hvn,hvnus))
-            shuffleind=np.random.permutation(obs.shape[0])
-            obs=obs[shuffleind]
-            hvn=hvn[shuffleind]
+            if replay_buffer_unsafe!=None:
+                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+                obsus=out_dictus['obs']#us means unsafe
+                rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
+                obs=np.vstack((obs,obsus))
+                hvn=np.concatenate((hvn,hvnus))
+                shuffleind=np.random.permutation(obs.shape[0])
+                obs=obs[shuffleind]
+                hvn=hvn[shuffleind]
             #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
             #loss, info = self.cbfd.update(obs,action, hvd, already_embedded=True)  #
             loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #
@@ -318,18 +319,19 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
                 #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
                 #print('obsold.shape',obs.shape)
-                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
-                obsus=out_dictus['obs']#us means unsafe
-                #print('obsus.shape',obsus.shape)(128,32)
-                rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
-                obs=np.vstack((obs,obsus))
-                #print('obsnew.shape',obs.shape)(256,32)
-                #print('hvnold.shape',hvn.shape)
-                hvn=np.concatenate((hvn,hvnus))
-                #print('hvnnew.shape',hvn.shape)
-                shuffleind=np.random.permutation(obs.shape[0])
-                obs=obs[shuffleind]
-                hvn=hvn[shuffleind]
+                if replay_buffer_unsafe!=None:
+                    out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+                    obsus=out_dictus['obs']#us means unsafe
+                    #print('obsus.shape',obsus.shape)(128,32)
+                    rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
+                    obs=np.vstack((obs,obsus))
+                    #print('obsnew.shape',obs.shape)(256,32)
+                    #print('hvnold.shape',hvn.shape)
+                    hvn=np.concatenate((hvn,hvnus))
+                    #print('hvnnew.shape',hvn.shape)
+                    shuffleind=np.random.permutation(obs.shape[0])
+                    obs=obs[shuffleind]
+                    hvn=hvn[shuffleind]
                 #loss, info = self.constr.update(next_obs, constr, already_embedded=True)
                 #loss, info = self.cbfd.update(rda, hvd, already_embedded=True)
                 #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
@@ -337,8 +339,10 @@ class CBFdotlatentplanaTrainer(Trainer):
                 self.loss_plotter.add_data(info)
                 if self.env_name=='reacher':
                     dhzepochave+=np.sqrt(loss)#faithfully record it!#np.sqrt(min(loss,10))#over 10 is too crazy!
-                else:
+                elif self.env_name=='push':
                     dhzepochave+=np.sqrt(loss)#
+                elif self.env_name=='spb':
+                    print('just hold it now!')
             dhzepochave=dhzepochave/self.params['cbfd_update_iters']
             dhzepochave=dhzepochave/1000
             log.info('the average dhz of this epochs: %f'%(dhzepochave))
@@ -367,9 +371,10 @@ class CBFdotlatentplanaTrainer(Trainer):
     def plot(self, file, replay_buffer,replay_buffer_unsafe):
         out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
-        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
-        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
-        next_obs=np.vstack((next_obs,next_obsus))
+        if replay_buffer_unsafe!=None:
+            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+            next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']  # rdo = out_dict['rdo']
         pu.visualize_cbfdot(next_obs, self.cbfd,
                              file,
@@ -379,9 +384,10 @@ class CBFdotlatentplanaTrainer(Trainer):
         out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         next_obs = out_dict['next_obs']
         rdo = out_dict['rdo']
-        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
-        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
-        next_obs=np.vstack((next_obs,next_obsus))
+        if replay_buffer_unsafe!=None:
+            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+            next_obs=np.vstack((next_obs,next_obsus))
         pu.visualize_cbfdotconly(next_obs, self.cbfd,
                              file,
                              env=self.env)
@@ -392,9 +398,10 @@ class CBFdotlatentplanaTrainer(Trainer):
         next_obs = out_dict['next_obs']
         #next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
-        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
-        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
-        next_obs=np.vstack((next_obs,next_obsus))
+        if replay_buffer_unsafe!=None:
+            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+            next_obs=np.vstack((next_obs,next_obsus))
         pu.visualize_cbfdotlatentunbiased(next_obs, self.cbfd,
                              file,
                              env=self.env,coeff=coeff)
@@ -402,9 +409,10 @@ class CBFdotlatentplanaTrainer(Trainer):
     def plotlatentgroundtruth(self, file, replay_buffer,replay_buffer_unsafe):
         out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         next_obs = out_dict['next_obs']
-        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
-        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
-        next_obs=np.vstack((next_obs,next_obsus))
+        if replay_buffer_unsafe!=None:
+            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+            next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdotlatentgroundtruth(next_obs, self.cbfd,
@@ -414,9 +422,10 @@ class CBFdotlatentplanaTrainer(Trainer):
     def plotlatent(self, file, replay_buffer,replay_buffer_unsafe):
         out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         next_obs = out_dict['next_obs']
-        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
-        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
-        next_obs=np.vstack((next_obs,next_obsus))
+        if replay_buffer_unsafe!=None:
+            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+            next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdotlatent(next_obs, self.cbfd,

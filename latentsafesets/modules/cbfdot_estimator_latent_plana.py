@@ -112,7 +112,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
     def update(self, next_obs, constr, already_embedded=False):#the training process
         self.trained = True
         next_obs = ptu.torchify(next_obs)#input
-        print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+        #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
         constr = ptu.torchify(constr)#output
 
         self.optimizer.zero_grad()

@@ -52,16 +52,17 @@ class EncodedReplayBuffer:
                     if self.mean=='mean':
                         new_data_log_std=np.clip(new_data_log_std,a_min=None,a_max=-80)#-80 is really very small!
                     new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()
-                    '''
+                    
                     #just for testing!
                     new_data_mean2, new_data_log_std2 = self.encoder(im[None] / 255)#is it legit?
                     new_data_mean2 = new_data_mean2.squeeze().detach().cpu().numpy()
                     new_data_log_std2 = new_data_log_std2.squeeze().detach().cpu().numpy()
-                    if self.mean=='mean':
+                    #print('new_data_log_std2: ',new_data_log_std2)#(32,)the ordier is e-5~e-7
+                    if self.mean=='mean':#the mean is around 0.1. Thus, in the pushing case, the sampling doesn't matter that much!
                         new_data_log_std2=np.clip(new_data_log_std2,a_min=None,a_max=-80)#-80 is really very small!
                     new_data2 = np.dstack((new_data_mean2, new_data_log_std2)).squeeze()
                     new_datadiff=new_data-new_data2
-                    '''
+                    
                     #print('new_data2',new_data2)#all the log std is -80 now! passed!
                     #print('new_datadiff',new_datadiff)#0,0 as expected! same seed still 0 in sample mode!
                     #print('new_data_mean.shape',new_data_mean.shape)#(32,)
@@ -133,7 +134,7 @@ class EncodedReplayBuffer:
                 dat_std = np.exp(dat_log_std)
                 return np.random.normal(dat_mean.squeeze(), dat_std.squeeze())#this is already sampled!
             elif self.mean=='mean':
-                #print('dat_log_std',dat_log_std)
+                #print('dat_log_std',dat_log_std)#it also works for pushing! The implementation for pushing is also right!
                 #print('dat_mean.shape',dat_mean.shape)
                 return dat_mean.squeeze()#double check
         else:#if it is not an image, then just return the value
