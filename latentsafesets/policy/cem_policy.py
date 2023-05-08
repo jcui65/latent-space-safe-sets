@@ -94,6 +94,7 @@ class CEMSafeSetPolicy(Policy):
         #print('conservativeness: ',self.conservative)
         self.current_robust=params['current_robust']
         self.dhz=params['dhz']
+        self.sigmaz=params['sigmaz']
         self.dhdmax=params['dhdmax']
         self.idea=params['idea']
         self.noofsigma=params['noofsigma']
@@ -1691,8 +1692,8 @@ class CEMSafeSetPolicy(Policy):
         #print('env.state',state)
         randflag=0#this is the flag to show if a random action is finally being chosen!
         cbfhorizon=self.plan_hor#1#just a try#
-        sigmaz=0.13855#1.8#0.13985#1.5#0.23
-        dz=2*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#1*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#3*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#
+        #sigmaz=self.sigmaz#0.13855#1.8#0.13985#1.5#0.23
+        dz=1*self.sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#1*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#3*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)

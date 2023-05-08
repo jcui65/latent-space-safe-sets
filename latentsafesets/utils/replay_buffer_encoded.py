@@ -52,8 +52,8 @@ class EncodedReplayBuffer:
                     if self.mean=='mean':
                         new_data_log_std=np.clip(new_data_log_std,a_min=None,a_max=-80)#-80 is really very small!
                     new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()
-                    
-                    #just for testing!
+                    '''
+                    #just for testing!#test passed!
                     new_data_mean2, new_data_log_std2 = self.encoder(im[None] / 255)#is it legit?
                     new_data_mean2 = new_data_mean2.squeeze().detach().cpu().numpy()
                     new_data_log_std2 = new_data_log_std2.squeeze().detach().cpu().numpy()
@@ -62,7 +62,7 @@ class EncodedReplayBuffer:
                         new_data_log_std2=np.clip(new_data_log_std2,a_min=None,a_max=-80)#-80 is really very small!
                     new_data2 = np.dstack((new_data_mean2, new_data_log_std2)).squeeze()
                     new_datadiff=new_data-new_data2
-                    
+                    '''
                     #print('new_data2',new_data2)#all the log std is -80 now! passed!
                     #print('new_datadiff',new_datadiff)#0,0 as expected! same seed still 0 in sample mode!
                     #print('new_data_mean.shape',new_data_mean.shape)#(32,)
