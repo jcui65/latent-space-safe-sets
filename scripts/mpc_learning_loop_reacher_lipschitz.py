@@ -238,7 +238,7 @@ if __name__ == '__main__':
                 action_rand=False
                 constr_viol_cbf = False
                 constr_viol_cbf2 = False
-                params['horizon']=400#500
+                params['horizon']=500#400#
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]
@@ -434,11 +434,11 @@ if __name__ == '__main__':
 
             # Update models
 
-            episodiccbfdhz=trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?
-            if params['dynamic_dhz']=='yes':
-                dhzoriginal=params['dhz']
+            #episodiccbfdhz=trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?#not needed when calculating the Lipschitz of a CBF
+            #if params['dynamic_dhz']=='yes':
+                #dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
-                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
+                #params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
             log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)

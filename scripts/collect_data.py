@@ -59,7 +59,7 @@ def generate_teacher_demo_datasafety(env, data_dir, teacher, n=100, noisy=False,
     teacher = teacher(env, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
     demonstrations = []#an empty list
     #ro=0.04#0.05-1
-    for i in range(n):
+    for i in range(n):#generate n trajectories
         print('data_dir',data_dir)
         if data_dir=='ReacherConstraintdense1' or data_dir=='ReacherConstraintdense2':
             #print('teacherenter',teacher)

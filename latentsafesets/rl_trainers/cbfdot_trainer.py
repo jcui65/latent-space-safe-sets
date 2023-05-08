@@ -257,7 +257,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             obs=out_dict['obs']
             #obs = out_dict['obs_relative']
             #print('obs',obs)
-            #print('obs.shape',obs.shape)
+            print('obs.shape',obs.shape)
             #rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']#0 or 1
             if self.params['env']=='push' and self.params['push_cbf_strategy']==2:
                 rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
@@ -313,15 +313,17 @@ class CBFdotlatentplanaTrainer(Trainer):
                     obs, rdn, hvn = out_dict['obs'], out_dict['rdnef'], out_dict['hvnef']  # 0 or 1
                 else:
                     obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
+                    #print('obsold.shape',obs.shape)(128,32)
                 #rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
                 #rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
                 #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
                 #print('obsold.shape',obs.shape)
                 out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
                 obsus=out_dictus['obs']#us means unsafe
+                #print('obsus.shape',obsus.shape)(128,32)
                 rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
                 obs=np.vstack((obs,obsus))
-                #print('obsnew.shape',obs.shape)
+                #print('obsnew.shape',obs.shape)(256,32)
                 #print('hvnold.shape',hvn.shape)
                 hvn=np.concatenate((hvn,hvnus))
                 #print('hvnnew.shape',hvn.shape)

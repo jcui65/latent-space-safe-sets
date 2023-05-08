@@ -47,10 +47,13 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             #embedding = self.encoder.encode(obs).detach()#workaround#currently I am in the state space
             if self.mean=='sample':
                 embedding = self.encoder.encode(obs).detach()
+                #print('get sample embedding from images! embedding.shape',embedding.shape)
             elif self.mean=='mean':
                 embedding = self.encoder.encodemean(obs).detach()
+                #print('get mean embedding from images! embedding.shape',embedding.shape)#
         else:
             embedding = obs
+            #print('get embedded embedding already! embedding.shape',embedding.shape)#torch.Size([20, 500, 1, 32]), torch.Size([1, 32]), torch.Size([20, 500, 3, 32])
         #print('embedding.shape',embedding.shape)#torch.Size([1000,5,4])#torch.Size([256,4])#torch.Size([180,4])#
         #device = embedding.device
         #action=ptu.torchify(action)
@@ -109,6 +112,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
     def update(self, next_obs, constr, already_embedded=False):#the training process
         self.trained = True
         next_obs = ptu.torchify(next_obs)#input
+        print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
         constr = ptu.torchify(constr)#output
 
         self.optimizer.zero_grad()

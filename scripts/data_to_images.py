@@ -15,7 +15,7 @@ def main():
     params = parse_args()
     env_name = params['env']#spb
     frame_stack = params['frame_stack']#1 or not? In spb is is not stacking
-    demo_trajectories = []
+    demo_trajectories = []#it will be a list of dictionaries!!!
     for count, data_dir in list(zip(params['data_counts'], params['data_dirs'])):#see 180-200
         demo_trajectories += utils.load_trajectories(count, file='data/' + data_dir)#98#SimplePointBot
         #demo_trajectories += utils.load_trajectories(count, file='data_relative/' + data_dir)  # 98

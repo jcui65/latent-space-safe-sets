@@ -10,10 +10,10 @@ class EncodedReplayBuffer:
 
     This replay buffer replaces all images with their representation from encoder
     """
-    def __init__(self, encoder, size=10000):
+    def __init__(self, encoder, size=10000,mean='mean'):
         self.size = size
         self.encoder = encoder
-
+        self.mean=mean
         self.data = {}#finally it becomes a dict where each key's value have size number of values
         self._index = 0
         self._len = 0
@@ -43,12 +43,32 @@ class EncodedReplayBuffer:
             if key in transition:#I added!
                 new_data = np.array(transition[key])#it seems already converts value list to array
                 if key in self.im_keys:
+                    #print('keyname: ',key)#
                     im = np.array(transition[key])#seems to be the image?
                     im = ptu.torchify(im)
-                    new_data_mean, new_data_log_std = self.encoder(im[None] / 255)
+                    new_data_mean, new_data_log_std = self.encoder(im[None] / 255)#is it legit?
                     new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
                     new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()
+                    if self.mean=='mean':
+                        new_data_log_std=np.clip(new_data_log_std,a_min=None,a_max=-80)#-80 is really very small!
                     new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()
+                    '''
+                    #just for testing!
+                    new_data_mean2, new_data_log_std2 = self.encoder(im[None] / 255)#is it legit?
+                    new_data_mean2 = new_data_mean2.squeeze().detach().cpu().numpy()
+                    new_data_log_std2 = new_data_log_std2.squeeze().detach().cpu().numpy()
+                    if self.mean=='mean':
+                        new_data_log_std2=np.clip(new_data_log_std2,a_min=None,a_max=-80)#-80 is really very small!
+                    new_data2 = np.dstack((new_data_mean2, new_data_log_std2)).squeeze()
+                    new_datadiff=new_data-new_data2
+                    '''
+                    #print('new_data2',new_data2)#all the log std is -80 now! passed!
+                    #print('new_datadiff',new_datadiff)#0,0 as expected! same seed still 0 in sample mode!
+                    #print('new_data_mean.shape',new_data_mean.shape)#(32,)
+                    #print('new_data_log_std.shape',new_data_log_std.shape)#(32,)
+                    #print('new_data.shape',new_data.shape)#(32,2)
+                    #print('new_data_mean',new_data_mean)#(32,)
+                    #print('new_data_log_std',new_data_log_std)#(32,)
 
                 if data is None:
                     data = np.zeros((self.size, *new_data.shape))#then fill one by one
@@ -109,8 +129,13 @@ class EncodedReplayBuffer:
         if key in self.im_keys:#obs and next_obs
             dat = self.data[key][indices]
             dat_mean, dat_log_std = np.split(dat, 2, axis=-1)
-            dat_std = np.exp(dat_log_std)
-            return np.random.normal(dat_mean.squeeze(), dat_std.squeeze())
+            if self.mean=='sample':
+                dat_std = np.exp(dat_log_std)
+                return np.random.normal(dat_mean.squeeze(), dat_std.squeeze())#this is already sampled!
+            elif self.mean=='mean':
+                #print('dat_log_std',dat_log_std)
+                #print('dat_mean.shape',dat_mean.shape)
+                return dat_mean.squeeze()#double check
         else:#if it is not an image, then just return the value
             return self.data[key][indices]
 

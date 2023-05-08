@@ -92,12 +92,15 @@ class ValueFunction(nn.Module, EncodedModule):
             if self.mean=='sample':
                 emb = self.encoder.encode(obs).detach()
                 next_emb = self.encoder.encode(next_obs).detach()
+                #print('sample mode')
             elif self.mean=='mean':
                 emb = self.encoder.encodemean(obs).detach()
                 next_emb = self.encoder.encodemean(next_obs).detach()
+                #print('mean mode')
         else:
             emb = obs#latent state
             next_emb = next_obs
+            #print('alreadyembedded')#yes, already embedded!
 
         val_out = self.value_net(emb).squeeze()
         target_out = self.value_net_target(next_emb).squeeze()#that is our target, value of next emb!
@@ -123,10 +126,13 @@ class ValueFunction(nn.Module, EncodedModule):
             #emb = self.encoder.encode(obs).detach()
             if self.mean=='sample':
                 emb = self.encoder.encode(obs).detach()
+                #print('sample mode')
             elif self.mean=='mean':
                 emb = self.encoder.encodemean(obs).detach()
+                #print('mean mode')
         else:
             emb = obs
+            #print('alreadyembedded')
 
         targets = rtg
 

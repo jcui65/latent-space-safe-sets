@@ -512,17 +512,17 @@ class ReacherConstraintdense2Teacher(AbstractTeacher):
         xaf=float(xa);yaf=float(ya);xa2f=float(xa2);ya2f=float(ya2)#f for float!
         goal1 = np.array((xaf,yaf))#np.array((np.pi * .53, 0.7 * np.pi))
         goal2 = np.array((xa2f,ya2f))#np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
-        p2=65#60
+        p2=65*5#60
         if angled>=0:
-            if i<25:
+            if i<25*5:
                 goal=np.array((np.pi/6,np.pi*5.2/6))
-            elif i<45:
+            elif i<45*5:
                 goal=np.array((np.pi/6,np.pi*4/6))  
             elif i < p2:
                 #goal = np.array((xa, ya))
                 goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
         elif angled<=-np.pi/2:
-            if i<30:
+            if i<30*5:
                 goal=np.array((np.pi*5/6,np.pi/2))
             elif i < p2:
                 goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
