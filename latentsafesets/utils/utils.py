@@ -139,6 +139,78 @@ def load_trajectories(num_traj, file):#data/simplepointbot
 
     return trajectories#that is a sequence/buffer/pool of trajs including images
 
+def load_trajectories_lipschitz(num_traj, file):#data/simplepointbot
+    log.info('Loading trajectories from %s' % file)#data/SimplePointBot
+
+    if not os.path.exists(file):
+        raise RuntimeError("Could not find directory %s." % file)
+    trajectories = []
+    iterator = range(num_traj) if num_traj <= 200 else trange(num_traj)#maybe a bug source?
+    slopexy=np.zeros((200*320))
+    slopeyz=np.zeros((200*320))
+    slopezh=np.zeros((200*320))
+    slopeyh=np.zeros((200*320))
+    k=0
+    for i in iterator:#50
+        if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json
+            log.info('Could not find %d' % i)
+            continue
+        im_fields = ('obs', 'next_obs')
+        with open(os.path.join(file, '%d.json' % i), 'r') as f:#read the json file!
+            trajectory = json.load(f)#1 piece traj info without 2 images 100 time steps
+        im_dat = {}#image_data
+
+        for field in im_fields:
+            f = os.path.join(file, "%d_%s.npy" % (i, field))#obs and next_obs
+            if os.path.exists(file):
+                dat = np.load(f)
+                im_dat[field] = dat.astype(np.uint8)#100 images of obs and next_obs
+        eps=1e-10
+        for j, frame in list(enumerate(trajectory)):#each frame in one trajectory
+            #I am going to change this!
+            #if j==0:
+                
+            #get state
+            currentstate=frame['state']
+            currentpos=currentstate[0:2]
+            nextstate=frame['next_state']
+            nextpos=nextstate[0:2]
+            posdiff=nextpos-currentpos
+            posdiffnorm=np.linalg.norm(posdiff)
+            #for key in im_dat:#from obs and next_obs
+                #frame[key] = im_dat[key][j]#the frame is the jth frame in 1 traj
+            frame['obs'] = im_dat['obs'][j]#the frame is the jth frame in 1 traj
+            frame['next_obs'] = im_dat['next_obs'][j]#the frame is the jth frame in 1 traj
+            imagediff=frame['next_obs']-frame['obs']
+            imagediffnorm=np.linalg.norm(imagediff)
+            imagediffnormal=imagediffnorm/255
+            imobs = np.array(frame['obs'])#(transition[key])#seems to be the image?
+            imobs = ptu.torchify(imobs)
+            zobs_mean, zobs_log_std = self.encoder(imobs[None] / 255)#is it legit?
+            zobs_mean = zobs_mean.squeeze().detach().cpu().numpy()
+            imnextobs = np.array(frame['next_obs'])#(transition[key])#seems to be the image?
+            imnextobs = ptu.torchify(imnextobs)
+            znext_obs_mean, znext_obs_log_std = self.encoder(imnextobs[None] / 255)#is it legit?
+            znext_obs_mean = znext_obs_mean.squeeze().detach().cpu().numpy()
+            zdiff=znext_obs_mean-zobs_mean
+            zdiffnorm=np.linalg.norm(zdiff)
+            hobs=cbfd(zobs_mean)
+            hnextobs=cbfd(znext_obs_mean)
+            hdiff=hnextobs-hobs
+            hdiffnorm=np.linalg.norm(hdiff)
+            slopexyk=imagediffnormal/(posdiffnorm+eps)
+            slopeyzk=zdiffnorm/(imagediffnormal+eps)
+            slopezhk=hdiffnorm/(zdiff+eps)
+            slopeyhk=hdiffnorm/(imagediffnormal+eps)
+            slopexy[k]=slopexyk
+            slopeyz[k]=slopeyzk
+            slopezh[k]=slopezhk
+            slopeyh[k]=slopeyhk
+            #frameold=frame
+        trajectories.append(trajectory)#now you recover the full trajectory info with images
+
+    return trajectories#that is a sequence/buffer/pool of trajs including images
+
 def load_trajectories_relative(num_traj, file):#data/simplepointbot#num_traj is the num of traj in each folder!
     log.info('Loading trajectories from %s' % file)#data/SimplePointBot
 
@@ -164,8 +236,8 @@ def load_trajectories_relative(num_traj, file):#data/simplepointbot#num_traj is 
         for j, frame in list(enumerate(trajectory)):#each frame in one trajectory
             for key in im_dat:#from obs and next_obs
                 frame[key] = im_dat[key][j]#the frame is the jth frame in 1 traj
-                #print('key',key)#(3,64,64)
-                #print('frame[key].shape',frame[key].shape)
+                #print('key',key)
+                #print('frame[key].shape',frame[key].shape)#(3,64,64)
         trajectories.append(trajectory)#now you recover the full trajectory info with images
 
     return trajectories#that is a sequence/buffer/pool of trajs including images
@@ -291,6 +363,20 @@ def load_replay_buffer_relative_expensive2(params, encoder=None, encoder2=None, 
         replay_buffer.store_transitions(trajectory)#22
     #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
     return replay_buffer
+
+def load_replay_buffer_lipschitz(params, encoder=None, first_only=False):#it doesn't have traj parameter!
+
+    log.info('Populating replay buffer')#find correspondence in the cmd output
+
+    if encoder is not None:#replay buffer finally comes in!
+        replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'],params['mean'])#35000 for spb, 25000 for reacher
+        #print('load encoded buffer!')#load encoded buffer!
+    else:
+        replay_buffer = ReplayBuffer(params['buffer_size'])
+        #print('load plain buffer!')
+    #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
+    return replay_buffer
+    #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
 
 def make_env(params, monitoring=False):
     from latentsafesets.envs import SimplePointBot, PushEnv, SimpleVideoSaver

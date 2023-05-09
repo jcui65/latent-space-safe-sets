@@ -2004,7 +2004,7 @@ class CEMSafeSetPolicy(Policy):
                 values = values.squeeze()#all those violators, assign them with big cost of -1e5
             itr += 1#CEM Evolution method
         # Return the best action
-        action = actions_sorted[-1][0]#the best one
+        action = actions_sorted[-1][0]#the best one#it is a numpy array
         return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
     def actcbfdsquarelatentplanareacheraverage(self, obs):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states

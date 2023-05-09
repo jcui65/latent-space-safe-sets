@@ -86,21 +86,23 @@ if __name__ == '__main__':
         #dynamics_model2 = modules['dyn2']
         # Populate replay buffer
         #the following is loading replay buffer, rather than loading trajectories
-        replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
+        #replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
         #replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
         #replay_buffer2 = utils.load_replay_buffer_relative(params, encoder2)  # around line 123 in utils.py
         #replay_buffer = utils.load_replay_buffer_relative_expensive2(params, encoder, encoder2)  # around line 123 in utils.py
-
+        replay_buffer = utils.load_replay_buffer_lipschitz(params, encoder)#around line 123 in utils.py
+        '''
         if params['unsafebuffer']=='yes':
             replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
             log.info('unsafe buffer!')
         else:
             replay_buffer_unsafe=replay_buffer
             log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
-
+        '''
+        replay_buffer_unsafe=None
         trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
 
-        trainer.initial_train(replay_buffer,replay_buffer_unsafe)#initialize all the parts!
+        #trainer.initial_train(replay_buffer,replay_buffer_unsafe)#initialize all the parts!
 
         log.info("Creating policy")
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
@@ -111,8 +113,8 @@ if __name__ == '__main__':
                                 #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
                                 #constraint_function, goal_indicator, cbfdot_function, encoder2,dynamics_model2, params)
-        num_updates = params['num_updates']#default 25
-        traj_per_update = params['traj_per_update']#default 10
+        num_updates = 1#params['num_updates']#default 25
+        traj_per_update = 200#params['traj_per_update']#default 10
 
         losses = {}
         avg_rewards = []
@@ -134,13 +136,16 @@ if __name__ == '__main__':
         action_type=params['action_type']
         cbfalpha=0.2#exponential averaging for CBF
         for i in range(num_updates):#default 25 in spb
-            if i==0:
-                teacher=ReacherConstraintdense1Teacher(env,noisy=False)
-            elif i==1:
-                teacher=ReacherConstraintdense2Teacher(env,noisy=False)
+            #if i==0:
+                #teacher=ReacherConstraintdense1Teacher(env,noisy=False)
+            #elif i==1:
+                #teacher=ReacherConstraintdense2Teacher(env,noisy=False)
+            teacher=ReacherConstraintdense2Teacher(env,noisy=False)
             log.info('current dhz: %f'%(params['dhz']))
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
+            datasave_dir = os.path.join(update_dir, "ReacherConstraintdense2")#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
+            os.makedirs(datasave_dir)#mkdir!
             update_rewards = []
 
 
@@ -174,11 +179,13 @@ if __name__ == '__main__':
             for j in range(traj_per_update):#default 10 in spb
 
 
-                angled=-np.pi + 1.5*np.pi*i/traj_per_update#n#here n is traj_per_update##np.pi/2 - 1.5*np.pi*i/n#d means desired
+                angled=-np.pi + 1.5*np.pi*(j+1)/traj_per_update#n#here n is traj_per_update##np.pi/2 - 1.5*np.pi*i/n#d means desired
                 if type(teacher)==ReacherConstraintdense1Teacher:#'ReacherConstraintdense1':
                     radius=0.045#0.05#0.04#
                 else:
                     radius=0.12
+                    if j<2:
+                        radius=(0.11+0.005*j)
                 xinc=radius*np.cos(angled)
                 yinc=radius*np.sin(angled)
                 xbase=-0.13*np.sqrt(0.75)
@@ -223,6 +230,7 @@ if __name__ == '__main__':
                 transitions = []
 
                 obs = np.array(env.reset())#the obs seems to be the observation as image rather than obstacle
+                #obs = np.array(env.reset(s0t1))#just a test
                 #obs,obs_relative = np.array(env.reset()) #can I do this? # the obs seems to be the observation as image rather than obstacle
                 policy.reset()#self.mean, self.std = None, None
                 done = False
@@ -238,7 +246,7 @@ if __name__ == '__main__':
                 action_rand=False
                 constr_viol_cbf = False
                 constr_viol_cbf2 = False
-                params['horizon']=500#400#
+                params['horizon']=320#500#400#
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]
@@ -300,9 +308,14 @@ if __name__ == '__main__':
                                 'next_obs': next_obs, 'done': done,
                                 'constraint': constr, 'safe_set': 0, 'on_policy': 1}
                     '''
-                    transition = {'obs': obs, 'action': action, 'reward': reward,
-                                'next_obs': next_obs, 'done': done,  # this is a dictionary
-                                'constraint': constr, 'safe_set': 0,
+                    #print(np.dtype(float(reward)))
+                    #print(np.dtype(hvo))
+                    #print(np.dtype(hvn))
+                    #print(np.dtype(hvd))
+                    action64=np.float64(action)
+                    transition = {'obs': obs, 'action': tuple(action64), 'reward': float(reward),
+                                'next_obs': next_obs, 'done': int(done),  # this is a dictionary
+                                'constraint': int(constr), 'safe_set': 0,
                                 'on_policy': 1,
                                 'rdo': info['rdo'].tolist(),#rdo for relative distance old
                                 'rdn': info['rdn'].tolist(),#rdn for relative distance new
@@ -408,6 +421,9 @@ if __name__ == '__main__':
                     rtg = rtg + transition['reward']
 
                 replay_buffer.store_transitions(transitions)#replay buffer online training
+                #I am going to save trajectory!
+                #utils.save_trajectory(traj, file, i)#
+                utils.save_trajectory(transitions, datasave_dir, j)#
                 update_rewards.append(traj_reward)
 
             mean_rew = float(np.mean(update_rewards))
