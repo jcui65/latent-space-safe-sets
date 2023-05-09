@@ -32,12 +32,13 @@ if __name__ == '__main__':
     initdhz=params['dhz']
     traj_per_update = 200#params['traj_per_update']#default 10
     params['horizon']=320#500#400#
-    slopexy=np.zeros((traj_per_update*params['horizon']))
-    slopeyz=np.zeros((traj_per_update*params['horizon']))
-    slopezh=np.zeros((traj_per_update*params['horizon']))
-    slopeyh=np.zeros((traj_per_update*params['horizon']))
+    slopexy=slopeyz=slopezh=slopeyh=np.zeros((traj_per_update*params['horizon']))
     piece=0#which piece of trajectory? this piece
     eps=1e-10
+    lipxy=lipyz=lipzh=lipyh=0
+    tpx=-0.25*np.sqrt(0.5)
+    tpy=0.25*np.sqrt(0.5)
+    targetpos=np.array([tpx,tpy])
     for m in range(repeattimes):
         params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23
@@ -135,7 +136,7 @@ if __name__ == '__main__':
         task_succ = []
         n_episodes = 0
 
-        tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
+        #tp, fp, fn, tn, tpc, fpc, fnc, tnc = 0, 0, 0, 0, 0, 0, 0, 0
 
         reward_type=params['reward_type']
         #print('reward_type',reward_type)
@@ -156,32 +157,7 @@ if __name__ == '__main__':
             os.makedirs(datasave_dir)#mkdir!
             update_rewards = []
 
-
             #teacher = teacher(env)#, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
-            '''
-            demonstrations = []#an empty list
-            #ro=0.04#0.05-1
-            for i in range(n):#50/250
-                print('data_dir',data_dir)
-                if data_dir=='ReacherConstraintdense1' or data_dir=='ReacherConstraintdense2':
-                    #print('teacherenter',teacher)
-                    
-
-
-                    #print('s1t2',s1t2)#print('s1t1',s1[t1])
-                    traj = teacher.generate_trajectorysafety_dense(xa=s0t1,ya=s0t2,xa2=s1t1,ya2=s1t2,angled=angled)
-                else:
-                    traj = teacher.generate_trajectorysafety()#line 33 in teacher.py#100 transitions
-                reward = sum([frame['reward'] for frame in traj])#traj is a list of dictionaries
-                #why not directly use rtg[0]?
-                print('Trajectory %d, Reward %d' % (i, reward))
-                demonstrations.append(traj)#traj is one piece of trajectories
-                utils.save_trajectory(traj, file, i)#86 in utils.py#save 1 traj having 100 steps
-
-                if i < 50 and logdir is not None:
-                    pu.make_movie(traj, os.path.join(logdir, '%s_%d.gif' % (data_dir, i)))#do I add relative here or in other place?
-            '''
-
 
             # Collect Data
             for j in range(traj_per_update):#default 10 in spb
@@ -316,10 +292,7 @@ if __name__ == '__main__':
                                 'next_obs': next_obs, 'done': done,
                                 'constraint': constr, 'safe_set': 0, 'on_policy': 1}
                     '''
-                    #print(np.dtype(float(reward)))
-                    #print(np.dtype(hvo))
-                    #print(np.dtype(hvn))
-                    #print(np.dtype(hvd))
+
                     action64=np.float64(action)
                     transition = {'obs': obs, 'action': tuple(action64), 'reward': float(reward),
                                 'next_obs': next_obs, 'done': int(done),  # this is a dictionary
@@ -333,45 +306,27 @@ if __name__ == '__main__':
                                 'state': info['state'].tolist(),
                                 'next_state': info['next_state'].tolist()
                                 }  # add key and value into it!
-                    '''
-                    transition = {'obs': obs, 'action': action, 'reward': reward,
-                                'next_obs': next_obs, 'done': done,  # this is a dictionary
-                                'constraint': constr, 'safe_set': 0,
-                                'on_policy': 1,
-                                'rdo': info['rdo'].tolist(),  # rdo for relative distance old
-                                'rdn': info['rdn'].tolist(),  # rdn for relative distance new
-                                'hvo': info['hvo'],  # hvo for h value old
-                                'hvn': info['hvn'],  # hvn for h value new
-                                'hvd': info['hvd'],  # hvd for h value difference
-                                'state': info['state'].tolist(),
-                                'next_state': info['next_state'].tolist(),
-                                'state_relative': info['state_relative'].tolist(),
-                                'next_state_relative': info['next_state_relative'].tolist(),
-                                'obs_relative': obs_relative,
-                                'next_obs_relative': next_obs_relative
-                                }  # add key and value into it!
-                    '''
-
 
                     transitions.append(transition)
 
 
-
-
-
                     currentstate=info['state']
-                    currentpos=currentstate[0:2]
+                    #print('currentstate',currentstate)#the first 2 values are still in configuration space!
+                    currentpos=targetpos-currentstate[2:4]#currentstate[0:2]#
+                    #print('currentpos',currentpos)#now it is the state space position of the end effector!
                     nextstate=info['next_state']
-                    nextpos=nextstate[0:2]
+                    nextpos=targetpos-nextstate[2:4]#nextstate[0:2]#
+                    #print('nextstate',nextstate)
+                    #print('nextpos',nextpos)
                     posdiff=nextpos-currentpos
                     posdiffnorm=np.linalg.norm(posdiff)
                     #for key in im_dat:#from obs and next_obs
                         #frame[key] = im_dat[key][j]#the frame is the jth frame in 1 traj
                     #frame['obs'] = im_dat['obs'][j]#the frame is the jth frame in 1 traj
                     #frame['next_obs'] = im_dat['next_obs'][j]#the frame is the jth frame in 1 traj
-                    imagediff=next_obs-obs#frame['next_obs']-frame['obs']
-                    imagediffnorm=np.linalg.norm(imagediff)
-                    imagediffnormal=imagediffnorm/255
+                    #imagediff=next_obs-obs#frame['next_obs']-frame['obs']
+                    #imagediffnorm=np.linalg.norm(imagediff)
+                    #imagediffnormal=imagediffnorm/255
                     imobs = ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary#np.array(frame['obs'])#(transition[key])#seems to be the image?
                     #zobs_mean, zobs_log_std = self.encoder(imobs[None] / 255)#is it legit?
                     #zobs_mean = zobs_mean.squeeze().detach().cpu().numpy()
@@ -387,27 +342,29 @@ if __name__ == '__main__':
                         znextobs = encoder.encode(imnextobs/255)#in latent space now!#even
                     elif params['mean']=='mean':
                         znextobs = encoder.encodemean(imnextobs/255)#in latent space now!#really zero now! That's what I  want!
-                    zdiff=znextobs-zobs
+                    imagediff=ptu.to_numpy(imnextobs/255-imobs/255)#next_obs-obs#frame['next_obs']-frame['obs']
+                    #imagediffnorm=np.linalg.norm(imagediff)#
+                    imagediffnormal=np.linalg.norm(imagediff)#imagediffnorm/255#
+                    zdiff=ptu.to_numpy(znextobs-zobs)
                     zdiffnorm=np.linalg.norm(zdiff)
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
-                    hdiff=hnextobs-hobs
+                    hdiff=ptu.to_numpy(hnextobs-hobs)
                     hdiffnorm=np.linalg.norm(hdiff)
                     slopexyp=imagediffnormal/(posdiffnorm+eps)
                     slopeyzp=zdiffnorm/(imagediffnormal+eps)
-                    slopezhp=hdiffnorm/(zdiff+eps)
+                    slopezhp=hdiffnorm/(zdiffnorm+eps)
                     slopeyhp=hdiffnorm/(imagediffnormal+eps)
                     slopexy[piece]=slopexyp
                     slopeyz[piece]=slopeyzp
                     slopezh[piece]=slopezhp
                     slopeyh[piece]=slopeyhp
-
-
-
-
-
-
-
+                    log.info('piece:%d,slopexyp:%f,slopeyzp:%f,slopezhp:%f,slopeyhp:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp))
+                    lipxy=max(lipxy,slopexyp)
+                    lipyz=max(lipyz,slopeyzp)
+                    lipzh=max(lipzh,slopezhp)
+                    lipyh=max(lipyh,slopeyhp)
+                    log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f' % (piece,lipxy,lipyz,lipzh,lipyh))
                     obs = next_obs#don't forget this step!
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                     #obs_relative = next_obs_relative  # don't forget this step!
@@ -417,47 +374,7 @@ if __name__ == '__main__':
                     constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1
                     succ = succ or reward == 0#as said in the paper, reward=0 means success!
 
-                    '''
-                    #Now, I should do the evaluation!
-                    obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
-                    #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
-                    #embeval = encoder.encode(obseval)#in latent space now!
-                    if params['mean']=='sample':
-                        embeval = encoder.encode(obseval)#in latent space now!#even
-                    elif params['mean']=='mean':
-                        embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
-                        #embeval2 = encoder.encodemean(obseval)#in latent space now!
-                    #print('emb.shape',emb.shape)#torch.Size([1, 32])
-                    #cbfdot_function.predict()
-                    
-                    cbfpredict = cbfdot_function(embeval,already_embedded=True)#is it legit? Seems not!
-                    cbfgt=hvn
-                    if (cbfpredict>=0) and (cbfgt>=0):
-                        tn+=1
-                    elif (cbfpredict>=0) and (cbfgt<0):
-                        fn+=1
-                    elif (cbfpredict<0) and (cbfgt>=0):
-                        fp+=1
-                    elif (cbfpredict<0) and (cbfgt<0):
-                        tp+=1
-                    tncvalue=0.05**2-0.055**2+1e-4#for reacher!#0.05**2-0.06**2+1e-4#0.3**2-0.4**2+1e-3#FOR PUSHING!#
-                    if (cbfpredict>=0) and (cbfgt>=tncvalue):
-                        tnc+=1
-                    elif (cbfpredict>=0) and (cbfgt<tncvalue):
-                        fnc+=1
-                    elif (cbfpredict<0) and (cbfgt>=tncvalue):
-                        fpc+=1
-                    elif (cbfpredict<0) and (cbfgt<tncvalue):
-                        tpc+=1
-                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
-                    '''
                     log.info('s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
-
-
-
-                    
-
-
 
 
                     #the evaluation phase ended
@@ -535,6 +452,11 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'constrcbf2.npy'), constr_viols_cbf2)
             np.save(os.path.join(logdir, 'action_rands.npy'), all_action_rands)
             np.save(os.path.join(logdir, 'tasksuccess.npy'), task_succ)
+            np.save(os.path.join(logdir, 'slopexy.npy'), slopexy)
+            np.save(os.path.join(logdir, 'slopeyz.npy'), slopeyz)
+            np.save(os.path.join(logdir, 'slopezh.npy'), slopezh)
+            np.save(os.path.join(logdir, 'slopeyh.npy'), slopeyh)
+
         params['seed']=params['seed']+1#m+1#
         #utils.init_logging(logdir)#record started!
         #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')
