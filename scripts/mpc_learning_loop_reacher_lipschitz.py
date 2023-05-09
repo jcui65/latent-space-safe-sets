@@ -30,6 +30,14 @@ if __name__ == '__main__':
     # Misc preliminaries
     repeattimes=1#params['repeat_times']#
     initdhz=params['dhz']
+    traj_per_update = 200#params['traj_per_update']#default 10
+    params['horizon']=320#500#400#
+    slopexy=np.zeros((traj_per_update*params['horizon']))
+    slopeyz=np.zeros((traj_per_update*params['horizon']))
+    slopezh=np.zeros((traj_per_update*params['horizon']))
+    slopeyh=np.zeros((traj_per_update*params['horizon']))
+    piece=0#which piece of trajectory? this piece
+    eps=1e-10
     for m in range(repeattimes):
         params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23
@@ -114,7 +122,7 @@ if __name__ == '__main__':
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
                                 #constraint_function, goal_indicator, cbfdot_function, encoder2,dynamics_model2, params)
         num_updates = 1#params['num_updates']#default 25
-        traj_per_update = 200#params['traj_per_update']#default 10
+        
 
         losses = {}
         avg_rewards = []
@@ -246,7 +254,7 @@ if __name__ == '__main__':
                 action_rand=False
                 constr_viol_cbf = False
                 constr_viol_cbf2 = False
-                params['horizon']=320#500#400#
+                
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]
@@ -346,6 +354,60 @@ if __name__ == '__main__':
 
 
                     transitions.append(transition)
+
+
+
+
+
+                    currentstate=info['state']
+                    currentpos=currentstate[0:2]
+                    nextstate=info['next_state']
+                    nextpos=nextstate[0:2]
+                    posdiff=nextpos-currentpos
+                    posdiffnorm=np.linalg.norm(posdiff)
+                    #for key in im_dat:#from obs and next_obs
+                        #frame[key] = im_dat[key][j]#the frame is the jth frame in 1 traj
+                    #frame['obs'] = im_dat['obs'][j]#the frame is the jth frame in 1 traj
+                    #frame['next_obs'] = im_dat['next_obs'][j]#the frame is the jth frame in 1 traj
+                    imagediff=next_obs-obs#frame['next_obs']-frame['obs']
+                    imagediffnorm=np.linalg.norm(imagediff)
+                    imagediffnormal=imagediffnorm/255
+                    imobs = ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary#np.array(frame['obs'])#(transition[key])#seems to be the image?
+                    #zobs_mean, zobs_log_std = self.encoder(imobs[None] / 255)#is it legit?
+                    #zobs_mean = zobs_mean.squeeze().detach().cpu().numpy()
+                    if params['mean']=='sample':
+                        zobs = encoder.encode(imobs/255)#in latent space now!#even
+                    elif params['mean']=='mean':
+                        zobs = encoder.encodemean(imobs/255)#in latent space now!#really zero now! That's what I  want!
+                    imnextobs = ptu.torchify(next_obs).reshape(1, *obs.shape)#np.array(frame['next_obs'])#(transition[key])#seems to be the image?
+                    #imnextobs = ptu.torchify(imnextobs)
+                    #znext_obs_mean, znext_obs_log_std = self.encoder(imnextobs[None] / 255)#is it legit?
+                    #znext_obs_mean = znext_obs_mean.squeeze().detach().cpu().numpy()
+                    if params['mean']=='sample':
+                        znextobs = encoder.encode(imnextobs/255)#in latent space now!#even
+                    elif params['mean']=='mean':
+                        znextobs = encoder.encodemean(imnextobs/255)#in latent space now!#really zero now! That's what I  want!
+                    zdiff=znextobs-zobs
+                    zdiffnorm=np.linalg.norm(zdiff)
+                    hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
+                    hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
+                    hdiff=hnextobs-hobs
+                    hdiffnorm=np.linalg.norm(hdiff)
+                    slopexyp=imagediffnormal/(posdiffnorm+eps)
+                    slopeyzp=zdiffnorm/(imagediffnormal+eps)
+                    slopezhp=hdiffnorm/(zdiff+eps)
+                    slopeyhp=hdiffnorm/(imagediffnormal+eps)
+                    slopexy[piece]=slopexyp
+                    slopeyz[piece]=slopeyzp
+                    slopezh[piece]=slopezhp
+                    slopeyh[piece]=slopeyhp
+
+
+
+
+
+
+
                     obs = next_obs#don't forget this step!
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                     #obs_relative = next_obs_relative  # don't forget this step!
@@ -355,7 +417,7 @@ if __name__ == '__main__':
                     constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1
                     succ = succ or reward == 0#as said in the paper, reward=0 means success!
 
-                    
+                    '''
                     #Now, I should do the evaluation!
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
@@ -367,7 +429,8 @@ if __name__ == '__main__':
                         #embeval2 = encoder.encodemean(obseval)#in latent space now!
                     #print('emb.shape',emb.shape)#torch.Size([1, 32])
                     #cbfdot_function.predict()
-                    cbfpredict = cbfdot_function(embeval,already_embedded=True)#
+                    
+                    cbfpredict = cbfdot_function(embeval,already_embedded=True)#is it legit? Seems not!
                     cbfgt=hvn
                     if (cbfpredict>=0) and (cbfgt>=0):
                         tn+=1
@@ -387,10 +450,20 @@ if __name__ == '__main__':
                     elif (cbfpredict<0) and (cbfgt<tncvalue):
                         tpc+=1
                     log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
+                    '''
+                    log.info('s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
+
+
+
                     
+
+
+
+
                     #the evaluation phase ended
                     #if done:#when calculating lipschitz constant, I want it to be 500 steps, so disable this part
                         #break
+                    piece+=1
                     if (oldcviol and constr_viol)==1:#one step buffer/hold
                         break
                 transitions[-1]['done'] = 1#change the last transition to success/done!
