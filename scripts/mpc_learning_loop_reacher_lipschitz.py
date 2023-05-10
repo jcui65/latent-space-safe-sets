@@ -33,9 +33,13 @@ if __name__ == '__main__':
     traj_per_update = 200#params['traj_per_update']#default 10
     params['horizon']=320#500#400#
     slopexy=slopeyz=slopezh=slopeyh=np.zeros((traj_per_update*params['horizon']))
+    slopexys=slopeyzs=slopezhs=slopeyhs=np.zeros((traj_per_update*params['horizon']))
+    slopexyu=slopeyzu=slopezhu=slopeyhu=np.zeros((traj_per_update*params['horizon']))
     piece=0#which piece of trajectory? this piece
     eps=1e-10
     lipxy=lipyz=lipzh=lipyh=0
+    lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=0
+    lipxyunsafe=lipyzunsafe=lipzhunsafe=lipyhunsafe=0
     tpx=-0.25*np.sqrt(0.5)
     tpy=0.25*np.sqrt(0.5)
     targetpos=np.array([tpx,tpy])
@@ -164,7 +168,7 @@ if __name__ == '__main__':
 
 
                 angled=-np.pi + 1.5*np.pi*(j+1)/traj_per_update#n#here n is traj_per_update##np.pi/2 - 1.5*np.pi*i/n#d means desired
-                if type(teacher)==ReacherConstraintdense1Teacher:#'ReacherConstraintdense1':
+                if angled<0 and angled>-np.pi/2:#type(teacher)==ReacherConstraintdense1Teacher:#'ReacherConstraintdense1':
                     radius=0.045#0.05#0.04#
                 else:
                     radius=0.12
@@ -311,11 +315,16 @@ if __name__ == '__main__':
 
 
                     currentstate=info['state']
-                    #print('currentstate',currentstate)#the first 2 values are still in configuration space!
+                    #print('currentstate',currentstate)#8 dim vector!#the first 2 values are still in configuration space!
                     currentpos=targetpos-currentstate[2:4]#currentstate[0:2]#
+                    ctoobstacle=currentstate[4:6]
+                    ctodistance=np.linalg.norm(ctoobstacle)
+                    #print('ctoobstacle',ctoobstacle)#the x and y signed distance to obstacle!
                     #print('currentpos',currentpos)#now it is the state space position of the end effector!
                     nextstate=info['next_state']
                     nextpos=targetpos-nextstate[2:4]#nextstate[0:2]#
+                    ntoobstacle=nextstate[4:6]
+                    ntodistance=np.linalg.norm(ntoobstacle)
                     #print('nextstate',nextstate)
                     #print('nextpos',nextpos)
                     posdiff=nextpos-currentpos
@@ -342,7 +351,9 @@ if __name__ == '__main__':
                         znextobs = encoder.encode(imnextobs/255)#in latent space now!#even
                     elif params['mean']=='mean':
                         znextobs = encoder.encodemean(imnextobs/255)#in latent space now!#really zero now! That's what I  want!
-                    imagediff=ptu.to_numpy(imnextobs/255-imobs/255)#next_obs-obs#frame['next_obs']-frame['obs']
+                    imdiff1=imnextobs/255-imobs/255
+                    #print('imdiff1',imdiff1)#3 channel image!
+                    imagediff=ptu.to_numpy(imdiff1)#next_obs-obs#frame['next_obs']-frame['obs']
                     #imagediffnorm=np.linalg.norm(imagediff)#
                     imagediffnormal=np.linalg.norm(imagediff)#imagediffnorm/255#
                     zdiff=ptu.to_numpy(znextobs-zobs)
@@ -359,12 +370,38 @@ if __name__ == '__main__':
                     slopeyz[piece]=slopeyzp
                     slopezh[piece]=slopezhp
                     slopeyh[piece]=slopeyhp
-                    log.info('piece:%d,slopexyp:%f,slopeyzp:%f,slopezhp:%f,slopeyhp:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp))
+                    
                     lipxy=max(lipxy,slopexyp)
                     lipyz=max(lipyz,slopeyzp)
                     lipzh=max(lipzh,slopezhp)
                     lipyh=max(lipyh,slopeyhp)
-                    log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f' % (piece,lipxy,lipyz,lipzh,lipyh))
+                    
+                    if ntodistance<=0.09 and ntodistance>=0.07:
+                        slopexys[piece]=slopexyp
+                        slopeyzs[piece]=slopeyzp
+                        slopezhs[piece]=slopezhp
+                        slopeyhs[piece]=slopeyhp
+                        lipxysafe=max(lipxysafe,slopexyp)
+                        lipyzsafe=max(lipyzsafe,slopeyzp)
+                        lipzhsafe=max(lipzhsafe,slopezhp)
+                        lipyhsafe=max(lipyhsafe,slopeyhp)
+                        log.info('piece:%d,sxysafep:%f,syzsafep:%f,szhsafep:%f,syhsafep:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,ntodistance))
+                        log.info('piece:%d,lxysafe:%f,lyzsafe:%f,lzhsafe:%f,lyhsafe:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe))
+                    elif ntodistance<=0.06:
+                        slopexyu[piece]=slopexyp
+                        slopeyzu[piece]=slopeyzp
+                        slopezhu[piece]=slopezhp
+                        slopeyhu[piece]=slopeyhp
+                        lipxyunsafe=max(lipxyunsafe,slopexyp)
+                        lipyzunsafe=max(lipyzunsafe,slopeyzp)
+                        lipzhunsafe=max(lipzhunsafe,slopezhp)
+                        lipyhunsafe=max(lipyhunsafe,slopeyhp)
+                        log.info('piece:%d,sxyunsafep:%f,syzunsafep:%f,szhunsafep:%f,syhunsafep:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,ntodistance))
+                        log.info('piece:%d,lxyunsafe:%f,lyzunsafe:%f,lzhunsafe:%f,lyhunsafe:%f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe))
+                    else:
+                        log.info('piece:%d,sxyp:%f,syzp:%f,szhp:%f,syhp:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,ntodistance))
+                        log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f' % (piece,lipxy,lipyz,lipzh,lipyh))
+
                     obs = next_obs#don't forget this step!
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                     #obs_relative = next_obs_relative  # don't forget this step!
@@ -376,12 +413,11 @@ if __name__ == '__main__':
 
                     log.info('s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
 
-
                     #the evaluation phase ended
                     #if done:#when calculating lipschitz constant, I want it to be 500 steps, so disable this part
                         #break
                     piece+=1
-                    if (oldcviol and constr_viol)==1:#one step buffer/hold
+                    if constr_viol==1:#one step to avoid redundancy#(oldcviol and constr_viol)==1:#one step buffer/hold
                         break
                 transitions[-1]['done'] = 1#change the last transition to success/done!
                 traj_reward = sum(traj_rews)#total reward, should be >=-100/-150
@@ -456,6 +492,14 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'slopeyz.npy'), slopeyz)
             np.save(os.path.join(logdir, 'slopezh.npy'), slopezh)
             np.save(os.path.join(logdir, 'slopeyh.npy'), slopeyh)
+            np.save(os.path.join(logdir, 'slopexys.npy'), slopexys)
+            np.save(os.path.join(logdir, 'slopeyzs.npy'), slopeyzs)
+            np.save(os.path.join(logdir, 'slopezhs.npy'), slopezhs)
+            np.save(os.path.join(logdir, 'slopeyhs.npy'), slopeyhs)
+            np.save(os.path.join(logdir, 'slopexyu.npy'), slopexyu)
+            np.save(os.path.join(logdir, 'slopeyzu.npy'), slopeyzu)
+            np.save(os.path.join(logdir, 'slopezhu.npy'), slopezhu)
+            np.save(os.path.join(logdir, 'slopeyhu.npy'), slopeyhu)
 
         params['seed']=params['seed']+1#m+1#
         #utils.init_logging(logdir)#record started!

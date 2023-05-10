@@ -513,23 +513,29 @@ class ReacherConstraintdense2Teacher(AbstractTeacher):
         goal1 = np.array((xaf,yaf))#np.array((np.pi * .53, 0.7 * np.pi))
         goal2 = np.array((xa2f,ya2f))#np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
         rate=2.5
-        p2=65*rate#60
+        p2=65#60
         if angled>=0:
-            if i<25*rate:
+            if i<25:
                 goal=np.array((np.pi/6,np.pi*5.2/6))
-            elif i<45*rate:
+                action_limit=1
+            elif i<45:
                 goal=np.array((np.pi/6,np.pi*4/6))  
+                action_limit=1
             elif i < p2:
                 #goal = np.array((xa, ya))
                 goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+                action_limit=1
         elif angled<=-np.pi/2:
-            if i<30*rate:
+            if i<30:
                 goal=np.array((np.pi*5/6,np.pi/2))
+                action_limit=1
             elif i < p2:
                 goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+                action_limit=1
         else:
-            if i < p2:
+            if i < p2:#kind of a mix
                 goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+                #action_limit=0.2#no need!
         if i>=p2:
             goal3 = np.array((1.61961612328942,1.99675550940415))#np.array((np.pi * .53, 0.7 * np.pi))#central position
             goal4 = np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
