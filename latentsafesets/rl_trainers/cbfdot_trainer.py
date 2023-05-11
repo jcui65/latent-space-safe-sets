@@ -108,7 +108,11 @@ class CBFdotplanaTrainer(Trainer):#modified from contraint trainer???
         log.info('Beginning cbfdot initial optimization')
 
         for i in range(self.params['cbfd_init_iters']):#for example, 10000
-            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
+            if self.params['mean']=='meancbf':
+                out_dict = replay_buffer.samplemeancbf(self.params['cbfd_batch_size'])#256
+            else:
+                out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
+            #out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
             rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']#0 or 1
             #rdo for relative distance old, hvd for h value difference
             #print('rdo',rdo)#seems reasonable##print(rdo.shape)#(256,2)
@@ -138,7 +142,11 @@ class CBFdotplanaTrainer(Trainer):#modified from contraint trainer???
         log.info('Beginning cbf dot update optimization')
 
         for _ in trange(self.params['cbfd_update_iters']):
-            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+            if self.params['mean']=='meancbf':
+                out_dict = replay_buffer.samplemeancbf(self.params['cbfd_batch_size'])#256
+            else:
+                out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
+            #out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
             #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
             rdo, action, hvd = out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
             rda = np.concatenate((rdo, action),axis=1)
@@ -155,7 +163,11 @@ class CBFdotplanaTrainer(Trainer):#modified from contraint trainer???
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
 
     def plot(self, file, replay_buffer):
-        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
+        #out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
         next_obs = out_dict['next_obs']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdot(next_obs, self.cbfd,
@@ -163,7 +175,11 @@ class CBFdotplanaTrainer(Trainer):#modified from contraint trainer???
                              env=self.env)
 
     def plotconly(self, file, replay_buffer):
-        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        #out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
         next_obs = out_dict['next_obs']
         #rdo = out_dict['rdo']
         pu.visualize_cbfdotconly(next_obs, self.cbfd,
@@ -220,14 +236,22 @@ class CBFdotlatentplanaTrainerold(Trainer):
         #self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
 
     def plot(self, file, replay_buffer):
-        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        #out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
         next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
         pu.visualize_cbfdot(next_obs, self.cbfd,
                              file,
                              env=self.env)
 
     def plotconly(self, file, replay_buffer):
-        out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        #out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.params['cbfd_batch_size'])#256
         next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
         pu.visualize_cbfdotconly(next_obs, self.cbfd,
                              file,
@@ -240,7 +264,13 @@ class CBFdotlatentplanaTrainer(Trainer):
         self.cbfd =cbfd
         self.loss_plotter = loss_plotter
         self.env = env
-        self.batchsize=self.params['cbfd_batch_size']#int(self.params['cbfd_batch_size']/2)#
+        self.unsafebuffer=self.params['unsafebuffer']
+        if self.unsafebuffer=='yes2':
+            self.batchsize=int(self.params['cbfd_batch_size']/2)#
+            #log.info('self.batchsize hope 128:%d'% (self.batchsize))
+        else:
+            self.batchsize=self.params['cbfd_batch_size']#int(self.params['cbfd_batch_size']/2)#
+            #log.info('self.batchsize hope 256:%d'% (self.batchsize))
         self.env_name = params['env']
 
     def initial_train(self, replay_buffer, update_dir,replay_buffer_unsafe):
@@ -253,7 +283,11 @@ class CBFdotlatentplanaTrainer(Trainer):
 
         self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer,replay_buffer_unsafe)#if not spb, then don't plot
         for i in range(self.params['cbfd_init_iters']):#10000
-            out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+            #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+            if self.params['mean']=='meancbf':
+                out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            else:
+                out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             obs=out_dict['obs']
             #obs = out_dict['obs_relative']
             #print('obs',obs)
@@ -265,7 +299,11 @@ class CBFdotlatentplanaTrainer(Trainer):
                 rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
             #print('hvn.shape',hvn.shape)
             if replay_buffer_unsafe!=None:
-                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+                #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+                if self.params['mean']=='meancbf':
+                    out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                else:
+                    out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 obsus=out_dictus['obs']#us means unsafe
                 rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
                 obs=np.vstack((obs,obsus))
@@ -307,7 +345,11 @@ class CBFdotlatentplanaTrainer(Trainer):
             dhzepochave=0
             #log.info('cbfd_lr: %f'%(self.params['cbfd_lr']))
             for _ in trange(self.params['cbfd_update_iters']):#512
-                out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#random shuffling is done in this step!
+                #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#random shuffling is done in this step!
+                if self.params['mean']=='meancbf':
+                    out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                else:
+                    out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 #next_obs, constr = out_dict['next_obs'], out_dict['constraint']
                 #obs, rdo, action, hvd = out_dict['obs'], out_dict['rdo'], out_dict['action'], out_dict['hvd']  # 0 or 1
                 if self.params['env']=='push' and self.params['push_cbf_strategy']==2:
@@ -320,7 +362,11 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
                 #print('obsold.shape',obs.shape)
                 if replay_buffer_unsafe!=None:
-                    out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+                    #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+                    if self.params['mean']=='meancbf':
+                        out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                    else:
+                        out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
                     obsus=out_dictus['obs']#us means unsafe
                     #print('obsus.shape',obsus.shape)(128,32)
                     rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
@@ -369,10 +415,18 @@ class CBFdotlatentplanaTrainer(Trainer):
             return deal
 
     def plot(self, file, replay_buffer,replay_buffer_unsafe):
-        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
         next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
         if replay_buffer_unsafe!=None:
-            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            if self.params['mean']=='meancbf':
+                out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            else:
+                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
             next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']  # rdo = out_dict['rdo']
@@ -381,11 +435,19 @@ class CBFdotlatentplanaTrainer(Trainer):
                              env=self.env)
 
     def plotconly(self, file, replay_buffer,replay_buffer_unsafe):
-        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
         next_obs = out_dict['next_obs']
         rdo = out_dict['rdo']
         if replay_buffer_unsafe!=None:
-            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            if self.params['mean']=='meancbf':
+                out_dictus = replay_buffer_unsafe.samplemeancbf(self.params['cbfd_batch_size'])#256
+            else:
+                out_dictus = replay_buffer_unsafe.sample(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
             next_obs=np.vstack((next_obs,next_obsus))
         pu.visualize_cbfdotconly(next_obs, self.cbfd,
@@ -394,12 +456,20 @@ class CBFdotlatentplanaTrainer(Trainer):
 
 
     def plotlatentunbiased(self, file, replay_buffer,replay_buffer_unsafe,coeff):
-        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
         next_obs = out_dict['next_obs']
         #next_obs = out_dict['next_obs_relative']
         #rdo = out_dict['rdo']
         if replay_buffer_unsafe!=None:
-            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            if self.params['mean']=='meancbf':
+                out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            else:
+                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
             next_obs=np.vstack((next_obs,next_obsus))
         pu.visualize_cbfdotlatentunbiased(next_obs, self.cbfd,
@@ -407,10 +477,18 @@ class CBFdotlatentplanaTrainer(Trainer):
                              env=self.env,coeff=coeff)
 
     def plotlatentgroundtruth(self, file, replay_buffer,replay_buffer_unsafe):
-        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
         next_obs = out_dict['next_obs']
         if replay_buffer_unsafe!=None:
-            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            if self.params['mean']=='meancbf':
+                out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            else:
+                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
             next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']
@@ -420,10 +498,18 @@ class CBFdotlatentplanaTrainer(Trainer):
                              env=self.env)
 
     def plotlatent(self, file, replay_buffer,replay_buffer_unsafe):
-        out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
         next_obs = out_dict['next_obs']
         if replay_buffer_unsafe!=None:
-            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+            if self.params['mean']=='meancbf':
+                out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            else:
+                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
             next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']

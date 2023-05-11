@@ -299,10 +299,10 @@ def load_replay_buffer_unsafe(params, encoder=None, first_only=False):#it doesn'
     random.shuffle(trajectories)
     if encoder is not None:#replay buffer finally comes in!
         replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'],params['mean'])#35000 for spb, 25000 for reacher!
-        print('load encoded buffer!')
+        #print('load encoded buffer!')#I know it is loading the encoded buffer now!
     else:
         replay_buffer = ReplayBuffer(params['buffer_size'])
-        print('load plain buffer!')
+        #print('load plain buffer!')
 
     for trajectory in tqdm(trajectories):#trajectory is 1 traj having 100 steps
         replay_buffer.store_transitions(trajectory)#22

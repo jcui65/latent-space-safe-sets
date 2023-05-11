@@ -48,7 +48,7 @@ class EncodedReplayBuffer:
                     im = ptu.torchify(im)
                     new_data_mean, new_data_log_std = self.encoder(im[None] / 255)#is it legit?
                     new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
-                    new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()
+                    new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()#meancbf still works like this!
                     if self.mean=='mean':
                         new_data_log_std=np.clip(new_data_log_std,a_min=None,a_max=-80)#-80 is really very small!
                     new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()
@@ -88,6 +88,16 @@ class EncodedReplayBuffer:
             raise ValueError("ensemble size cannot be negative")
 
         return {key: self._extract(key, indices) for key in self.data}#106
+
+    def samplemeancbf(self, batch_size, ensemble=0):#bs=256 by default#it is sampling a few transitions!
+        if ensemble == 0:#len(self) is literally self.size
+            indices = np.random.randint(len(self), size=batch_size)
+        elif ensemble > 0:
+            indices = np.random.randint(len(self), size=(ensemble, batch_size))
+        else:
+            raise ValueError("ensemble size cannot be negative")
+
+        return {key: self._extractmean(key, indices) for key in self.data}#106
 
     def sample_positive(self, batch_size, key, ensemble=0):
         """
@@ -130,13 +140,23 @@ class EncodedReplayBuffer:
         if key in self.im_keys:#obs and next_obs
             dat = self.data[key][indices]
             dat_mean, dat_log_std = np.split(dat, 2, axis=-1)
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 dat_std = np.exp(dat_log_std)
+                #print('meancbf non cbf should enter here!')
                 return np.random.normal(dat_mean.squeeze(), dat_std.squeeze())#this is already sampled!
             elif self.mean=='mean':
                 #print('dat_log_std',dat_log_std)#it also works for pushing! The implementation for pushing is also right!
                 #print('dat_mean.shape',dat_mean.shape)
                 return dat_mean.squeeze()#double check
+        else:#if it is not an image, then just return the value
+            return self.data[key][indices]
+
+    def _extractmean(self, key, indices):#give the term you want, then return the value
+        if key in self.im_keys:#obs and next_obs
+            dat = self.data[key][indices]
+            dat_mean, dat_log_std = np.split(dat, 2, axis=-1)
+            #print('meancbf cbf should enter here!')
+            return dat_mean.squeeze()#double check
         else:#if it is not an image, then just return the value
             return self.data[key][indices]
 

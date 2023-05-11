@@ -11,7 +11,7 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='05-07',help='the date when the simulation started', type=str)
+@click.option('--date', default='05-08',help='the date when the simulation started', type=str)
 @click.option('--time', default='00-36-31', help='time of the simulation', type=str)
 def main(date, time):
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'

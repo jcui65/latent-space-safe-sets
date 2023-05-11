@@ -125,9 +125,9 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
     def loss(self, next_obs, constr, already_embedded=False):
         #next_obs=torch.autograd.Variable(next_obs,requires_grad=True)
         logits = self(next_obs, already_embedded).squeeze()#.forward!#prediction
-        #print('logits',logits)
+        #print('logits',logits)#the value of the CBF
         targets = constr#label
-        loss1 =1000000*self.loss_func(logits, targets)#1000000 for reacher
+        loss1 =1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
         #print('next_obs.shape',next_obs.shape)
         #selfforwardtrue=lambda nextobs: self(nextobs, True)
         #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])

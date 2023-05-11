@@ -1657,7 +1657,7 @@ class CEMSafeSetPolicy(Policy):
             #emb = self.encoder.encode(obs)#in latent space now!it is 32 dimensional!
             if self.sample=='sample':#self.mean has been occupied for other uses!
                 emb=self.encoder.encode(obs)
-            elif self.sample=='mean':
+            elif self.sample=='mean' or self.sample=='meancbf':
                 emb=self.encoder.encodemean(obs)
                 #embtest=self.encoder.encodemean(obs)
                 #embdiff=(emb-embtest)*1000000000
@@ -1667,16 +1667,16 @@ class CEMSafeSetPolicy(Policy):
             #print('emb min',torch.min(emb))
             embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         elif self.current_robust=='weak':
-            if self.sample=='sample':
+            if self.sample=='sample' or self.sample=='meancbf':
                 emb=self.encoder.encode(obs)
-            elif self.sample=='mean':
+            elif self.sample=='mean' or self.sample=='meancbf':
                 emb=self.encoder.encodemean(obs)
             embrepeat20=emb.repeat(1, self.popsize, 1, 1)
             for i in range(self.n_particles-1):
                 #embi=self.encoder.encode(obs)
-                if self.sample=='sample':
+                if self.sample=='sample' or self.sample=='meancbf':
                     embi=self.encoder.encode(obs)
-                elif self.sample=='mean':
+                elif self.sample=='mean' or self.sample=='meancbf':
                     embi=self.encoder.encodemean(obs)
                 embrepeati=embi.repeat(1, self.popsize, 1, 1)
                 emb+=embi

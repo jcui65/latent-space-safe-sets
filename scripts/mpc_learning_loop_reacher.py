@@ -96,7 +96,7 @@ if __name__ == '__main__':
             replay_buffer_unsafe=replay_buffer
             log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
         '''
-        if params['unsafebuffer']=='yes':#new version
+        if params['unsafebuffer']=='yes' or params['unsafebuffer']=='yes2':#new version
             replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
             log.info('unsafe buffer!')
         else:
@@ -297,7 +297,7 @@ if __name__ == '__main__':
                         embeval = encoder.encode(obseval)#in latent space now!#even
                         #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                         #embeval2 = encoder.encode(obseval)#in latent space now!
-                    elif params['mean']=='mean':
+                    elif params['mean']=='mean' or params['mean']=='meancbf':
                         embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
                         #embeval2 = encoder.encodemean(obseval)#in latent space now!
                     #embdiff100000=(embeval-embeval2)*100000

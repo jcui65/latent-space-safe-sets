@@ -31,15 +31,15 @@ if __name__ == '__main__':
     repeattimes=1#params['repeat_times']#
     initdhz=params['dhz']
     traj_per_update = 200#params['traj_per_update']#default 10
-    params['horizon']=320#500#400#
-    slopexy=slopeyz=slopezh=slopeyh=np.zeros((traj_per_update*params['horizon']))
-    slopexys=slopeyzs=slopezhs=slopeyhs=np.zeros((traj_per_update*params['horizon']))
-    slopexyu=slopeyzu=slopezhu=slopeyhu=np.zeros((traj_per_update*params['horizon']))
+    params['horizon']=300#320#500#400#
+    slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((traj_per_update*params['horizon']))
+    slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((traj_per_update*params['horizon']))
+    slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((traj_per_update*params['horizon']))
     piece=0#which piece of trajectory? this piece
     eps=1e-10
-    lipxy=lipyz=lipzh=lipyh=0
-    lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=0
-    lipxyunsafe=lipyzunsafe=lipzhunsafe=lipyhunsafe=0
+    lipxy=lipyz=lipzh=lipyh=lipxh=0
+    lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=lipxhsafe=0
+    lipxyunsafe=lipyzunsafe=lipzhunsafe=lipyhunsafe=lipxhunsafe=0
     tpx=-0.25*np.sqrt(0.5)
     tpy=0.25*np.sqrt(0.5)
     targetpos=np.array([tpx,tpy])
@@ -366,41 +366,48 @@ if __name__ == '__main__':
                     slopeyzp=zdiffnorm/(imagediffnormal+eps)
                     slopezhp=hdiffnorm/(zdiffnorm+eps)
                     slopeyhp=hdiffnorm/(imagediffnormal+eps)
+                    slopexhp=hdiffnorm/(posdiffnorm+eps)
                     slopexy[piece]=slopexyp
                     slopeyz[piece]=slopeyzp
                     slopezh[piece]=slopezhp
                     slopeyh[piece]=slopeyhp
+                    slopexh[piece]=slopexhp
                     
                     lipxy=max(lipxy,slopexyp)
                     lipyz=max(lipyz,slopeyzp)
                     lipzh=max(lipzh,slopezhp)
                     lipyh=max(lipyh,slopeyhp)
+                    lipxh=max(lipxh,slopexhp)
                     
                     if ntodistance<=0.09 and ntodistance>=0.07:
                         slopexys[piece]=slopexyp
                         slopeyzs[piece]=slopeyzp
                         slopezhs[piece]=slopezhp
                         slopeyhs[piece]=slopeyhp
+                        slopexhs[piece]=slopexhp
                         lipxysafe=max(lipxysafe,slopexyp)
                         lipyzsafe=max(lipyzsafe,slopeyzp)
                         lipzhsafe=max(lipzhsafe,slopezhp)
                         lipyhsafe=max(lipyhsafe,slopeyhp)
-                        log.info('piece:%d,sxysafep:%f,syzsafep:%f,szhsafep:%f,syhsafep:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,ntodistance))
-                        log.info('piece:%d,lxysafe:%f,lyzsafe:%f,lzhsafe:%f,lyhsafe:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe))
+                        lipxhsafe=max(lipxhsafe,slopexhp)
+                        log.info('piece:%d,sxysafep:%f,syzsafep:%f,szhsafep:%f,syhsafep:%f,sxhsafep:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,ntodistance))
+                        log.info('piece:%d,lxysafe:%f,lyzsafe:%f,lzhsafe:%f,lyhsafe:%f,lxhsafe:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe))
                     elif ntodistance<=0.06:
                         slopexyu[piece]=slopexyp
                         slopeyzu[piece]=slopeyzp
                         slopezhu[piece]=slopezhp
                         slopeyhu[piece]=slopeyhp
+                        slopexhu[piece]=slopexhp
                         lipxyunsafe=max(lipxyunsafe,slopexyp)
                         lipyzunsafe=max(lipyzunsafe,slopeyzp)
                         lipzhunsafe=max(lipzhunsafe,slopezhp)
                         lipyhunsafe=max(lipyhunsafe,slopeyhp)
-                        log.info('piece:%d,sxyunsafep:%f,syzunsafep:%f,szhunsafep:%f,syhunsafep:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,ntodistance))
-                        log.info('piece:%d,lxyunsafe:%f,lyzunsafe:%f,lzhunsafe:%f,lyhunsafe:%f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe))
+                        lipxhunsafe=max(lipxhunsafe,slopexhp)
+                        log.info('piece:%d,sxyunsafep:%f,syzunsafep:%f,szhunsafep:%f,syhunsafep:%f,sxhunsafep:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,ntodistance))
+                        log.info('piece:%d,lxyunsafe:%f,lyzunsafe:%f,lzhunsafe:%f,lyhunsafe:%f,lxhunsafe:%f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
                     else:
-                        log.info('piece:%d,sxyp:%f,syzp:%f,szhp:%f,syhp:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,ntodistance))
-                        log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f' % (piece,lipxy,lipyz,lipzh,lipyh))
+                        log.info('piece:%d,sxyp:%f,syzp:%f,szhp:%f,syhp:%f,sxhp:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,ntodistance))
+                        log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f,lipxh:%f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh))
 
                     obs = next_obs#don't forget this step!
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
@@ -492,14 +499,17 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'slopeyz.npy'), slopeyz)
             np.save(os.path.join(logdir, 'slopezh.npy'), slopezh)
             np.save(os.path.join(logdir, 'slopeyh.npy'), slopeyh)
+            np.save(os.path.join(logdir, 'slopexh.npy'), slopexh)
             np.save(os.path.join(logdir, 'slopexys.npy'), slopexys)
             np.save(os.path.join(logdir, 'slopeyzs.npy'), slopeyzs)
             np.save(os.path.join(logdir, 'slopezhs.npy'), slopezhs)
             np.save(os.path.join(logdir, 'slopeyhs.npy'), slopeyhs)
+            np.save(os.path.join(logdir, 'slopexhs.npy'), slopexhs)
             np.save(os.path.join(logdir, 'slopexyu.npy'), slopexyu)
             np.save(os.path.join(logdir, 'slopeyzu.npy'), slopeyzu)
             np.save(os.path.join(logdir, 'slopezhu.npy'), slopezhu)
             np.save(os.path.join(logdir, 'slopeyhu.npy'), slopeyhu)
+            np.save(os.path.join(logdir, 'slopexhu.npy'), slopexhu)
 
         params['seed']=params['seed']+1#m+1#
         #utils.init_logging(logdir)#record started!
