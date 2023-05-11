@@ -47,6 +47,46 @@ def simple_plot(data, std=None, title=None, show=False, file=None, ylabel=None, 
     else:
         plt.close()
 
+def simple_plot2(data, std=None, data2=None, std2=None, title=None, show=False, file=None, ylabel=None, xlabel=None, log=False, nonreward=False):
+    plt.figure()
+    if log:
+        plt.semilogy(data)
+        plt.semilogy(data2)
+    else:
+        plt.plot(data, color='blue', label='LS3-zero')#label='LS3-recovery')#
+        plt.plot(data2, color='red', label='ROLSCBF')
+        plt.legend()
+    if nonreward:
+        plt.ylim(0, 1)
+    if std is not None:
+        assert not log, 'not sure how to implement this with log'
+        upper = np.add(data, std)
+        lower = np.subtract(data, std)
+        xs = np.arange(len(lower))
+        plt.fill_between(xs, lower, upper, alpha=0.3)
+
+    if std2 is not None:
+        assert not log, 'not sure how to implement this with log'
+        upper2 = np.add(data2, std2)
+        lower2 = np.subtract(data2, std2)
+        xs2 = np.arange(len(lower2))
+        plt.fill_between(xs2, lower2, upper2, alpha=0.3)
+
+    if title is not None:
+        plt.title(title)
+
+    if xlabel is not None:
+        plt.xlabel(xlabel)
+    if ylabel is not None:
+        plt.ylabel(ylabel)
+
+    if file is not None:
+        plt.savefig(file)
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
 
 def make_movie(trajectory, file):
     def float_to_int(im):
