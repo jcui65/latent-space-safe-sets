@@ -326,7 +326,7 @@ class ReacherConstraintTeacher(AbstractTeacher):
         angle = state[:2]
         goal1 = np.array((np.pi * .53, 0.7 * np.pi))
         goal2 = np.array((np.pi, -0.7 * np.pi))
-        goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))
+        goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#goal 1 or 2, which one is closer to current x
         act = goal - angle#all unsafe demos are similar! Is it good?
         # act = np.random.normal((self.direction, 0), 1)
         act = np.clip(act, -1, 1)

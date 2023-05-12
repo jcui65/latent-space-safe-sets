@@ -1847,7 +1847,8 @@ class CEMSafeSetPolicy(Policy):
                     jcesa=torch.abs(jces)
                     dhd=torch.dot(jcesa,dz)#delta h due to dynamics error
                     #print('dhd',dhd)
-                    log.info('dhd: %f'%(dhd.item()))
+                    if itr==1:
+                        log.info('dhd: %f'%(dhd.item()))
                     dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
                     #print('dz',dz[0])
                     #embs=emb.squeeze()
