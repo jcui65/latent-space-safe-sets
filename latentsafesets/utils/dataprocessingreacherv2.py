@@ -11,7 +11,7 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='05-10',help='the date when the simulation started', type=str)
+@click.option('--date', default='05-11',help='the date when the simulation started', type=str)
 @click.option('--time', default='02-41-37', help='time of the simulation', type=str)
 @click.option('--fh', default=500, help='five hundred or 250', type=int)
 def main(date, time,fh):
@@ -80,28 +80,38 @@ def main(date, time,fh):
         #tsrlist.append(tasksuccirate)
         ralist.append(rewardaveragei)
         ralastlist.append(rewardaveragelasti)
-
+    lenseed=len(seedlist)
     #calculate the statistics: mean and std
     rfarray=rfarray[1:]
     cvarray=cvarray[1:]
     tsrarray=tsrarray[1:]
+    np.save(os.path.join(logdirbeforeseed, 'rewards'+str(lenseed)+'.npy'), rfarray)
+    np.save(os.path.join(logdirbeforeseed, 'cv'+str(lenseed)+'.npy'), cvarray)
+    np.save(os.path.join(logdirbeforeseed, 'tsr'+str(lenseed)+'.npy'), tsrarray)
     #print('rfarray.shape',rfarray.shape)#3,250
     cvcarray=np.cumsum(cvarray,axis=1) 
+    np.save(os.path.join(logdirbeforeseed, 'cvc'+str(lenseed)+'.npy'), cvcarray)
     rfmean=np.mean(rfarray,axis=0)
     cvcmean=np.mean(cvcarray,axis=0)
     tsrmean=np.mean(tsrarray,axis=0)
+    np.save(os.path.join(logdirbeforeseed, 'rewardsmean'+str(lenseed)+'.npy'), rfmean)
+    np.save(os.path.join(logdirbeforeseed, 'cvcmean'+str(lenseed)+'.npy'), cvcmean)
+    np.save(os.path.join(logdirbeforeseed, 'tsrmean'+str(lenseed)+'.npy'), tsrmean)
     #print(rfmean)
     rfstd=np.std(rfarray,axis=0)
     cvcstd=np.std(cvcarray,axis=0)
     tsrstd=np.std(tsrarray,axis=0)
+    np.save(os.path.join(logdirbeforeseed, 'rewardsstd'+str(lenseed)+'.npy'), rfstd)
+    np.save(os.path.join(logdirbeforeseed, 'cvcstd'+str(lenseed)+'.npy'), cvcstd)
+    np.save(os.path.join(logdirbeforeseed, 'tsrstd'+str(lenseed)+'.npy'), tsrstd)
     #print(rfstd)
-    lenseed=len(seedlist)
+    
     pu.simple_plot(rfmean, std=rfstd, title='Average Rewards',
                             file=os.path.join(logdirbeforeseed, 'rewards'+str(lenseed)+'trajs'+date+'-'+time+'epochs'+str(fh)+'.pdf'),
                             ylabel='Average Reward', xlabel='# Training updates')
     pu.simple_plot(cvcmean, std=cvcstd, title='Constraint Violations',
                             file=os.path.join(logdirbeforeseed, 'cvc'+str(lenseed)+'trajs'+date+'-'+time+'epochs'+str(fh)+'.pdf'),
-                            ylabel='Average Reward', xlabel='# Training updates')
+                            ylabel='No. of Constraint Violations', xlabel='# Trajectories')
     pu.simple_plot(tsrmean, std=tsrstd, title='Average task success rate',
                             file=os.path.join(logdirbeforeseed, 'tsr'+str(lenseed)+'trajs'+date+'-'+time+'epochs'+str(fh)+'.pdf'),
                             ylabel='Average task success rate', xlabel='# Training updates')
@@ -118,13 +128,19 @@ def main(date, time,fh):
         tsrcarray=np.vstack((tsrcarray,tsrci))
     rfcarray=rfcarray[1:]
     tsrcarray=tsrcarray[1:]
+    np.save(os.path.join(logdirbeforeseed, 'rewardsc'+str(lenseed)+'.npy'), rfcarray)
+    np.save(os.path.join(logdirbeforeseed, 'tsrc'+str(lenseed)+'.npy'), tsrcarray)
     #print('rfcarray.shape',rfcarray.shape)#3,250
     rfcmean=np.mean(rfcarray,axis=1)
     tsrcmean=np.mean(tsrcarray,axis=1)
+    np.save(os.path.join(logdirbeforeseed, 'rewardscmean'+str(lenseed)+'.npy'), rfcmean)
+    np.save(os.path.join(logdirbeforeseed, 'tsrcmean'+str(lenseed)+'.npy'), tsrcmean)
     #print(rfcmean)
     rfcstd=np.std(rfcarray,axis=1)
     tsrcstd=np.std(tsrcarray,axis=1)
-    #print(rfcstd)
+    np.save(os.path.join(logdirbeforeseed, 'rewardscstd'+str(lenseed)+'.npy'), rfcstd)
+    np.save(os.path.join(logdirbeforeseed, 'tsrcstd'+str(lenseed)+'.npy'), tsrcstd)
+    #print(rfcstd)#
     pu.simple_plot(rfcmean, std=rfcstd, title='Average Rewards',
                             file=os.path.join(logdirbeforeseed, 'rewards'+str(lenseed)+'epochs'+date+'-'+time+'epochs'+str(fh)+'.pdf'),
                             ylabel='Average Reward', xlabel='# Training updates')

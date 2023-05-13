@@ -156,7 +156,8 @@ if __name__ == '__main__':
             teacher=ReacherConstraintdense2Teacher(env,noisy=False)
             log.info('current dhz: %f'%(params['dhz']))
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
-            datasave_dir = os.path.join(update_dir, "ReacherConstraintdense2")#create the corresponding folder!
+            #datasave_dir = os.path.join(update_dir, "ReacherConstraintdense2")#create the corresponding folder!
+            datasave_dir = os.path.join(logdir, "ReacherConstraintdense2")#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
             os.makedirs(datasave_dir)#mkdir!
             update_rewards = []
@@ -456,7 +457,8 @@ if __name__ == '__main__':
                 replay_buffer.store_transitions(transitions)#replay buffer online training
                 #I am going to save trajectory!
                 #utils.save_trajectory(traj, file, i)#
-                utils.save_trajectory(transitions, datasave_dir, j)#
+                utils.save_trajectory(transitions, datasave_dir, i*traj_per_update+j)#
+                #replay_buffer.store_dump_transitions(transitions,logdir,i*traj_per_update+j)#
                 update_rewards.append(traj_reward)
 
             mean_rew = float(np.mean(update_rewards))

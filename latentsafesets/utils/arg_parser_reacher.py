@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=1, help='Random seed')#2, help='Random seed')#4, help='Random seed')#-1, help='Random seed')#
     parser.add_argument('--log_freq', type=int, default=100,
                         help='How frequently to log updates')
-    parser.add_argument('--plot_freq', type=int, default=1000,#500,#2000,#
+    parser.add_argument('--plot_freq', type=int, default=2000,#1000,#500,#
                         help='How frequently to produce plots')
     parser.add_argument('--checkpoint_freq', type=int, default=2000,
                         help='How frequently to save model checkpoints')
@@ -226,7 +226,8 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbf_thresh_mult_iters', type=int, default=3)#5)#8)#16)#16 is crazy, but fails#
     parser.add_argument('--reducerocbfhd',type=str,default='yes')
     parser.add_argument('--dynamic_dhz',type=str,default='no')#'yes')#
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-05-07/23-06-07/1/initial_train/cbfd_10000.pth')#true#'outputs/2023-04-30/02-35-05/1/initial_train/cbfd_10000.pth')#half mean!#'outputs/2023-05-02/14-49-18/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
+    parser.add_argument('--reg_lipschitz',type=str,default='no')#
+    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-05-12/08-56-12/1/initial_train/cbfd_10000.pth')#'outputs/2023-05-07/23-06-07/1/initial_train/cbfd_10000.pth')#true#'outputs/2023-04-30/02-35-05/1/initial_train/cbfd_10000.pth')#half mean!#'outputs/2023-05-02/14-49-18/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
     # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.
     # pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#

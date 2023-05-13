@@ -267,7 +267,7 @@ class CBFdotlatentplanaTrainer(Trainer):
         self.unsafebuffer=self.params['unsafebuffer']
         if self.unsafebuffer=='yes2':
             self.batchsize=int(self.params['cbfd_batch_size']/2)#
-            #log.info('self.batchsize hope 128:%d'% (self.batchsize))
+            #log.info('self.batchsize hope 128:%d'% (self.batchsize))#it is 128!
         else:
             self.batchsize=self.params['cbfd_batch_size']#int(self.params['cbfd_batch_size']/2)#
             #log.info('self.batchsize hope 256:%d'% (self.batchsize))
@@ -285,7 +285,8 @@ class CBFdotlatentplanaTrainer(Trainer):
         for i in range(self.params['cbfd_init_iters']):#10000
             #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
             if self.params['mean']=='meancbf':
-                out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                out_dict = replay_buffer.samplemeancbf(self.batchsize)#sanity check passed!#(self.params['cbfd_batch_size'])#256
+                #log.info('training the mean version of the CBF!')
             else:
                 out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             obs=out_dict['obs']
@@ -302,6 +303,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
                 if self.params['mean']=='meancbf':
                     out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                    #log.info('training the mean version of the CBF!')#sanity check passed!
                 else:
                     out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 obsus=out_dictus['obs']#us means unsafe
@@ -412,6 +414,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer,replay_buffer_unsafe,
                                     coeff=1 / 4)  # a few lines later
             #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
+            self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             return deal
 
     def plot(self, file, replay_buffer,replay_buffer_unsafe):

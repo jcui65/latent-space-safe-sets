@@ -1,7 +1,7 @@
 import numpy as np
 import latentsafesets.utils.pytorch_utils as ptu
-
-
+import json
+import os
 class EncodedReplayBuffer:
     """
     This replay buffer uses numpy to efficiently store arbitrary data. Keys can be whatever,
@@ -28,6 +28,21 @@ class EncodedReplayBuffer:
         assert transitions[-1]['done'] > 0, "Last transition must be end of trajectory"
         for transition in transitions:#a transition is 1 step#It is a dictionary
             self.store_transition(transition)
+
+    def store_dump_transitions(self,transitions,file,update):#transitions is 1 traj having 100 steps
+        """
+        Stores transitions
+        :param transitions: a list of dictionaries encoding transitions. Keys can be anything
+        """
+        assert transitions[-1]['done'] > 0, "Last transition must be end of trajectory"
+        for transition in transitions:#a transition is 1 step#It is a dictionary
+            self.store_transition(transition)
+        im_fields = ('obs', 'next_obs')
+        #traj_no_ims = [{key: frame[key] if key not in im_fields else key: frame[key].tolist() for key in frame}
+                   #for frame in trajectory]#trajectory contains 100 frames#turn images into latent states
+        n=update#*10+traj
+        with open(os.path.join(file, "%d.json" % n), "w") as f:
+            json.dump(traj_no_ims, f)#separate trajectory info from images
 
     def store_transition(self, transition):#a transition is 1 step#It is a dictionary
         if len(self.data) > 0:#at first it is not like this, from second it is like this
@@ -79,6 +94,29 @@ class EncodedReplayBuffer:
         self._index = (self._index + 1) % self.size#no more no less, just 10k pieces of data#a queue like dagger
         self._len = min(self._len + 1, self.size)#a thing saturate at self.size!
         #I think I have understood the above function!
+
+    def store_transition_latent(self, transition):#a transition is 1 step#It is a dictionary
+        if len(self.data) > 0:#at first it is not like this, from second it is like this
+            key_set = set(self.data)#the keys of self.data are the keys of transition!
+        else:#at first it is like this#self.data is different from self.transition!
+            key_set = set(transition)#you only get the keys of that dictionary! python usage!
+
+        # assert key_set == set(transition), "Expected transition to have keys %s" % key_set
+
+        for key in key_set:#it is a set
+            data = self.data.get(key, None)#.get() is to get the value of a key
+            #print('transition',transition)
+            if key in transition:#I added!
+                new_data = np.array(transition[key])#it seems already converts value list to array
+                if data is None:
+                    data = np.zeros((self.size, *new_data.shape))#then fill one by one
+                data[self._index] = new_data#now fill one by one#this is the data of this key!
+                self.data[key] = data#the value of self.data[key] is a np array#the way to init a value in a dict
+
+        self._index = (self._index + 1) % self.size#no more no less, just 10k pieces of data#a queue like dagger
+        self._len = min(self._len + 1, self.size)#a thing saturate at self.size!
+        #I think I have understood the above function!
+
     def sample(self, batch_size, ensemble=0):#bs=256 by default#it is sampling a few transitions!
         if ensemble == 0:#len(self) is literally self.size
             indices = np.random.randint(len(self), size=batch_size)
@@ -240,6 +278,43 @@ class EncodedReplayBuffer_expensive2:
         self._index = (self._index + 1) % self.size#no more no less, just 10k pieces of data#a queue like dagger
         self._len = min(self._len + 1, self.size)#a thing saturate at self.size!
         #I think I have understood the above function!
+    
+    def store_dump_transition(self, transition):#a transition is 1 step#It is a dictionary
+        if len(self.data) > 0:#at first it is not like this, from second it is like this
+            key_set = set(self.data)#the keys of self.data are the keys of transition!
+        else:#at first it is like this
+            key_set = set(transition)#you only get the keys of that dictionary! python usage!
+
+        # assert key_set == set(transition), "Expected transition to have keys %s" % key_set
+
+        for key in key_set:#it is a set
+            data = self.data.get(key, None)#.get() is to get the value of a key
+
+            new_data = np.array(transition[key])#it seems already converts value list to array
+            if key in self.im_keys1:
+                im = np.array(transition[key])#seems to be the image?
+                im = ptu.torchify(im)
+                new_data_mean, new_data_log_std = self.encoder(im[None] / 255)#get the latent states corresponding to the image
+                new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
+                new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()
+                new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()
+            elif key in self.im_keys2:
+                im = np.array(transition[key])#seems to be the image?
+                im = ptu.torchify(im)
+                new_data_mean, new_data_log_std = self.encoder2(im[None] / 255)#get the latent states corresponding to the image
+                new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
+                new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()
+                new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()
+
+            if data is None:
+                data = np.zeros((self.size, *new_data.shape))#then fill one by one
+            data[self._index] = new_data#now fill one by one
+            self.data[key] = data#the value of self.data[key] is a np array#the way to init a value in a dict
+
+        self._index = (self._index + 1) % self.size#no more no less, just 10k pieces of data#a queue like dagger
+        self._len = min(self._len + 1, self.size)#a thing saturate at self.size!
+        #I think I have understood the above function!
+    
     def sample(self, batch_size, ensemble=0):#bs=256 by default#it is sampling a few transitions!
         if ensemble == 0:#len(self) is literally self.size
             indices = np.random.randint(len(self), size=batch_size)
