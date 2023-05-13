@@ -29,6 +29,15 @@ class EncodedReplayBuffer:
         for transition in transitions:#a transition is 1 step#It is a dictionary
             self.store_transition(transition)
 
+    def store_transitions_latent(self, transitions):#transitions is 1 traj having 100 steps
+        """
+        Stores transitions
+        :param transitions: a list of dictionaries encoding transitions. Keys can be anything
+        """
+        assert transitions[-1]['done'] > 0, "Last transition must be end of trajectory"
+        for transition in transitions:#a transition is 1 step#It is a dictionary
+            self.store_transition_latent(transition)
+
     def store_dump_transitions(self,transitions,file,update):#transitions is 1 traj having 100 steps
         """
         Stores transitions

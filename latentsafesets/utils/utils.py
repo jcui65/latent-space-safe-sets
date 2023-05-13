@@ -104,17 +104,27 @@ def save_trajectory_latent(trajectory, file, n,encoder,mean):#file: data/SimpleP
             #dat = np.array([frame[field] for frame in trajectory], dtype=np.uint8)#
             dat=np.zeros((1,32,2))
             for transition in trajectory:
-                im = np.array(transition[key])#seems to be the image?
-                im = ptu.torchify(im)
-                new_data_mean, new_data_log_std = self.encoder(im[None] / 255)#is it legit?
-                new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
-                new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()#meancbf still works like this!
-                if mean=='mean':
-                    new_data_log_std=np.clip(new_data_log_std,a_min=None,a_max=-80)#-80 is really very small!
-                #new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()#it should be (32, 2)
-                new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()#it should be (32, 2)
-                dat=np.vstack((dat,new_data))
+                #tfield=transition[field]
+                #print('tfield.shape',tfield.shape)#(32, 2)
+                im = np.array(transition[field])#transition[field] is the image#key is the field#seems to be the image?
+                #print('im.shape',im.shape)#(32, 2)
+                if im.shape[0]==32 and im.shape[1]==2:#this means it is already in the latent representation!
+                    new_data=np.expand_dims(im, axis=0)
+                else:#this means that im is an image!
+                    im = ptu.torchify(im)
+                    new_data_mean, new_data_log_std = encoder(im[None] / 255)#is it legit?
+                    new_data_mean = new_data_mean.squeeze().detach().cpu().numpy()
+                    new_data_log_std = new_data_log_std.squeeze().detach().cpu().numpy()#meancbf still works like this!
+                    if mean=='mean':
+                        new_data_log_std=np.clip(new_data_log_std,a_min=None,a_max=-80)#-80 is really very small!
+                    #new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()#it should be (32, 2)
+                    #new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()#it should be (32, 2)
+                    new_data = np.dstack((new_data_mean, new_data_log_std))#it should be (1,32, 2)
+                #log.info('new_data.shape: %d,%d,%d'%(new_data.shape[0],new_data.shape[1],new_data.shape[2]))#(1,32,2)
+                dat=np.vstack((dat,new_data))#sanity check complete!
 
+            dat=dat[1:]#sanity check complete!
+            #log.info('dat.shape: %d,%d,%d'%(dat.shape[0],dat.shape[1],dat.shape[2]))#hope it would be (150,32,2)! Yes, it is!#
             #it is 100 pieces of 3-channel image of obs or next_obs
             np.save(os.path.join(file, "%d_%s_latent.npy" % (n, field)), dat)#save the images in .npy file
     traj_no_ims = [{key: frame[key] for key in frame if key not in im_fields}
@@ -164,7 +174,7 @@ def load_trajectories(num_traj, file):#data/simplepointbot
 
     return trajectories#that is a sequence/buffer/pool of trajs including images
 
-def load_trajectories_latent(num_traj, file):#data/simplepointbot
+def load_trajectories_latent(num_traj, file):#data/simplepointbot#do I need this?
     log.info('Loading trajectories from %s' % file)#data/SimplePointBot
 
     if not os.path.exists(file):
@@ -181,7 +191,7 @@ def load_trajectories_latent(num_traj, file):#data/simplepointbot
         im_dat = {}#image_data
 
         for field in im_fields:
-            f = os.path.join(file, "%d_%s.npy" % (i, field))#obs and next_obs
+            f = os.path.join(file, "%d_%s_latent.npy" % (i, field))#obs and next_obs
             if os.path.exists(file):
                 dat = np.load(f)
                 im_dat[field] = dat.astype(np.uint8)#100 images of obs and next_obs
@@ -357,7 +367,7 @@ def load_replay_buffer_latent(params, encoder=None, first_only=False):#it doesn'
         replay_buffer = ReplayBuffer(params['buffer_size'])
         #print('load plain buffer!')
     i=0
-    data_latent=os.path.join(params['logdir'],params['seed'],'data_latent') 
+    data_latent=os.path.join(params['logdir'],str(params['seed']),'data_latent') 
     os.makedirs(data_latent)#e.g.: 'outputs/2022-07-15/17-41-16'
     for trajectory in tqdm(trajectories):#trajectory is 1 traj having 100 steps, trajectories is a list of many trajectorys!
         replay_buffer.store_transitions(trajectory)#22#
@@ -401,6 +411,49 @@ def load_replay_buffer_unsafe(params, encoder=None, first_only=False):#it doesn'
     #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
     return replay_buffer
     #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
+
+def load_replay_buffer_preemption_latent(params, encoder=None, first_only=False):#it doesn't have traj parameter!
+    log.info('Loading preempted data')
+    trajectories = []#SimplePointBot or SimplePointBotConstraints
+    #for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe 50 & obstacle 50
+    #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
+    logdir='outputs/2023-05-13/12-03-00'#params['logdir']
+    logdirseed=os.path.join(logdir,str(params['seed']))
+    real_dir = os.path.join(logdirseed, 'data_latent')#,directory)  #
+    if params['env']=='push':
+        num=800
+    elif params['env']=='reacher':
+        num=250
+    trajectories += load_trajectories_latent(num, file=real_dir)#load_trajectories(num, file=real_dir)#now you have 50+50=100 pieces of trajs each containing 100 time steps
+    log.info('Populating replay buffer')#find correspondence in the cmd output
+    if encoder is not None:#replay buffer finally comes in!
+        replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'])#35000 for spb
+    else:
+        replay_buffer = ReplayBuffer(params['buffer_size'])
+    i=0
+    data_latent=os.path.join(params['logdir'],str(params['seed']),'data_latent') #will be changed accordingly
+    os.makedirs(data_latent)#e.g.: 'outputs/2022-07-15/17-41-16'
+    for trajectory in tqdm(trajectories):#trajectory is 1 traj having 100 steps
+        #replay_buffer.store_transitions(trajectory)#22
+        replay_buffer.store_transitions_latent(trajectory)#22
+        save_trajectory_latent(trajectory,data_latent,i,encoder,params['mean'])
+        i+=1
+    #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
+    log.info('Loading data from the run trajectories!')
+    #directoryrun=
+    trajectories2 = []#SimplePointBot or SimplePointBotConstraints#run means running
+    #for directory, num in list(zip(params['data_dirs_run'], params['data_counts_run'])):#safe 50 & obstacle 50
+    #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
+    real_dir2 = os.path.join(logdirseed, 'datarun')#,directory)  ##real_dir = os.path.join('', 'data',directoryrun)  #
+    num=80#70
+    trajectories2 += load_trajectories_latent(num, file=real_dir2)#load_trajectories(num, file=real_dir2)#now you have 50+50=100 pieces of trajs each containing 100 time steps
+    # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
+    #random.shuffle(trajectories)#no need to shuffle this!
+    for trajectory in tqdm(trajectories2):#trajectory is 1 traj having 100 steps
+        #log.info('loading each trajectory!')#sanity check passed!
+        replay_buffer.store_transitions_latent(trajectory)#22
+    #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
+    return replay_buffer
 
 def load_replay_buffer_preemption(params, encoder=None, first_only=False):#it doesn't have traj parameter!
     log.info('Loading preempted data')

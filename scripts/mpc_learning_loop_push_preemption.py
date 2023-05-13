@@ -84,12 +84,13 @@ if __name__ == '__main__':
         # Populate replay buffer
         #the following is loading replay buffer, rather than loading trajectories
         datasave_dir = os.path.join(logdir, "datarun")#create the corresponding folder!
-        if not os.path.exists(datasave_dir):#this means that, not yet been preempted, should start from scratch
+        if os.path.exists(datasave_dir):#this means that, not yet been preempted, should start from scratch
             #replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
             replay_buffer = utils.load_replay_buffer_latent(params, encoder)#around line 123 in utils.py
         else:#this means that it has been preempted and should start from the previous checkpoint!
-            log.info('Loading data from the trajectories!')
-            replay_buffer = utils.load_replay_buffer_latent(params, encoder)#around line 123 in utils.py
+            log.info('Loading data from the previous collected trajectories!')
+            replay_buffer = utils.load_replay_buffer_preemption_latent(params, encoder)#around line 123 in utils.py
+            '''
             trajectories2 = []#SimplePointBot or SimplePointBotConstraints#run means running
             #for directory, num in list(zip(params['data_dirs_run'], params['data_counts_run'])):#safe 50 & obstacle 50
             #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
@@ -102,15 +103,7 @@ if __name__ == '__main__':
             #random.shuffle(trajectories)#no need to shuffle this!
             for trajectory in tqdm(trajectories2):#trajectory is 1 traj having 100 steps
                 replay_buffer.store_transitions_latent(trajectory)#22
-        
-        '''
-        if params['unsafebuffer']=='yes':#old version
-            replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
-            log.info('unsafe buffer!')
-        else:
-            replay_buffer_unsafe=replay_buffer#not loading new buffer!
-            log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
-        '''
+            '''
         if params['unsafebuffer']=='yes':#new version
             replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
             log.info('unsafe buffer!')
@@ -155,7 +148,9 @@ if __name__ == '__main__':
         action_type=params['action_type']
         
         os.makedirs(datasave_dir)#mkdir!
+        offset=8#7#
         for i in range(num_updates):#default 25 in spb
+            i=i+offset
             #log.info('current dhz: %f'%(params['dhz']))I think there is no need to update
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
