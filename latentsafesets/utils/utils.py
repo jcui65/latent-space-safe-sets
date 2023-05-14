@@ -121,6 +121,8 @@ def save_trajectory_latent(trajectory, file, n,encoder,mean):#file: data/SimpleP
                     #new_data = np.dstack((new_data_mean, new_data_log_std)).squeeze()#it should be (32, 2)
                     new_data = np.dstack((new_data_mean, new_data_log_std))#it should be (1,32, 2)
                 #log.info('new_data.shape: %d,%d,%d'%(new_data.shape[0],new_data.shape[1],new_data.shape[2]))#(1,32,2)
+                #print('new_data[0]',new_data[0])
+                #print('new_data[0]norm',np.linalg.norm(new_data[0]))
                 dat=np.vstack((dat,new_data))#sanity check complete!
 
             dat=dat[1:]#sanity check complete!
@@ -194,7 +196,10 @@ def load_trajectories_latent(num_traj, file):#data/simplepointbot#do I need this
             f = os.path.join(file, "%d_%s_latent.npy" % (i, field))#obs and next_obs
             if os.path.exists(file):
                 dat = np.load(f)
-                im_dat[field] = dat.astype(np.uint8)#100 images of obs and next_obs
+                #print('dat',dat)#sanity check passed finally!
+                #print('datunit8',dat.astype(np.uint8))
+                im_dat[field] = dat#dat.astype(np.uint8)#100 images of obs and next_obs#
+                #print('im_dat[field]',im_dat[field])#
 
         for j, frame in list(enumerate(trajectory)):#each frame in one trajectory
             for key in im_dat:#from obs and next_obs

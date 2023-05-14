@@ -117,6 +117,11 @@ class EncodedReplayBuffer:
             #print('transition',transition)
             if key in transition:#I added!
                 new_data = np.array(transition[key])#it seems already converts value list to array
+                if key in self.im_keys:
+                    #print('keyname: ',key)#
+                    im = np.array(transition[key])#seems to be the image?
+                    #print('im.shape',im.shape)#(32,2)
+                    #print('im0norm',np.linalg.norm(im))
                 if data is None:
                     data = np.zeros((self.size, *new_data.shape))#then fill one by one
                 data[self._index] = new_data#now fill one by one#this is the data of this key!
