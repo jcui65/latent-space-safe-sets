@@ -366,7 +366,11 @@ class CBFdotlatentplanaTrainer(Trainer):
                 if replay_buffer_unsafe!=None:
                     #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
                     if self.params['mean']=='meancbf':
-                        out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                        #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                        if self.params['boundary']=='no':
+                            out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                        elif self.params['boundary']=='yes':
+                            out_dictus = replay_buffer_unsafe.sample_boundary_meancbf(self.batchsize,'hvn')#(self.params['cbfd_batch_size'])#256
                     else:
                         out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
                     obsus=out_dictus['obs']#us means unsafe
@@ -385,10 +389,11 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #loss, info = self.cbfd.update(rdal, hvd, already_embedded=True)#if already_embedded is set to false, then the current setting will run into bug
                 loss, info = self.cbfd.update(obs, hvn, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)
+                cbfloss=info['cbf']#this is the real cbf loss
                 if self.env_name=='reacher':
-                    dhzepochave+=np.sqrt(loss)#faithfully record it!#np.sqrt(min(loss,10))#over 10 is too crazy!
+                    dhzepochave+=np.sqrt(cbfloss)#faithfully record it!#np.sqrt(min(loss,10))#over 10 is too crazy!
                 elif self.env_name=='push':
-                    dhzepochave+=np.sqrt(loss)#
+                    dhzepochave+=np.sqrt(cbfloss)#
                 elif self.env_name=='spb':
                     print('just hold it now!')
             dhzepochave=dhzepochave/self.params['cbfd_update_iters']
@@ -427,7 +432,11 @@ class CBFdotlatentplanaTrainer(Trainer):
         if replay_buffer_unsafe!=None:
             #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
             if self.params['mean']=='meancbf':
-                out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                if self.params['boundary']=='no':
+                    out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                elif self.params['boundary']=='yes':
+                    out_dictus = replay_buffer_unsafe.sample_boundary_meancbf(self.batchsize,'hvn')#(self.params['cbfd_batch_size'])#256
             else:
                 out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
@@ -448,9 +457,13 @@ class CBFdotlatentplanaTrainer(Trainer):
         if replay_buffer_unsafe!=None:
             #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
             if self.params['mean']=='meancbf':
-                out_dictus = replay_buffer_unsafe.samplemeancbf(self.params['cbfd_batch_size'])#256
+                #out_dictus = replay_buffer_unsafe.samplemeancbf(self.params['cbfd_batch_size'])#256
+                if self.params['boundary']=='no':
+                    out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                elif self.params['boundary']=='yes':
+                    out_dictus = replay_buffer_unsafe.sample_boundary_meancbf(self.batchsize,'hvn')#(self.params['cbfd_batch_size'])#256
             else:
-                out_dictus = replay_buffer_unsafe.sample(self.params['cbfd_batch_size'])#256
+                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
             next_obs=np.vstack((next_obs,next_obsus))
         pu.visualize_cbfdotconly(next_obs, self.cbfd,
@@ -470,7 +483,11 @@ class CBFdotlatentplanaTrainer(Trainer):
         if replay_buffer_unsafe!=None:
             #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
             if self.params['mean']=='meancbf':
-                out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                if self.params['boundary']=='no':
+                    out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                elif self.params['boundary']=='yes':
+                    out_dictus = replay_buffer_unsafe.sample_boundary_meancbf(self.batchsize,'hvn')#(self.params['cbfd_batch_size'])#256
             else:
                 out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
@@ -489,7 +506,11 @@ class CBFdotlatentplanaTrainer(Trainer):
         if replay_buffer_unsafe!=None:
             #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
             if self.params['mean']=='meancbf':
-                out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                if self.params['boundary']=='no':
+                    out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                elif self.params['boundary']=='yes':
+                    out_dictus = replay_buffer_unsafe.sample_boundary_meancbf(self.batchsize,'hvn')#(self.params['cbfd_batch_size'])#256
             else:
                 out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
@@ -510,7 +531,11 @@ class CBFdotlatentplanaTrainer(Trainer):
         if replay_buffer_unsafe!=None:
             #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
             if self.params['mean']=='meancbf':
-                out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                if self.params['boundary']=='no':
+                    out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                elif self.params['boundary']=='yes':
+                    out_dictus = replay_buffer_unsafe.sample_boundary_meancbf(self.batchsize,'hvn')#(self.params['cbfd_batch_size'])#256
             else:
                 out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']

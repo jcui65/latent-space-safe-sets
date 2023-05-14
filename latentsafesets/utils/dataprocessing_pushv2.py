@@ -78,6 +78,9 @@ def main(date, time):
     #calculate the statistics: mean and std
     rfarray=rfarray[1:]
     tsrarray=tsrarray[1:]
+    np.save(os.path.join(logdirbeforeseed, 'rewards'+str(lenseed)+'.npy'), rfarray)
+    #np.save(os.path.join(logdirbeforeseed, 'cv'+str(lenseed)+'.npy'), cvarray)
+    np.save(os.path.join(logdirbeforeseed, 'tsr'+str(lenseed)+'.npy'), tsrarray)
     #print('rfarray.shape',rfarray.shape)#3,250
     rfmean=np.mean(rfarray,axis=0)
     tsrmean=np.mean(tsrarray,axis=0)

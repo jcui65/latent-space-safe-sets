@@ -168,6 +168,37 @@ class EncodedReplayBuffer:
 
         return {key: self._extract(key, nonzeros[indices]) for key in self.data}#106
 
+    def sample_boundary_meancbf(self, batch_size, key, ensemble=0):#here my key is hvn or hvo?
+        """
+        Samples only from the entries where the array corresponding to key is nonzero
+        I added this method so I could sample only from data entries in the safe set
+        """
+        assert len(self.data[key].shape) == 1, 'cannot sample positive from array with >1d values'
+        #self.data[key] is a numpy array! 
+        #print('key',key)#hvn
+        #print('self.data[key].shape',(self.data[key]).shape)#25000
+        #print('self.data[key]',self.data[key])#
+        #condition=(self.data[key]<=0.0015) &(self.data[key]!=0)#4032 things!#if this then there are 4635 things!#0.002##
+        #condition=(self.data[key]>=-0.0011) & (self.data[key]<=0.0015) &(self.data[key]!=0)#only 3422!#0.002#
+        #condition=(self.data[key]>-0.0011) & (self.data[key]<=0.0015) &(self.data[key]!=0)#still 3422!#0.002#
+        #condition=(self.data[key]>=-0.0011) & (self.data[key]<=0.0013) &(self.data[key]!=0)#only 3243!#0.002#
+        #ondition=(self.data[key]>=-0.0011) & (self.data[key]<0)#only 2282!!#0.002#
+        #condition=(self.data[key]>-0.001) & (self.data[key]<0)#only 2201!!#0.002#
+        condition=(self.data[key]>=-0.0011) & (self.data[key]<=0.0013) &(self.data[key]!=0)##only 2201!!#0.002#
+        #print('condition.shape',condition.shape)
+        nonzeros = np.nonzero(condition)[0]#self.data[key].nonzero(condition)[0]#self.data[key] is the value#get the safe ones!
+        print('nonzeros.shape',nonzeros.shape)#2282 to 2201#(17100,) when no process!
+        print('nonzeros',nonzeros)#self.data[key]#[0 1 2 ... 17097 17098 17099]
+        if ensemble == 0:
+            indices = np.random.randint(len(nonzeros), size=batch_size)
+        elif ensemble > 0:
+            indices = np.random.randint(len(nonzeros), size=(ensemble, batch_size))
+        else:
+            raise ValueError("ensemble size cannot be negative")
+
+        return {key: self._extractmean(key, nonzeros[indices]) for key in self.data}#106
+
+
     # Returns a batch of sequence chunks uniformly sampled from the memory
     def sample_chunk(self, batch_size, length, ensemble=0):
         if ensemble == 0:
