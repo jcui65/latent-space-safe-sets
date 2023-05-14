@@ -31,6 +31,7 @@ if __name__ == '__main__':
     for m in range(repeattimes):
         params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23
+        offset=92#8#7#
         log = logging.getLogger("main")#some logging stuffs
         seed=params['seed']
         #print('seed',seed)#works as expected!
@@ -85,11 +86,12 @@ if __name__ == '__main__':
         #the following is loading replay buffer, rather than loading trajectories
         datasave_dir = os.path.join(logdir, "datarun")#create the corresponding folder!
         if os.path.exists(datasave_dir):#this means that, not yet been preempted, should start from scratch
+            log.info('Normal start!')
             #replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
             replay_buffer = utils.load_replay_buffer_latent(params, encoder)#around line 123 in utils.py
         else:#this means that it has been preempted and should start from the previous checkpoint!
             log.info('Loading data from the previous collected trajectories!')
-            replay_buffer = utils.load_replay_buffer_preemption_latent(params, encoder)#around line 123 in utils.py
+            replay_buffer = utils.load_replay_buffer_preemption_latent(params, encoder,offset)#around line 123 in utils.py
             '''
             trajectories2 = []#SimplePointBot or SimplePointBotConstraints#run means running
             #for directory, num in list(zip(params['data_dirs_run'], params['data_counts_run'])):#safe 50 & obstacle 50
@@ -148,9 +150,11 @@ if __name__ == '__main__':
         action_type=params['action_type']
         
         os.makedirs(datasave_dir)#mkdir!
-        offset=8#7#
+        
         for i in range(num_updates):#default 25 in spb
             i=i+offset
+            if i>=100:
+                break
             #log.info('current dhz: %f'%(params['dhz']))I think there is no need to update
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!

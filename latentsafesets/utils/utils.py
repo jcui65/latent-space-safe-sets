@@ -417,7 +417,7 @@ def load_replay_buffer_unsafe(params, encoder=None, first_only=False):#it doesn'
     return replay_buffer
     #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
 
-def load_replay_buffer_preemption_latent(params, encoder=None, first_only=False):#it doesn't have traj parameter!
+def load_replay_buffer_preemption_latent(params, encoder=None, offset=0, first_only=False):#it doesn't have traj parameter!
     log.info('Loading preempted data')
     trajectories = []#SimplePointBot or SimplePointBotConstraints
     #for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe 50 & obstacle 50
@@ -450,7 +450,7 @@ def load_replay_buffer_preemption_latent(params, encoder=None, first_only=False)
     #for directory, num in list(zip(params['data_dirs_run'], params['data_counts_run'])):#safe 50 & obstacle 50
     #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
     real_dir2 = os.path.join(logdirseed, 'datarun')#,directory)  ##real_dir = os.path.join('', 'data',directoryrun)  #
-    num=80#70
+    num=offset*params['traj_per_update']#80#70
     trajectories2 += load_trajectories_latent(num, file=real_dir2)#load_trajectories(num, file=real_dir2)#now you have 50+50=100 pieces of trajs each containing 100 time steps
     # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
     #random.shuffle(trajectories)#no need to shuffle this!
