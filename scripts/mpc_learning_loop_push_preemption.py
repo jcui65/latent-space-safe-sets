@@ -23,15 +23,77 @@ from datetime import datetime
 #log = logging.getLogger("main")#some logging stuff
 
 
+##### BEGIN CUSTOM CLUSTER OVERHEAD
+import signal
+import sys
+
+class ClusterStateManager:
+    def __init__(self, time_to_run=600):
+        self.external_exit = None
+        self.timer_exit = False
+
+        signal.signal(signal.SIGTERM, self.signal_handler)
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGALRM, self.timer_handler)
+        signal.alarm(time_to_run)
+
+    def signal_handler(self, signal, frame):
+        print("Received signal [", signal, "]")
+        self.external_exit = signal
+
+    def timer_handler(self, signal, frame):
+        print("Received alarm [", signal, "]")
+        self.timer_exit = True
+
+    def should_exit(self):
+        if self.timer_exit:
+            return True
+
+        if self.external_exit is not None:
+            return True
+
+        return False
+
+    def get_exit_code(self):
+        if self.timer_exit:
+            return 3
+
+        if self.external_exit is not None:
+            return 0
+
+        return 0
+
+def save(network, optimizer, epoch):
+    full_training_state = {"network": network.state_dict(),
+                 "optimizer": optimizer.state_dict(),
+                 "epoch": epoch}
+    torch.save(full_training_state, "data/mnist_cnn.pt")
+
+def load(network, optimizer):
+    if not os.path.exists("data/mnist_cnn.pt"):
+        return 0
+
+    checkpoint = torch.load("data/mnist_cnn.pt")
+    network.load_state_dict( checkpoint['network'] )
+    optimizer.load_state_dict( checkpoint['optimizer'] )
+
+    return checkpoint['epoch']
+
+# Start the timer on how long you're allowed to run
+csm = ClusterStateManager(150000)
+
+##### END CUSTOM CLUSTER OVERHEAD
+
+
 if __name__ == '__main__':
     params = parse_args()#get the parameters from parse_args, see arg_parser.py
     # Misc preliminaries
     repeattimes=params['repeat_times']
-    initdhz=params['dhz']
+    initdhz=params['dhz']#it will be it!
     for m in range(repeattimes):
         params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23
-        offset=92#8#7#
+        offset=params['offset']#92#8#7#
         log = logging.getLogger("main")#some logging stuffs
         seed=params['seed']
         #print('seed',seed)#works as expected!
@@ -67,6 +129,27 @@ if __name__ == '__main__':
         light=params['light']
         #if light=='normal':
         #modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
+        if os.path.exists("outputs/checkpoints"+str(params['jobs'])+".txt"):#this means that the #params['hasbeenpreempted']=='yes':
+            f=open("outputs/checkpoints"+str(params['jobs'])+".txt","r")
+            valcheckpoint=f.readline().rstrip('\n')
+            dyncheckpoint=f.readline().rstrip('\n')
+            gicheckpoint=f.readline().rstrip('\n')
+            cbfdcheckpoint=f.readline().rstrip('\n')
+            #data_latentdir=f.readline().rstrip('\n')
+            #datarundir=f.readline().rstrip('\n')
+            oldlogdir=f.readline().rstrip('\n')
+            offset=f.readline().rstrip('\n')
+            hasbeenpreempted=f.readline().rstrip('\n')
+            dhz=f.readline().rstrip('\n')#it is still a string! will be converted to float later!
+            f.close()
+            params['val_checkpoint']=valcheckpoint
+            params['dyn_checkpoint']=dyncheckpoint
+            params['gi_checkpoint']=gicheckpoint
+            params['cbfd_checkpoint']=cbfdcheckpoint
+            offset=int(offset)
+            params['hasbeenpreempted']=hasbeenpreempted
+            params['dhz']=float(dhz)
+            #how to handle those 2 data directories?
         modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
         #modules = utils.make_modulessafetyexpensive(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)#forever banned!
         #modules = utils.make_modulessafetyexpensive2(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True,dyn2=True)#forever banned!
@@ -84,14 +167,15 @@ if __name__ == '__main__':
         #dynamics_model2 = modules['dyn2']
         # Populate replay buffer
         #the following is loading replay buffer, rather than loading trajectories
-        datasave_dir = os.path.join(logdir, "datarun")#create the corresponding folder!
-        if os.path.exists(datasave_dir):#this means that, not yet been preempted, should start from scratch
+        datasave_dir = os.path.join(logdir, "datarun")#create the corresponding folder!the datarun for this time!
+        #if os.path.exists(datasave_dir):#this means that, not yet been preempted, should start from scratch
+        if params['hasbeenpreempted']=='no':#this means that, not yet been preempted, should start from scratch
             log.info('Normal start!')
             #replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
             replay_buffer = utils.load_replay_buffer_latent(params, encoder)#around line 123 in utils.py
         else:#this means that it has been preempted and should start from the previous checkpoint!
             log.info('Loading data from the previous collected trajectories!')
-            replay_buffer = utils.load_replay_buffer_preemption_latent(params, encoder,offset)#around line 123 in utils.py
+            replay_buffer = utils.load_replay_buffer_preemption_latent(params, encoder,oldlogdir,offset)#around line 123 in utils.py
             '''
             trajectories2 = []#SimplePointBot or SimplePointBotConstraints#run means running
             #for directory, num in list(zip(params['data_dirs_run'], params['data_counts_run'])):#safe 50 & obstacle 50
@@ -116,7 +200,7 @@ if __name__ == '__main__':
         trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
 
         #trainer.initial_train(replay_buffer)#initialize all the parts!
-        trainer.initial_train(replay_buffer,replay_buffer_unsafe)#initialize all the parts!
+        trainer.initial_train(replay_buffer,replay_buffer_unsafe)#initialize all the parts!#doesn't matter when everything is pretrained
 
         log.info("Creating policy")
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
@@ -152,6 +236,36 @@ if __name__ == '__main__':
         os.makedirs(datasave_dir)#mkdir!
         
         for i in range(num_updates):#default 25 in spb
+            if csm.should_exit():
+                #num_traj_already_collect=(i-1)*traj_per_update#at this time, what is the number of trajectories that has been collected?
+                #if i>=1:#if i=0, then this means that you can start from scratch! You don't need to handle preemption!
+                #thus, so much trajectory should be loaded to the replay buffer
+                #checkpointshouldbe (some character processing)
+                #cofvf
+                #params['val_checkpoint_preemp']=os.path.join(logdir,'update_%d'%(i-1),'val.pth')#it will be a string of directory!
+                #cofdyn
+                #params['dyn_checkpoint_preemp']=os.path.join(logdir,'update_%d'%(i-1),'dyn.pth')#
+                #cofgi
+                #params['gi_checkpoint_preemp']=os.path.join(logdir,'update_%d'%(i-1),'gi.pth')#
+                #cofcbfd
+                #params['cbfd_checkpoint_preemp']=os.path.join(logdir,'update_%d'%(i-1),'cbfd.pth')#
+                #exist_ok=True!
+                #params['offset']=i
+                #params['hasbeenpreempted']='yes'#use the existence of this file to decide if preemption has happened
+                f = open("outputs/checkpoints"+str(params['jobs'])+".txt", "w")#use the write mode to cover previous one, as previous one should be replaced!
+                f.write(os.path.join(logdir,'update_%d'%(i-1),'val.pth')+'\n')#val_checkpoint
+                f.write(os.path.join(logdir,'update_%d'%(i-1),'dyn.pth')+'\n')#dyn_checkpoint
+                f.write(os.path.join(logdir,'update_%d'%(i-1),'gi.pth')+'\n')#gi_checkpoint
+                f.write(os.path.join(logdir,'update_%d'%(i-1),'cbfd.pth')+'\n')#cbfd_checkpoint
+                #f.write(os.path.join(logdir,'data_latent')+'\n')#data_latent#still need to record this, as it might change!
+                #f.write(os.path.join(logdir,'datarun')+'\n')#datarun
+                f.write(logdir+'\n')#the parent folder of both data_latent and datarun#still need to record this, as it might change!
+                f.write(str(i)+'\n')#offset
+                f.write('yes\n')#hasbeenpreempted#
+                f.write(str(params['dhz'])+'\n')
+                #f.write('What I want to write: %s'%(params['quote']))
+                f.close()
+                return
             i=i+offset
             if i>=100:
                 break
@@ -199,18 +313,6 @@ if __name__ == '__main__':
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
-                    '''
-                    if conservative=='conservative' and reward_type=='sparse':
-                        #print('conservative and sparse!')#you get this right!
-                        action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                            #fn, tn, tpc, fpc, fnc, tnc)
-                    elif conservative=='average' and reward_type=='sparse':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
-                    elif conservative=='conservative' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
-                    elif conservative=='average' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
-                    '''
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!

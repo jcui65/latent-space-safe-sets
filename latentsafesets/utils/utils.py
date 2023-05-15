@@ -417,13 +417,13 @@ def load_replay_buffer_unsafe(params, encoder=None, first_only=False):#it doesn'
     return replay_buffer
     #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
 
-def load_replay_buffer_preemption_latent(params, encoder=None, offset=0, first_only=False):#it doesn't have traj parameter!
+def load_replay_buffer_preemption_latent(params, encoder=None,oldlogdir=None,offset=0):#, first_only=False):#it doesn't have traj parameter!
     log.info('Loading preempted data')
     trajectories = []#SimplePointBot or SimplePointBotConstraints
     #for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe 50 & obstacle 50
     #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
-    logdir='outputs/2023-05-13/12-03-00'#params['logdir']
-    logdirseed=os.path.join(logdir,str(params['seed']))
+    #logdir='outputs/2023-05-13/12-03-00'#params['logdir']#Now I need to pass this dir from outside
+    logdirseed=oldlogdir#os.path.join(logdir,str(params['seed']))
     real_dir = os.path.join(logdirseed, 'data_latent')#,directory)  #
     if params['env']=='push':
         num=800
@@ -436,7 +436,7 @@ def load_replay_buffer_preemption_latent(params, encoder=None, offset=0, first_o
     else:
         replay_buffer = ReplayBuffer(params['buffer_size'])
     i=0
-    data_latent=os.path.join(params['logdir'],str(params['seed']),'data_latent') #will be changed accordingly
+    data_latent=os.path.join(params['logdir'],str(params['seed']),'data_latent')#the new data_latent dir#will be changed accordingly
     os.makedirs(data_latent)#e.g.: 'outputs/2022-07-15/17-41-16'
     for trajectory in tqdm(trajectories):#trajectory is 1 traj having 100 steps
         #replay_buffer.store_transitions(trajectory)#22
@@ -450,7 +450,7 @@ def load_replay_buffer_preemption_latent(params, encoder=None, offset=0, first_o
     #for directory, num in list(zip(params['data_dirs_run'], params['data_counts_run'])):#safe 50 & obstacle 50
     #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
     real_dir2 = os.path.join(logdirseed, 'datarun')#,directory)  ##real_dir = os.path.join('', 'data',directoryrun)  #
-    num=offset*params['traj_per_update']#80#70
+    num=offset*params['traj_per_update']#e.g., 92*10#80#70
     trajectories2 += load_trajectories_latent(num, file=real_dir2)#load_trajectories(num, file=real_dir2)#now you have 50+50=100 pieces of trajs each containing 100 time steps
     # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
     #random.shuffle(trajectories)#no need to shuffle this!

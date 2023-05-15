@@ -30,6 +30,8 @@ def parse_args():
     parser.add_argument('--datasetnumber',type=int,default=1)#1 for old data, 2 for new data, 3 for data 3!
     parser.add_argument('--vaesnumber',type=str,default='d1v1')#divi means dataset i vae i, 'no' means no pretrain
     parser.add_argument('--quote',type=str,default=' ')#what I want to quote
+    parser.add_argument('--hasbeenpreempted',type=str,default='no')
+    parser.add_argument('--jobs',type=int,default=1)#1/2/3/4, I think that is enough
     add_controller_args(parser)
     add_encoder_args(parser)
     add_ss_args(parser)
