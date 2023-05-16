@@ -63,7 +63,7 @@ def generate_teacher_demo_datasafety(env, data_dir, teacher, n=100, noisy=False,
         print('data_dir',data_dir)
         if data_dir=='ReacherConstraintdense1' or data_dir=='ReacherConstraintdense2':
             #print('teacherenter',teacher)
-            angled=np.pi/2 - 1.5*np.pi*i/n#d means desired
+            angled=-np.pi + 1.5*np.pi*i/n#d means desired#np.pi/2 - 1.5*np.pi*i/n#d means desired
             if data_dir=='ReacherConstraintdense1':
                 radius=0.045#0.05#0.04#
             else:

@@ -21,7 +21,7 @@ from latentsafesets.modules import VanillaVAE, CBFdotEstimator,CBFdotEstimatorla
 from datetime import datetime
 #provides a capability to “pretty-print” arbitrary Python data structures in a form that can be used as input to the interpreter
 #log = logging.getLogger("main")#some logging stuff
-
+import torch
 
 ##### BEGIN CUSTOM CLUSTER OVERHEAD
 import signal
@@ -237,35 +237,20 @@ if __name__ == '__main__':
         
         for i in range(num_updates):#default 25 in spb
             if csm.should_exit():
-                #num_traj_already_collect=(i-1)*traj_per_update#at this time, what is the number of trajectories that has been collected?
-                #if i>=1:#if i=0, then this means that you can start from scratch! You don't need to handle preemption!
-                #thus, so much trajectory should be loaded to the replay buffer
-                #checkpointshouldbe (some character processing)
-                #cofvf
-                #params['val_checkpoint_preemp']=os.path.join(logdir,'update_%d'%(i-1),'val.pth')#it will be a string of directory!
-                #cofdyn
-                #params['dyn_checkpoint_preemp']=os.path.join(logdir,'update_%d'%(i-1),'dyn.pth')#
-                #cofgi
-                #params['gi_checkpoint_preemp']=os.path.join(logdir,'update_%d'%(i-1),'gi.pth')#
-                #cofcbfd
-                #params['cbfd_checkpoint_preemp']=os.path.join(logdir,'update_%d'%(i-1),'cbfd.pth')#
-                #exist_ok=True!
-                #params['offset']=i
-                #params['hasbeenpreempted']='yes'#use the existence of this file to decide if preemption has happened
-                f = open("outputs/checkpoints"+str(params['jobs'])+".txt", "w")#use the write mode to cover previous one, as previous one should be replaced!
-                f.write(os.path.join(logdir,'update_%d'%(i-1),'val.pth')+'\n')#val_checkpoint
-                f.write(os.path.join(logdir,'update_%d'%(i-1),'dyn.pth')+'\n')#dyn_checkpoint
-                f.write(os.path.join(logdir,'update_%d'%(i-1),'gi.pth')+'\n')#gi_checkpoint
-                f.write(os.path.join(logdir,'update_%d'%(i-1),'cbfd.pth')+'\n')#cbfd_checkpoint
-                #f.write(os.path.join(logdir,'data_latent')+'\n')#data_latent#still need to record this, as it might change!
-                #f.write(os.path.join(logdir,'datarun')+'\n')#datarun
-                f.write(logdir+'\n')#the parent folder of both data_latent and datarun#still need to record this, as it might change!
-                f.write(str(i)+'\n')#offset
-                f.write('yes\n')#hasbeenpreempted#
-                f.write(str(params['dhz'])+'\n')
-                #f.write('What I want to write: %s'%(params['quote']))
-                f.close()
-                return
+                if i>=1:#otherwise, it has little difference with training right from the start
+                    #params['hasbeenpreempted']='yes'#use the existence of this file to decide if preemption has happened
+                    f = open("outputs/checkpoints"+str(params['jobs'])+".txt", "w")#use the write mode to cover previous one, as previous one should be replaced!
+                    f.write(os.path.join(logdir,'update_%d'%(i-1),'val.pth')+'\n')#val_checkpoint
+                    f.write(os.path.join(logdir,'update_%d'%(i-1),'dyn.pth')+'\n')#dyn_checkpoint
+                    f.write(os.path.join(logdir,'update_%d'%(i-1),'gi.pth')+'\n')#gi_checkpoint
+                    f.write(os.path.join(logdir,'update_%d'%(i-1),'cbfd.pth')+'\n')#cbfd_checkpoint
+                    f.write(logdir+'\n')#the parent folder of both data_latent and datarun#still need to record this, as it might change!
+                    f.write(str(i)+'\n')#offset
+                    f.write('yes\n')#hasbeenpreempted#
+                    f.write(str(params['dhz'])+'\n')
+                    #f.write('What I want to write: %s'%(params['quote']))
+                    f.close()
+                break
             i=i+offset
             if i>=100:
                 break
@@ -277,6 +262,20 @@ if __name__ == '__main__':
             # Collect Data
             cbfalpha=0.2#exponential averaging for CBF
             for j in range(traj_per_update):#default 10 in spb
+                if csm.should_exit():
+                    #params['hasbeenpreempted']='yes'#use the existence of this file to decide if preemption has happened
+                    f = open("outputs/checkpoints"+str(params['jobs'])+".txt", "w")#use the write mode to cover previous one, as previous one should be replaced!
+                    f.write(os.path.join(logdir,'update_%d'%(i-1),'val.pth')+'\n')#val_checkpoint
+                    f.write(os.path.join(logdir,'update_%d'%(i-1),'dyn.pth')+'\n')#dyn_checkpoint
+                    f.write(os.path.join(logdir,'update_%d'%(i-1),'gi.pth')+'\n')#gi_checkpoint
+                    f.write(os.path.join(logdir,'update_%d'%(i-1),'cbfd.pth')+'\n')#cbfd_checkpoint
+                    f.write(logdir+'\n')#the parent folder of both data_latent and datarun#still need to record this, as it might change!
+                    f.write(str(i)+'\n')#offset
+                    f.write('yes\n')#hasbeenpreempted#
+                    f.write(str(params['dhz'])+'\n')
+                    #f.write('What I want to write: %s'%(params['quote']))
+                    f.close()
+                    break
                 log.info("Collecting trajectory %d for update %d" % (j, i))
                 transitions = []
 
@@ -519,6 +518,20 @@ if __name__ == '__main__':
             # Update models
 
             #trainer.update(replay_buffer, i)#online training, right?
+            if csm.should_exit():
+                #params['hasbeenpreempted']='yes'#use the existence of this file to decide if preemption has happened
+                f = open("outputs/checkpoints"+str(params['jobs'])+".txt", "w")#use the write mode to cover previous one, as previous one should be replaced!
+                f.write(os.path.join(logdir,'update_%d'%(i-1),'val.pth')+'\n')#val_checkpoint
+                f.write(os.path.join(logdir,'update_%d'%(i-1),'dyn.pth')+'\n')#dyn_checkpoint
+                f.write(os.path.join(logdir,'update_%d'%(i-1),'gi.pth')+'\n')#gi_checkpoint
+                f.write(os.path.join(logdir,'update_%d'%(i-1),'cbfd.pth')+'\n')#cbfd_checkpoint
+                f.write(logdir+'\n')#the parent folder of both data_latent and datarun#still need to record this, as it might change!
+                f.write(str(i)+'\n')#offset
+                f.write('yes\n')#hasbeenpreempted#
+                f.write(str(params['dhz'])+'\n')
+                #f.write('What I want to write: %s'%(params['quote']))
+                f.close()
+                break
             episodiccbfdhz=trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
