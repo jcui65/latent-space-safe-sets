@@ -11,8 +11,8 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='04-12',help='the date when the simulation started', type=str)
-@click.option('--time', default='10-51-09', help='time of the simulation', type=str)
+@click.option('--date', default='05-01',help='the date when the simulation started', type=str)
+@click.option('--time', default='01-19-14', help='time of the simulation', type=str)
 
 def main(date, time):
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
@@ -27,6 +27,7 @@ def main(date, time):
     srlist=[]#success rate list
     ralist=[]#reward average list
     rfarray=np.zeros((250,))#reacher#np.zeros((1000,))#push#
+    cvarray=np.zeros((250,))#reacher#np.zeros((1000,))#push#
     ralastlist=[]#reward average last list
     cvrlist=[]#constraint violation rate list
     cvrcbflist=[]#constraint violation rate list
@@ -34,7 +35,7 @@ def main(date, time):
     tsrarray=np.zeros((250,))#reacher#np.zeros((1000,))#push#
     #tsrlist=[]#constraint violation rate list
     lastnum=50
-    seedlist=[1,2,3,4,5]#[1,2,3,4,5,6,7,8,9,10]#[1,2,3,4,5,6,7]#[1,2,3]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    seedlist=[1,2,3]#[1,2,3,4,5]#[1,2,3,4,5,6,7,8,9,10]#[1,2,3,4,5,6,7]#[1,2,3]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
 
     for seed in seedlist:
         logdir=os.path.join(logdirbeforeseed, str(seed))
@@ -57,6 +58,7 @@ def main(date, time):
         #print('constri.shape',constri.shape)#250
         totalconstri=np.sum(constri)
         constrirate=totalconstri/constri.shape[0]
+        cvarray=np.vstack((cvarray,constri))#reacher#np.zeros((1000,))#push#
         #print('constrirate',constrirate)
         constrcbfi=np.load(os.path.join(logdir, "constrsafety.npy"))
         #print('constri.shape',constri.shape)#250
@@ -80,18 +82,25 @@ def main(date, time):
 
     #calculate the statistics: mean and std
     rfarray=rfarray[1:]
+    cvarray=cvarray[1:]
     tsrarray=tsrarray[1:]
+    cvcarray=np.cumsum(cvarray,axis=1) 
     #print('rfarray.shape',rfarray.shape)#3,250
     rfmean=np.mean(rfarray,axis=0)
+    cvcmean=np.mean(cvcarray,axis=0)
     tsrmean=np.mean(tsrarray,axis=0)
     #print(rfmean)
     rfstd=np.std(rfarray,axis=0)
+    cvcstd=np.std(cvcarray,axis=0)
     tsrstd=np.std(tsrarray,axis=0)
     #print(rfstd)
     lenseed=len(seedlist)
     pu.simple_plot(rfmean, std=rfstd, title='Average Rewards',
                             file=os.path.join(logdirbeforeseed, 'rewards'+str(lenseed)+'trajs'+date+'-'+time+'.pdf'),
                             ylabel='Average Reward', xlabel='# Training updates')
+    pu.simple_plot(cvcmean, std=cvcstd, title='Constraint Violations',
+                            file=os.path.join(logdirbeforeseed, 'cvc'+str(lenseed)+'trajs'+date+'-'+time+'epochs'+str(250)+'.pdf'),
+                            ylabel='Cumulative violations', xlabel='# Training updates')
     pu.simple_plot(tsrmean, std=tsrstd, title='Average task success rate',
                             file=os.path.join(logdirbeforeseed, 'tsr'+str(lenseed)+'trajs'+date+'-'+time+'.pdf'),
                             ylabel='Average task success rate', xlabel='# Training updates')

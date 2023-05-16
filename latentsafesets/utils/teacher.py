@@ -184,6 +184,76 @@ class AbstractTeacher(ABC):
         #     t['values'] = V[i]
         return transitions
 
+    def generate_trajectorysafety_dense(self,xa,ya,xa2,ya2,angled, noise_param=None, store_noisy=True):#xa/ya means x/y angle
+        """
+        The teacher initially tries to go northeast before going to the origin
+        """
+        self.reset()
+        transitions = []#AN EMPTY LIST
+        obs = self.env.reset(random_start=self.random_start)    #obs is a 3 channel image!
+        #around line 85 in simple_point_bot.py#random_start is false by default
+        # state = np.zeros((0, 0))
+        state = None
+        done = False
+        for i in range(self.horizon):
+            if state is None:
+                action = self.env.action_space.sample().astype(np.float64)#sample between -3 and 3
+            else:#I think the control is usually either -3 or +3
+                action = self._expert_control_dense(state, i,xa,ya,xa2,ya2,angled).astype(np.float64)
+            if self.noisy:
+                action_input = np.random.normal(action, self.noise_std)
+                action_input = np.clip(action_input, self.ac_low, self.ac_high)
+                #action_input = np.clip(action_input, self.ac_low + 1e-6, self.ac_high - 1e-6)
+            else:
+                action_input = action
+
+            if store_noisy:
+                action = action_input#if it not noisy, then it is just the same
+            #import ipdb; ipdb.set_trace()
+            action_input=np.float32(action_input)#has to be like this?#this is important!
+            next_obs, reward, done, info = self.env.step(action_input)#for reacher#63 in simple_point_bot.py
+            #next_obs, reward, done, info = self.env.stepsafety(action_input)#for pushing and for spb#63 in simple_point_bot.py
+            #next_obs,reward,done,info=self.env.stepsafety2(action_input)#strategy 2 for pushing!#for pushing and for spb#63 in simple_point_bot.py
+            
+            transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
+                          'next_obs': next_obs, 'done': int(done),#this is a dictionary
+                          'constraint': int(info['constraint']), 'safe_set': 0,
+                          'on_policy': int(self.on_policy),##
+                          'rdo': info['rdo'].tolist(),
+                          'rdn': info['rdn'].tolist(),
+                          'hvo': info['hvo'],
+                          'hvn': info['hvn'],
+                          'hvd': info['hvd'],
+                          'state':info['state'].tolist(),
+                          'next_state':info['next_state'].tolist()
+                          }#add key and value into it!
+            # print({k: v.dtype for k, v in transition.items() if 'obs' in k})
+            transitions.append(transition)#a list of dictionaries!
+            state = info['next_state']
+            obs = next_obs
+
+            if done:#it is just a time count rather than a sign of success or not!
+                break
+
+        transitions[-1]['done'] = 1
+
+        rtg = 0#reward to goal?
+        ss = 0
+        for frame in reversed(transitions):
+            if frame['reward'] >= 0:
+                ss = 1
+            #along the way of the trajectroy, the trajectory is safe
+            frame['safe_set'] = ss#is this dynamic programming?
+            frame['rtg'] = rtg#the reward to goal at each frame!#I think this is good
+            #add a key value pair to the trajectory(key='rtg', value=rtg
+            rtg = rtg + frame['reward']
+        #print('transitions[obs]',transitions[0]['obs'])#it looks normal
+        # assert done, "Did not reach the goal set on task completion."
+        # V = self.env.values()
+        # for i, t in enumerate(transitions):
+        #     t['values'] = V[i]
+        return transitions
+
     def generate_trajectorysafety_relative(self, noise_param=None, store_noisy=True):
         """
         The teacher initially tries to go northeast before going to the origin
@@ -326,10 +396,154 @@ class ReacherConstraintTeacher(AbstractTeacher):
         angle = state[:2]
         goal1 = np.array((np.pi * .53, 0.7 * np.pi))
         goal2 = np.array((np.pi, -0.7 * np.pi))
-        goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))
+        goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
         act = goal - angle#all unsafe demos are similar! Is it good?
         # act = np.random.normal((self.direction, 0), 1)
         act = np.clip(act, -1, 1)
+        return act
+
+    def reset(self):
+        self.direction = self.direction * -1
+
+class ReacherConstraintdense1Teacher(AbstractTeacher):#
+    def __init__(self, env, noisy=False):
+        super(ReacherConstraintdense1Teacher, self).__init__(env, noisy, on_policy=False)
+        self.direction = 1
+        self.random_start = True
+
+    def _expert_control_dense(self, state, i,xa,ya,xa2,ya2,angled):#xa, ya means x angle, y angle
+        angle = state[:2]
+        #print('angle',angle)
+        xaf=float(xa);yaf=float(ya);xa2f=float(xa2);ya2f=float(ya2)#f for float!
+        goal1 = np.array((xaf,yaf))#np.array((np.pi * .53, 0.7 * np.pi))
+        #print('goal1',goal1)
+        goal2 = np.array((xa2f,ya2f))#np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
+        #print('goal2',goal2)
+        if angled>=0:
+            if i<30:
+                goal=np.array((np.pi/6,np.pi*5.2/6))#initial points!
+            elif i<55:
+                goal=np.array((np.pi/6,np.pi*4/6))#initial points!
+            else:
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min   
+        elif angled<=-np.pi/2:
+            if i<30:
+                goal=np.array((np.pi*5/6,np.pi/2))
+            else:
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        else:
+            goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        act = goal - angle#all unsafe demos are similar! Is it good?
+        # act = np.random.normal((self.direction, 0), 1)
+        act = np.clip(act, -1, 1)
+        return act
+
+    def _expert_control_dense_lip(self, state, i,xa,ya,xa2,ya2,angled,action_limit=0.2):#xa, ya means x angle, y angle
+        angle = state[:2]
+        #print('angle',angle)
+        xaf=float(xa);yaf=float(ya);xa2f=float(xa2);ya2f=float(ya2)#f for float!
+        goal1 = np.array((xaf,yaf))#np.array((np.pi * .53, 0.7 * np.pi))
+        #print('goal1',goal1)
+        goal2 = np.array((xa2f,ya2f))#np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
+        #print('goal2',goal2)
+        if angled>=0:
+            if i<30*5:
+                goal=np.array((np.pi/6,np.pi*5.2/6))#initial points!
+            elif i<55*5:
+                goal=np.array((np.pi/6,np.pi*4/6))#initial points!
+            else:
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min   
+        elif angled<=-np.pi/2:
+            if i<30*5:
+                goal=np.array((np.pi*5/6,np.pi/2))
+            else:
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        else:
+            goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        act = goal - angle#all unsafe demos are similar! Is it good?
+        # act = np.random.normal((self.direction, 0), 1)
+        #act = np.clip(act, -1, 1)
+        act = np.clip(act, -action_limit, action_limit)
+        return act
+
+
+    def reset(self):
+        self.direction = self.direction * -1
+
+class ReacherConstraintdense2Teacher(AbstractTeacher):
+    def __init__(self, env, noisy=False):
+        super(ReacherConstraintdense2Teacher, self).__init__(env, noisy, on_policy=False)
+        self.direction = 1
+        self.random_start = True
+
+    def _expert_control_dense(self, state, i,xa,ya,xa2,ya2,angled):
+        angle = state[:2]
+        xaf=float(xa);yaf=float(ya);xa2f=float(xa2);ya2f=float(ya2)#f for float!
+        goal1 = np.array((xaf,yaf))#np.array((np.pi * .53, 0.7 * np.pi))
+        goal2 = np.array((xa2f,ya2f))#np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
+        p2=65#60
+        if angled>=0:
+            if i<25:
+                goal=np.array((np.pi/6,np.pi*5.2/6))
+            elif i<45:
+                goal=np.array((np.pi/6,np.pi*4/6))  
+            elif i < p2:
+                #goal = np.array((xa, ya))
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        elif angled<=-np.pi/2:
+            if i<30:
+                goal=np.array((np.pi*5/6,np.pi/2))
+            elif i < p2:
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        else:
+            if i < p2:
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        if i>=p2:
+            goal3 = np.array((1.61961612328942,1.99675550940415))#np.array((np.pi * .53, 0.7 * np.pi))#central position
+            goal4 = np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
+            goal = min(goal3, goal4, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        act = goal - angle#all unsafe demos are similar! Is it good?
+        # act = np.random.normal((self.direction, 0), 1)
+        act = np.clip(act, -1, 1)
+        return act
+
+    def _expert_control_dense_lip(self, state, i,xa,ya,xa2,ya2,angled,action_limit=0.2):
+        angle = state[:2]
+        xaf=float(xa);yaf=float(ya);xa2f=float(xa2);ya2f=float(ya2)#f for float!
+        goal1 = np.array((xaf,yaf))#np.array((np.pi * .53, 0.7 * np.pi))
+        goal2 = np.array((xa2f,ya2f))#np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
+        rate=2.5
+        p2=65#60
+        if angled>=0:
+            if i<25:
+                goal=np.array((np.pi/6,np.pi*5.2/6))
+                action_limit=1
+            elif i<45:
+                goal=np.array((np.pi/6,np.pi*4/6))  
+                action_limit=1
+            elif i < p2:
+                #goal = np.array((xa, ya))
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+                action_limit=1
+        elif angled<=-np.pi/2:
+            if i<30:
+                goal=np.array((np.pi*5/6,np.pi/2))
+                action_limit=1
+            elif i < p2:
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+                action_limit=1
+        else:
+            if i < p2:#kind of a mix
+                goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+                #action_limit=0.2#no need!
+        if i>=p2:
+            goal3 = np.array((1.61961612328942,1.99675550940415))#np.array((np.pi * .53, 0.7 * np.pi))#central position
+            goal4 = np.array((3.61637163269357,-1.99675550940415))#np.array((np.pi, -0.7 * np.pi))
+            goal = min(goal3, goal4, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
+        act = goal - angle#all unsafe demos are similar! Is it good?
+        # act = np.random.normal((self.direction, 0), 1)
+        #act = np.clip(act, -1, 1)
+        act = np.clip(act, -action_limit, action_limit)
         return act
 
     def reset(self):

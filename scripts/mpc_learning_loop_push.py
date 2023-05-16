@@ -27,7 +27,9 @@ if __name__ == '__main__':
     params = parse_args()#get the parameters from parse_args, see arg_parser.py
     # Misc preliminaries
     repeattimes=params['repeat_times']
+    initdhz=params['dhz']
     for m in range(repeattimes):
+        params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23
         log = logging.getLogger("main")#some logging stuffs
         seed=params['seed']
@@ -85,9 +87,25 @@ if __name__ == '__main__':
         #replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
         #replay_buffer2 = utils.load_replay_buffer_relative(params, encoder2)  # around line 123 in utils.py
         #replay_buffer = utils.load_replay_buffer_relative_expensive2(params, encoder, encoder2)  # around line 123 in utils.py
+        '''
+        if params['unsafebuffer']=='yes':#old version
+            replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
+            log.info('unsafe buffer!')
+        else:
+            replay_buffer_unsafe=replay_buffer#not loading new buffer!
+            log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
+        '''
+        if params['unsafebuffer']=='yes':#new version
+            replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
+            log.info('unsafe buffer!')
+        else:
+            replay_buffer_unsafe=None#replay_buffer
+            log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
+        
         trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
 
-        trainer.initial_train(replay_buffer)#initialize all the parts!
+        #trainer.initial_train(replay_buffer)#initialize all the parts!
+        trainer.initial_train(replay_buffer,replay_buffer_unsafe)#initialize all the parts!
 
         log.info("Creating policy")
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
@@ -120,11 +138,13 @@ if __name__ == '__main__':
         #print('conservative',conservative)
         action_type=params['action_type']
         for i in range(num_updates):#default 25 in spb
+            #log.info('current dhz: %f'%(params['dhz']))I think there is no need to update
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
             update_rewards = []
 
             # Collect Data
+            cbfalpha=0.2#exponential averaging for CBF
             for j in range(traj_per_update):#default 10 in spb
                 log.info("Collecting trajectory %d for update %d" % (j, i))
                 transitions = []
@@ -145,6 +165,7 @@ if __name__ == '__main__':
                 action_rand=False
                 constr_viol_cbf = False
                 constr_viol_cbf2 = False
+                
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]
@@ -288,7 +309,12 @@ if __name__ == '__main__':
                     #Now, I should do the evaluation!
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
-                    embeval = encoder.encode(obseval)#in latent space now!
+                    #embeval = encoder.encode(obseval)#in latent space now!
+                    if params['mean']=='sample':
+                        embeval = encoder.encode(obseval)#in latent space now!#even
+                    elif params['mean']=='mean':
+                        embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
+                        #embeval2 = encoder.encodemean(obseval)#in latent space now!
                     #print('emb.shape',emb.shape)#torch.Size([1, 32])
                     #cbfdot_function.predict()
                     cbfpredict = cbfdot_function(embeval,already_embedded=True)#
@@ -369,8 +395,13 @@ if __name__ == '__main__':
 
             # Update models
 
-            trainer.update(replay_buffer, i)#online training, right?
-
+            #trainer.update(replay_buffer, i)#online training, right?
+            episodiccbfdhz=trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?
+            if params['dynamic_dhz']=='yes':
+                dhzoriginal=params['dhz']
+                #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
+                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']
+            log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
             np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)
