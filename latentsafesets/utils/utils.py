@@ -229,15 +229,12 @@ def load_replay_buffer_preemption(params, encoder=None, first_only=False):#it do
         replay_buffer.store_transitions(trajectory)#22
     #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
     log.info('Loading data from the trajectories!')
-    directoryrun=
+    #directoryrun=
     trajectories2 = []#SimplePointBot or SimplePointBotConstraints#run means running
     #for directory, num in list(zip(params['data_dirs_run'], params['data_counts_run'])):#safe 50 & obstacle 50
     #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
     real_dir = os.path.join('', 'data',directoryrun)  #
     trajectories2 += load_trajectories(num, file=real_dir)#now you have 50+50=100 pieces of trajs each containing 100 time steps
-    if first_only:
-        print('wahoo')
-        break
     # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
     #random.shuffle(trajectories)#no need to shuffle this!
     for trajectory in tqdm(trajectories2):#trajectory is 1 traj having 100 steps
