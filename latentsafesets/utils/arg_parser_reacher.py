@@ -222,6 +222,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--dhdmax',type=float,default=0.010)#
     parser.add_argument('--idea',type=str,default='union_bound')#'vanilla_var')#'pca')#'gamma')#
     parser.add_argument('--noofsigma',type=float,default=3.0)#2.0)#
+    parser.add_argument('--noofsigmadhz',type=float,default=2.0)#2.0)#
     parser.add_argument('--unsafebuffer',type=str,default='no')#'yes')#
     parser.add_argument('--cbf_thresh_mult_iters', type=int, default=3)#5)#8)#16)#16 is crazy, but fails#
     parser.add_argument('--reducerocbfhd',type=str,default='yes')
@@ -257,7 +258,7 @@ def add_env_options(params):
         ]
         params['frame_stack'] = 1
     elif params['env'] == 'reacher':
-        params['buffer_size'] = 25000
+        params['buffer_size'] = 25000#75000#
         #params['data_dirs'] = [
             #'Reacher',
             #'ReacherConstraints',

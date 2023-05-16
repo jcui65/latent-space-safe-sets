@@ -85,7 +85,8 @@ if __name__ == '__main__':
         # Populate replay buffer
         #the following is loading replay buffer, rather than loading trajectories
         datasave_dir = os.path.join(logdir, "datarun")#create the corresponding folder!
-        if os.path.exists(datasave_dir):#this means that, not yet been preempted, should start from scratch
+
+        if params['hasbeenpreempted']=='no':#os.path.exists(datasave_dir):#this means that, not yet been preempted, should start from scratch
             log.info('Normal start!')
             #replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
             replay_buffer = utils.load_replay_buffer_latent(params, encoder)#around line 123 in utils.py

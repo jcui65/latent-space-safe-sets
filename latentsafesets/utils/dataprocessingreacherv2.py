@@ -11,10 +11,10 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='05-11',help='the date when the simulation started', type=str)
+@click.option('--date', default='05-15',help='the date when the simulation started', type=str)
 @click.option('--time', default='02-41-37', help='time of the simulation', type=str)
-@click.option('--fh', default=500, help='five hundred or 250 or 1000', type=int)
-@click.option('--env',default='reacher',help='the environment',type=str)
+@click.option('--fh', default=500, help='five hundred or 250 or 1000', type=int)#1000, 250#
+@click.option('--env',default='reacher',help='the environment',type=str)#reacher or push#
 def main(date, time,fh,env):
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
     #mar24='03-24'#mar23='03-23'#mar22='03-22'#mar25='03-25'#mar26='03-26'#mar27='03-27'#mar28='03-28'

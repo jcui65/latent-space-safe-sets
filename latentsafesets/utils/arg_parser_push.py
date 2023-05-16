@@ -30,6 +30,9 @@ def parse_args():
     parser.add_argument('--datasetnumber',type=int,default=1)#1 for old data, 2 for new data, 3 for data 3!
     parser.add_argument('--vaesnumber',type=str,default='d1v1')#divi means dataset i vae i, 'no' means no pretrain
     parser.add_argument('--quote',type=str,default=' ')#what I want to quote
+    parser.add_argument('--hasbeenpreempted',type=str,default='no')
+    parser.add_argument('--jobs',type=int,default=1)#1/2/3/4, I think that is enough
+    parser.add_argument('--offset',type=int,default=0)#0 means cold start! if no preemption happens, then this is it!
     add_controller_args(parser)
     add_encoder_args(parser)
     add_ss_args(parser)
@@ -224,6 +227,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--dhdmax',type=float,default=0.05)#0.044)#0.005)#
     parser.add_argument('--idea',type=str,default='union_bound')#'vanilla_var')#'pca')#'gamma')#
     parser.add_argument('--noofsigma',type=float,default=3.0)#2.0)#
+    parser.add_argument('--noofsigmadhz',type=float,default=2.0)#2.0)#
     parser.add_argument('--unsafebuffer',type=str,default='no')#'yes')#
     parser.add_argument('--cbf_thresh_mult_iters', type=int, default=4)#3)#5)#8)#16)#16 is crazy, but fails#
     parser.add_argument('--reducerocbfhd',type=str,default='yes')
