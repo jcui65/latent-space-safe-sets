@@ -229,7 +229,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--noofsigma',type=float,default=3.0)#2.0)#
     parser.add_argument('--noofsigmadhz',type=float,default=2.0)#2.0)#
     parser.add_argument('--unsafebuffer',type=str,default='no')#'yes')#
-    parser.add_argument('--cbf_thresh_mult_iters', type=int, default=4)#3)#5)#8)#16)#16 is crazy, but fails#
+    parser.add_argument('--cbf_thresh_mult_iters', type=int, default=3)#4)#5)#8)#16)#16 is crazy, but fails#
     parser.add_argument('--reducerocbfhd',type=str,default='yes')
     parser.add_argument('--dynamic_dhz',type=str,default='no')#'yes')#
     parser.add_argument('--reg_lipschitz',type=str,default='no')#

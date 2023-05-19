@@ -416,7 +416,7 @@ if __name__ == '__main__':
                     lipxq=max(lipxq,slopexhp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
-                    if ntodistance<=0.11 and ntodistance>=0.09:#ntodistance<=0.09 and ntodistance>=0.07:#
+                    if ntodistance<=0.10 and ntodistance>=0.08:#ntodistance<=0.09 and ntodistance>=0.07:#
                         slopexys[piece]=slopexyp
                         slopeyzs[piece]=slopeyzp
                         slopezhs[piece]=slopezhp

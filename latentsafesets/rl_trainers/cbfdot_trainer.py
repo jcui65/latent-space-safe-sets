@@ -402,7 +402,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             if self.params['dynamic_dhz']=='yes':
                 if self.env_name=='reacher':
                     deal=min(dhzepochave,1*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
-                else:
+                else:#not decreasing the dhz!
                     deal=min(dhzepochave,1*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
             else:
                 deal=dhzepochave
