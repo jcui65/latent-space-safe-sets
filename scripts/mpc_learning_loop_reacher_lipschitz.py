@@ -10,7 +10,8 @@ import latentsafesets.utils.plot_utils as pu
 from latentsafesets.utils.arg_parser_reacher import parse_args
 from latentsafesets.rl_trainers import MPCTrainer
 import latentsafesets.utils.pytorch_utils as ptu
-
+import torch
+from torch.autograd.functional import jacobian
 import os
 import logging
 from tqdm import trange#mainly for showing the progress bar
@@ -34,12 +35,16 @@ if __name__ == '__main__':
     params['horizon']=300#320#500#400#
     slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((traj_per_update*params['horizon']))
     slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((traj_per_update*params['horizon']))
+    slopezq=slopeyq=slopexq=qzuno=np.zeros((traj_per_update*params['horizon']))
+    slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((traj_per_update*params['horizon']))
     slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((traj_per_update*params['horizon']))
     piece=0#which piece of trajectory? this piece
     eps=1e-10
-    lipxy=lipyz=lipzh=lipyh=lipxh=0
-    lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=lipxhsafe=0
+    lipxy=lipyz=lipzh=lipyh=lipxh=lipzq=lipyq=lipxq=0
+    lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=lipxhsafe=lipzqsafe=lipyqsafe=lipxqsafe=0
     lipxyunsafe=lipyzunsafe=lipzhunsafe=lipyhunsafe=lipxhunsafe=0
+    gammadyn=gammadyns=10
+    pdnsafe=pdn=0
     tpx=-0.25*np.sqrt(0.5)
     tpy=0.25*np.sqrt(0.5)
     targetpos=np.array([tpx,tpy])
@@ -148,6 +153,8 @@ if __name__ == '__main__':
         #print('conservative',conservative)
         action_type=params['action_type']
         cbfalpha=0.2#exponential averaging for CBF
+        dhd=0.13855#0.013855#
+        dhz=0.000545
         for i in range(num_updates):#default 25 in spb
             #if i==0:
                 #teacher=ReacherConstraintdense1Teacher(env,noisy=False)
@@ -330,6 +337,7 @@ if __name__ == '__main__':
                     #print('nextpos',nextpos)
                     posdiff=nextpos-currentpos
                     posdiffnorm=np.linalg.norm(posdiff)
+                    pdnarray[piece]=posdiffnorm
                     #for key in im_dat:#from obs and next_obs
                         #frame[key] = im_dat[key][j]#the frame is the jth frame in 1 traj
                     #frame['obs'] = im_dat['obs'][j]#the frame is the jth frame in 1 traj
@@ -361,6 +369,24 @@ if __name__ == '__main__':
                     zdiffnorm=np.linalg.norm(zdiff)
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
+
+                    gradh2z=lambda nextobs: cbfdot_function(nextobs, True)
+                    #jno=jacobian(gradh2z,next_obs,create_graph=True)#jno means jacobian next_obs
+                    #jno=hessian(selfforwardtrue, next_obs, create_graph=True)  # jno means jacobian next_obs
+                    #print('jno',jno)
+                    #jnon=torch.norm(jno)#jnon means  norm of jacobian next_obs
+                    gradjh2z=lambda obs: torch.norm(jacobian(gradh2z,obs,create_graph=True))
+                    
+                    #jjno=jacobian(gradh2z,znextobs,create_graph=True)#jacobian of jacobian next_obs
+                    #print('gradjh2z(zobs)',gradjh2z(zobs))#difference is very small!!!
+                    #print('gradjh2z(znextobs)',gradjh2z(znextobs))
+                    #print('gradjh2z(znextobs)-gradjh2z(zobs)',gradjh2z(znextobs)-gradjh2z(zobs))#this difference is non zero, but very close to zero
+                    bzuop=hobs-gradjh2z(zobs)*dhd
+                    bzunop=hnextobs-gradjh2z(znextobs)*dhd
+                    qzuop=bzuop-dhz
+                    qzunop=bzunop-dhz
+                    qdiff=ptu.to_numpy(qzunop-qzuop)
+                    qdiffnorm=np.linalg.norm(qdiff)
                     hdiff=ptu.to_numpy(hnextobs-hobs)
                     hdiffnorm=np.linalg.norm(hdiff)
                     slopexyp=imagediffnormal/(posdiffnorm+eps)
@@ -368,31 +394,50 @@ if __name__ == '__main__':
                     slopezhp=hdiffnorm/(zdiffnorm+eps)
                     slopeyhp=hdiffnorm/(imagediffnormal+eps)
                     slopexhp=hdiffnorm/(posdiffnorm+eps)
+                    slopezqp=qdiffnorm/(zdiffnorm+eps)
+                    slopeyqp=qdiffnorm/(imagediffnormal+eps)
+                    slopexqp=qdiffnorm/(posdiffnorm+eps)
                     slopexy[piece]=slopexyp
                     slopeyz[piece]=slopeyzp
                     slopezh[piece]=slopezhp
                     slopeyh[piece]=slopeyhp
                     slopexh[piece]=slopexhp
-                    
+                    slopezq[piece]=slopezqp
+                    slopeyq[piece]=slopeyqp
+                    slopexq[piece]=slopexqp
+                    qzuno[piece]=qzunop
                     lipxy=max(lipxy,slopexyp)
                     lipyz=max(lipyz,slopeyzp)
                     lipzh=max(lipzh,slopezhp)
                     lipyh=max(lipyh,slopeyhp)
                     lipxh=max(lipxh,slopexhp)
-                    
-                    if ntodistance<=0.09 and ntodistance>=0.07:
+                    lipzq=max(lipzq,slopezhp)
+                    lipyq=max(lipyq,slopeyhp)
+                    lipxq=max(lipxq,slopexhp)
+                    gammadyn=min(gammadyn,qzunop)
+                    pdn=max(pdn,posdiffnorm)
+                    if ntodistance<=0.11 and ntodistance>=0.09:#ntodistance<=0.09 and ntodistance>=0.07:#
                         slopexys[piece]=slopexyp
                         slopeyzs[piece]=slopeyzp
                         slopezhs[piece]=slopezhp
                         slopeyhs[piece]=slopeyhp
                         slopexhs[piece]=slopexhp
+                        slopezqs[piece]=slopezqp
+                        slopeyqs[piece]=slopeyqp
+                        slopexqs[piece]=slopexqp
+                        qzunos[piece]=qzunop
                         lipxysafe=max(lipxysafe,slopexyp)
                         lipyzsafe=max(lipyzsafe,slopeyzp)
                         lipzhsafe=max(lipzhsafe,slopezhp)
                         lipyhsafe=max(lipyhsafe,slopeyhp)
                         lipxhsafe=max(lipxhsafe,slopexhp)
-                        log.info('piece:%d,sxysafep:%f,syzsafep:%f,szhsafep:%f,syhsafep:%f,sxhsafep:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,ntodistance))
-                        log.info('piece:%d,lxysafe:%f,lyzsafe:%f,lzhsafe:%f,lyhsafe:%f,lxhsafe:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe))
+                        lipzqsafe=max(lipzqsafe,slopezqp)
+                        lipyqsafe=max(lipyqsafe,slopeyqp)
+                        lipxqsafe=max(lipxqsafe,slopexqp)
+                        gammadyns=min(gammadyns,qzunop)
+                        pdnsafe=max(pdnsafe,posdiffnorm)
+                        log.info('piece:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('piece:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gammadyns:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
                     elif ntodistance<=0.06:
                         slopexyu[piece]=slopexyp
                         slopeyzu[piece]=slopeyzp
@@ -404,11 +449,11 @@ if __name__ == '__main__':
                         lipzhunsafe=max(lipzhunsafe,slopezhp)
                         lipyhunsafe=max(lipyhunsafe,slopeyhp)
                         lipxhunsafe=max(lipxhunsafe,slopexhp)
-                        log.info('piece:%d,sxyunsafep:%f,syzunsafep:%f,szhunsafep:%f,syhunsafep:%f,sxhunsafep:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,ntodistance))
-                        log.info('piece:%d,lxyunsafe:%f,lyzunsafe:%f,lzhunsafe:%f,lyhunsafe:%f,lxhunsafe:%f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
+                        log.info('piece:%d,sxyusp:%f,syzusp:%f,szhusp:%f,syhusp:%f,sxhusp:%f,pdnorm:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,posdiffnorm,ntodistance))
+                        log.info('piece:%d,lxyus:%f,lyzus:%f,lzhus:%f,lyhus:%f,lxhus:%f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
                     else:
-                        log.info('piece:%d,sxyp:%f,syzp:%f,szhp:%f,syhp:%f,sxhp:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,ntodistance))
-                        log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f,lipxh:%f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh))
+                        log.info('piece:%d,sxyp:%f,syzp:%f,szhp:%f,syhp:%f,sxhp:%f,szqp:%f,syqp:%f,sxqp:%f,pdnorm:%f,qzuno:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f,lipxh:%f,lipzq:%f,lipyq:%f,lipxq:%f,pdn:%f,gammadyn:%f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh,lipzq,lipyq,lipxq,pdn,gammadyn))
 
                     obs = next_obs#don't forget this step!
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
@@ -502,16 +547,26 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'slopezh.npy'), slopezh)
             np.save(os.path.join(logdir, 'slopeyh.npy'), slopeyh)
             np.save(os.path.join(logdir, 'slopexh.npy'), slopexh)
+            np.save(os.path.join(logdir, 'slopezq.npy'), slopezq)
+            np.save(os.path.join(logdir, 'slopeyq.npy'), slopeyq)
+            np.save(os.path.join(logdir, 'slopexq.npy'), slopexq)
+            np.save(os.path.join(logdir, 'qzuno.npy'), qzuno)
+            np.save(os.path.join(logdir, 'pdn.npy'), pdnarray)
             np.save(os.path.join(logdir, 'slopexys.npy'), slopexys)
             np.save(os.path.join(logdir, 'slopeyzs.npy'), slopeyzs)
             np.save(os.path.join(logdir, 'slopezhs.npy'), slopezhs)
             np.save(os.path.join(logdir, 'slopeyhs.npy'), slopeyhs)
             np.save(os.path.join(logdir, 'slopexhs.npy'), slopexhs)
+            np.save(os.path.join(logdir, 'slopezqs.npy'), slopezqs)
+            np.save(os.path.join(logdir, 'slopeyqs.npy'), slopeyqs)
+            np.save(os.path.join(logdir, 'slopexqs.npy'), slopexqs)
+            np.save(os.path.join(logdir, 'qzunos.npy'), qzunos)
             np.save(os.path.join(logdir, 'slopexyu.npy'), slopexyu)
             np.save(os.path.join(logdir, 'slopeyzu.npy'), slopeyzu)
             np.save(os.path.join(logdir, 'slopezhu.npy'), slopezhu)
             np.save(os.path.join(logdir, 'slopeyhu.npy'), slopeyhu)
             np.save(os.path.join(logdir, 'slopexhu.npy'), slopexhu)
+            
 
         params['seed']=params['seed']+1#m+1#
         #utils.init_logging(logdir)#record started!

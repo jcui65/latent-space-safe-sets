@@ -1667,7 +1667,7 @@ class CEMSafeSetPolicy(Policy):
             #print('emb min',torch.min(emb))
             embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         elif self.current_robust=='weak':
-            if self.sample=='sample' or self.sample=='meancbf':
+            if self.sample=='sample' or self.sample=='meancbf':#think about it
                 emb=self.encoder.encode(obs)
             elif self.sample=='mean' or self.sample=='meancbf':
                 emb=self.encoder.encodemean(obs)

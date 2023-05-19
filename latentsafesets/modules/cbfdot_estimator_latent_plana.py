@@ -51,7 +51,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             if self.mean=='sample':
                 embedding = self.encoder.encode(obs).detach()
                 #print('get sample embedding from images! embedding.shape',embedding.shape)
-            elif self.mean=='mean':
+            elif self.mean=='mean' or self.mean=='meancbf':
                 embedding = self.encoder.encodemean(obs).detach()
                 #print('get mean embedding from images! embedding.shape',embedding.shape)#
         else:

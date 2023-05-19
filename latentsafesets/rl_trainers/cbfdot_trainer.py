@@ -273,7 +273,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             #log.info('self.batchsize hope 256:%d'% (self.batchsize))
         self.env_name = params['env']
 
-    def initial_train(self, replay_buffer, update_dir,replay_buffer_unsafe):
+    def initial_train(self, replay_buffer, update_dir,replay_buffer_unsafe=None):
         if self.cbfd.trained:
             self.plot(os.path.join(update_dir, "cbfd_start.pdf"), replay_buffer,replay_buffer_unsafe)
             self.plotlatent(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer,replay_buffer_unsafe)
@@ -335,7 +335,7 @@ class CBFdotlatentplanaTrainer(Trainer):
 
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
 
-    def update(self, replay_buffer, update_dir,replay_buffer_unsafe):
+    def update(self, replay_buffer, update_dir,replay_buffer_unsafe=None):
         if self.params['train_cbf']=='no':
             log.info('No episodic cbf dot update optimization!')
         else:
@@ -422,7 +422,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             return deal
 
-    def plot(self, file, replay_buffer,replay_buffer_unsafe):
+    def plot(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -446,7 +446,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                              file,
                              env=self.env)
 
-    def plotconly(self, file, replay_buffer,replay_buffer_unsafe):
+    def plotconly(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -471,7 +471,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                              env=self.env)
 
 
-    def plotlatentunbiased(self, file, replay_buffer,replay_buffer_unsafe,coeff):
+    def plotlatentunbiased(self, file, replay_buffer,replay_buffer_unsafe=None,coeff=1):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -496,7 +496,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                              file,
                              env=self.env,coeff=coeff)
 
-    def plotlatentgroundtruth(self, file, replay_buffer,replay_buffer_unsafe):
+    def plotlatentgroundtruth(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -521,7 +521,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                              file,
                              env=self.env)
 
-    def plotlatent(self, file, replay_buffer,replay_buffer_unsafe):
+    def plotlatent(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
