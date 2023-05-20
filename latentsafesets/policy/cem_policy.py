@@ -1962,7 +1962,7 @@ class CEMSafeSetPolicy(Policy):
                                                # the acbfs is subject to change
                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     realdhz=self.dhz*dhz
-                    log.info('realdhz: %f'%(realdhz))
+                    #log.info('realdhz: %f'%(realdhz))
                     if self.conservative=='conservative':
                         #log.info('conservative!')#it is correct!
                         lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements

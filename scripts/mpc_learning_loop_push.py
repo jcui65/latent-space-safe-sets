@@ -53,6 +53,7 @@ if __name__ == '__main__':
         f.write('push_cbf_strategy: %d\n'%(params['push_cbf_strategy']))
         f.write('reduce_horizon: %s, 0 or 1: %s\n'%(params['reduce_horizon'],params['zero_one']))
         f.write('mean: %s, dhz: %f, dhdmax: %f\n'%(params['mean'],params['dhz'],params['dhdmax']))
+        f.write('nosigma: %f, nosigmadhz: %f, dynamic_dhz: %s, idea: %s, unsafe_buffer:%s, reg_lipschitz:%s\n'%(params['noofsigma'],params['noofsigmadhz'],params['dynamic_dhz'],params['idea'],params['unsafebuffer'],params['reg_lipschitz']))
         f.write('What I want to write: %s'%(params['quote']))
         f.close()
         utils.init_logging(logdir)#record started!
