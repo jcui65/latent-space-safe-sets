@@ -93,7 +93,7 @@ class CEMSafeSetPolicy(Policy):
         #print('reward_type: ',self.reward_type)
         #print('conservativeness: ',self.conservative)
         self.current_robust=params['current_robust']
-        self.dhz=params['dhz']
+        self.dhz=params['noofsigmadhz']*(2-params['cbfdot_thresh'])#params['dhz']*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
         self.sigmaz=params['sigmaz']
         self.dhdmax=params['dhdmax']
         self.idea=params['idea']
@@ -1645,7 +1645,7 @@ class CEMSafeSetPolicy(Policy):
         action = actions_sorted[-1][0]#the best one
         return action.detach().cpu().numpy(), tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
-    def actcbfdsquarelatentplanareacher(self, obs):#,conservative,reward_type):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
+    def actcbfdsquarelatentplanareacher(self, obs,dhz):#,conservative,reward_type):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
         """
         Returns the action that this controller would take at time t given observation obs.
         Arguments:obs: The current observation. Cannot be a batch
@@ -1961,23 +1961,26 @@ class CEMSafeSetPolicy(Policy):
                     #cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0),
                                                # the acbfs is subject to change
                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
+                    realdhz=self.dhz*dhz
+                    log.info('realdhz: %f'%(realdhz))
                     if self.conservative=='conservative':
                         #log.info('conservative!')#it is correct!
                         lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements
                         #print('lhse.shape',lhse.shape)#(1000,5)
                         rhse,rhsi=torch.max(acbfs, dim=0)#rhsi means right hand side indices
                         #print('rhse.shape', rhse.shape)#(1000,cbfhorizon)
-                        cbfdots_violss = torch.sum(( lhse< rhse+self.dhz),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
+                        cbfdots_violss = torch.sum(( lhse< rhse+realdhz),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
+                        #log.info('self.dhz: %f'%(self.dhz))#currently it is not passed inside!
                         #print('cbfdots_violss',cbfdots_violss)#dimension 1000
                     elif self.conservative=='onestd':
                         cbfstd,cbfmean=torch.std_mean(cbfdots_alls, dim=0)#this std is not the std of the latent state prediction error!
                         cbfmeanmstd=cbfmean-cbfstd#cbfmean minus 1 std
                         acbfstd,acbfmean=torch.std_mean(acbfs,dim=0)#dim (1000,5)
                         acbfmeanpstd=acbfmean+acbfstd#acbfmean plus 1 std
-                        cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd+self.dhz,# the acbfs is subject to change
+                        cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd+realdhz,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#now dimension only 1000!
                     elif self.conservative=='average':
-                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0)+self.dhz+dhd,# the acbfs is subject to change
+                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0)+realdhz+dhd,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction

@@ -181,7 +181,8 @@ if __name__ == '__main__':
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
-                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
+                    #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
+                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
                     '''
                     if conservative=='conservative' and reward_type=='sparse':
                         #print('conservative and sparse!')#you get this right!
@@ -402,7 +403,7 @@ if __name__ == '__main__':
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
-                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
+                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz#*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
             log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
