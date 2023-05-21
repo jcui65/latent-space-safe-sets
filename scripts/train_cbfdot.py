@@ -35,9 +35,15 @@ if __name__ == '__main__':
     cbfdot = modules['cbfd']#CBFdotEstimator(encoder,params)#
 
     replay_buffer = utils.load_replay_buffer(params, encoder)
-
+    if params['unsafebuffer']=='yes' or params['unsafebuffer']=='yes2':#new version
+        replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
+        log.info('unsafe buffer!')
+    else:
+        replay_buffer_unsafe=None#replay_buffer
+        log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
     loss_plotter = utils.LossPlotter(logdir)
 
     #trainer = CBFdotTrainer(env, params, cbfdot, loss_plotter)
     trainer = CBFdotlatentplanaTrainer(env, params, cbfdot, loss_plotter)
-    trainer.initial_train(replay_buffer, logdir)
+    #trainer.initial_train(replay_buffer, logdir)
+    trainer.initial_train(replay_buffer, logdir,replay_buffer_unsafe)

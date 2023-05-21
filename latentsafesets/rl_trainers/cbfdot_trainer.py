@@ -277,7 +277,7 @@ class CBFdotlatentplanaTrainer(Trainer):
         if self.cbfd.trained:
             self.plot(os.path.join(update_dir, "cbfd_start.pdf"), replay_buffer,replay_buffer_unsafe)
             self.plotlatent(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer,replay_buffer_unsafe)
-            return
+            #return
 
         log.info('Beginning cbfdot initial optimization')
 

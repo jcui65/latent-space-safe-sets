@@ -184,8 +184,11 @@ class EncodedReplayBuffer:
         #condition=(self.data[key]>=-0.0011) & (self.data[key]<=0.0013) &(self.data[key]!=0)#only 3243!#0.002#
         #ondition=(self.data[key]>=-0.0011) & (self.data[key]<0)#only 2282!!#0.002#
         #condition=(self.data[key]>-0.001) & (self.data[key]<0)#only 2201!!#0.002#
-        condition=(self.data[key]>=-0.0011) & (self.data[key]<=0.0013) &(self.data[key]!=0)##only 2201!!#0.002#
+        #condition=(self.data[key]>=-0.0011) & (self.data[key]<=0.0013) &(self.data[key]!=0)#for reacher!#only 2201!!#0.002#
         #print('condition.shape',condition.shape)
+        #condition=(self.data[key]<=0.02) &(self.data[key]!=0)#this condition is for pushing!!!13.5k
+        #condition=(self.data[key]<=0.025) &(self.data[key]!=0)#this condition is for pushing!!!13.889k
+        condition=(self.data[key]<=0.05) &(self.data[key]!=0)#this condition is for pushing!!!18.4k
         nonzeros = np.nonzero(condition)[0]#self.data[key].nonzero(condition)[0]#self.data[key] is the value#get the safe ones!
         #print('nonzeros.shape',nonzeros.shape)#2282 to 2201#(17100,) when no process!
         #print('nonzeros',nonzeros)#self.data[key]#[0 1 2 ... 17097 17098 17099]

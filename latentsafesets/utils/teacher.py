@@ -610,6 +610,22 @@ class OutburstPushTeacher(AbstractTeacher):
             return self.env.action_space.sample().astype(np.float64)
 
         return np.array((0, -0.02))#-0.02 means it is pushing downwards
+    
+    def _expert_control_lipschitz(self, state, i,action_limit=0.02):
+        if np.random.random() > .8:#only 10% random actions?
+            self.outburst = True
+
+        if np.random.random() > .9:
+            self.outburst = False
+
+        if self.outburst:
+            act=self.env.action_space.sample().astype(np.float64)
+            act=np.clip(act, -action_limit, action_limit)
+            return act
+
+        act=np.array((0, -0.02))#
+        act=np.clip(act, -action_limit, action_limit)
+        return act#np.array((0, -0.02))#-0.02 means it is pushing downwards
 
     def reset(self):
         self.block_id = 0

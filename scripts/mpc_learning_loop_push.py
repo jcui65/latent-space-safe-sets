@@ -184,18 +184,6 @@ if __name__ == '__main__':
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
                     action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
-                    '''
-                    if conservative=='conservative' and reward_type=='sparse':
-                        #print('conservative and sparse!')#you get this right!
-                        action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                            #fn, tn, tpc, fpc, fnc, tnc)
-                    elif conservative=='average' and reward_type=='sparse':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
-                    elif conservative=='conservative' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
-                    elif conservative=='average' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
-                    '''
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -307,19 +295,20 @@ if __name__ == '__main__':
                     constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1
                     succ = succ or reward == 0#as said in the paper, reward=0 means success!
 
-                    '''
+                    
                     #Now, I should do the evaluation!
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                     #embeval = encoder.encode(obseval)#in latent space now!
                     if params['mean']=='sample':
                         embeval = encoder.encode(obseval)#in latent space now!#even
-                    elif params['mean']=='mean':
+                    elif params['mean']=='mean' or params['mean']=='meancbf':
                         embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
                         #embeval2 = encoder.encodemean(obseval)#in latent space now!
                     #print('emb.shape',emb.shape)#torch.Size([1, 32])
                     #cbfdot_function.predict()
                     cbfpredict = cbfdot_function(embeval,already_embedded=True)#
+                    '''
                     cbfgt=hvn
                     if (cbfpredict>=0) and (cbfgt>=0):
                         tn+=1
@@ -341,7 +330,7 @@ if __name__ == '__main__':
                     #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
                     #the evaluation phase ended
                     '''
-                    log.info('s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
+                    log.info('s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d,cbfpredict:%f' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand,cbfpredict))
                     if done:
                         break
                 transitions[-1]['done'] = 1#change the last transition to success/done!

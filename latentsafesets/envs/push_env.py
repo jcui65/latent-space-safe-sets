@@ -179,8 +179,8 @@ class PushEnv(BaseMujocoEnv):
                 else:
                     block_done = True
         if block_done:
-            if cur_pos[1] < 0.04:
-                action[1] = step_size#?what's this for?
+            if cur_pos[1] < 0.04:#if the current pose for the jaw is not back enough
+                action[1] = step_size#?what's this for?#retreat back!
             else:
                 block_reset_done = True
   
@@ -371,7 +371,7 @@ class PushEnv(BaseMujocoEnv):
         info = {
             "constraint": constraint,
             "reward": reward,
-            "state": position,#the position of the end effector?
+            "state": position,#the position of the end effector? the 27 dimensional thing!
             "next_state": self.position,#it changes along the way?
             "action": action,
             "rdo":rdo,#rdo for relative distance old#array now!
