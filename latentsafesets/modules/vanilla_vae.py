@@ -32,7 +32,7 @@ class VanillaVAE(nn.Module):
         self.optimizer = optim.Adam(param_list, lr=self.learning_rate)
 
     def forward(self, inputs):
-        mu, log_std = self.encoder(inputs)
+        mu, log_std = self.encoder(inputs)#the forward of the encoder!
         return mu, log_std
 
     def encode(self, inputs):
@@ -189,7 +189,7 @@ class VanillaVAE2(nn.Module):
         self.optimizer = optim.Adam(param_list, lr=self.learning_rate)
 
     def forward(self, inputs):
-        mu, log_std = self.encoder(inputs)
+        mu, log_std = self.encoder(inputs)#the forward of the encoder
         return mu, log_std
 
     def encode(self, inputs):

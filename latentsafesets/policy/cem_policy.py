@@ -58,7 +58,7 @@ class CEMSafeSetPolicy(Policy):
         self.safe_set_thresh = params['safe_set_thresh']#0.8
         self.safe_set_thresh_mult = params['safe_set_thresh_mult']#0.8
         self.safe_set_thresh_mult_iters = params['safe_set_thresh_mult_iters']#5
-
+        self.cbf_thresh_mult_iters=params['cbf_thresh_mult_iters']#3
         self.cbfd_thresh=params['cbfdot_thresh']
         self.cbfd_thresh_mult = params['cbfdot_thresh_mult']  # 0.8
 
@@ -93,8 +93,13 @@ class CEMSafeSetPolicy(Policy):
         #print('reward_type: ',self.reward_type)
         #print('conservativeness: ',self.conservative)
         self.current_robust=params['current_robust']
-        self.dhz=params['dhz']
+        self.dhz=params['noofsigmadhz']*(2-params['cbfdot_thresh'])#params['dhz']*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
+        self.sigmaz=params['sigmaz']
         self.dhdmax=params['dhdmax']
+        self.idea=params['idea']
+        self.noofsigma=params['noofsigma']
+        self.reducerocbfhd=params['reducerocbfhd']
+        self.sample=params['mean']#self.mean has been occupied for other uses!#
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1640,7 +1645,7 @@ class CEMSafeSetPolicy(Policy):
         action = actions_sorted[-1][0]#the best one
         return action.detach().cpu().numpy(), tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
-    def actcbfdsquarelatentplanareacher(self, obs):#,conservative,reward_type):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
+    def actcbfdsquarelatentplanareacher(self, obs,dhz):#,conservative,reward_type):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
         """
         Returns the action that this controller would take at time t given observation obs.
         Arguments:obs: The current observation. Cannot be a batch
@@ -1649,16 +1654,30 @@ class CEMSafeSetPolicy(Policy):
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
         if self.current_robust=='no':
-            emb = self.encoder.encode(obs)#in latent space now!it is 32 dimensional!
+            #emb = self.encoder.encode(obs)#in latent space now!it is 32 dimensional!
+            if self.sample=='sample':#self.mean has been occupied for other uses!
+                emb=self.encoder.encode(obs)
+            elif self.sample=='mean' or self.sample=='meancbf':
+                emb=self.encoder.encodemean(obs)
+                #embtest=self.encoder.encodemean(obs)
+                #embdiff=(emb-embtest)*1000000000
+                #print('embdiff',embdiff)
             #print('emb',emb)
             #print('emb max',torch.max(emb))
             #print('emb min',torch.min(emb))
             embrepeat20 = emb.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
         elif self.current_robust=='weak':
-            emb=self.encoder.encode(obs)
+            if self.sample=='sample' or self.sample=='meancbf':#think about it
+                emb=self.encoder.encode(obs)
+            elif self.sample=='mean' or self.sample=='meancbf':
+                emb=self.encoder.encodemean(obs)
             embrepeat20=emb.repeat(1, self.popsize, 1, 1)
             for i in range(self.n_particles-1):
-                embi=self.encoder.encode(obs)
+                #embi=self.encoder.encode(obs)
+                if self.sample=='sample' or self.sample=='meancbf':
+                    embi=self.encoder.encode(obs)
+                elif self.sample=='mean' or self.sample=='meancbf':
+                    embi=self.encoder.encodemean(obs)
                 embrepeati=embi.repeat(1, self.popsize, 1, 1)
                 emb+=embi
                 embrepeat20=torch.vstack((embrepeat20,embrepeati))
@@ -1672,9 +1691,9 @@ class CEMSafeSetPolicy(Policy):
         act_cbfd_thresh=self.cbfd_thresh#initially 0.8
         #print('env.state',state)
         randflag=0#this is the flag to show if a random action is finally being chosen!
-        cbfhorizon=self.plan_hor
-        sigmaz=0.13985#0.23
-        dz=1*sigmaz*torch.ones((self.d_latent), device=ptu.TORCH_DEVICE)#2*sigmaz*torch.ones((self.d_latent), device=ptu.TORCH_DEVICE)#3*sigmaz*torch.ones((self.d_latent), device=ptu.TORCH_DEVICE)#
+        cbfhorizon=self.plan_hor#1#just a try#
+        #sigmaz=self.sigmaz#0.13855#1.8#0.13985#1.5#0.23
+        dz=1*self.sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#1*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#3*sigmaz*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -1706,7 +1725,7 @@ class CEMSafeSetPolicy(Policy):
                         cbfhorizon-=1
                         cbfhorizon=max(1,cbfhorizon)
                         log.info('horizon reduced to %d'%(cbfhorizon))
-                    if reset_count > self.safe_set_thresh_mult_iters:
+                    if reset_count > self.cbf_thresh_mult_iters:#self.safe_set_thresh_mult_iters:#
                         self.mean = None
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
@@ -1792,7 +1811,7 @@ class CEMSafeSetPolicy(Policy):
                 # dimension (num_models, num_candidates, planning_hor, d_latent)
                 predictions = self.dynamics_model.predict(emb, action_samples, already_embedded=True)#(20,1000,5,32)
                 #prediction0=predictions[:,0,:,:]
-                #p0sm=torch.std_mean(prediction0,dim=0)#p0sm for prediction 0 std mean
+                #p0sm=torch.std_mean(prediction0,dim=0)#p0sm for prediction 0 std mean over 20 particles!
                 #print('p0s0',p0sm[0][0],'max',torch.max(p0sm[0][0]),'min',torch.min(p0sm[0][0]))
                 #print('p0m0',p0sm[1][0],'max',torch.max(p0sm[1][0]),'min',torch.min(p0sm[1][0]))
                 #print('p0s1',p0sm[0][1],'max',torch.max(p0sm[0][1]),'min',torch.min(p0sm[0][1]))
@@ -1844,12 +1863,17 @@ class CEMSafeSetPolicy(Policy):
                     jces=jce.squeeze()
                     #print("zgrads shape :", jces.shape)#(32)
                     #print('dzs',jces)
-                    jcesa=torch.abs(jces)
+                    jcesa=torch.abs(jces)#just as an approximation
+                    #print('dzsa',jcesa)
                     dhd=torch.dot(jcesa,dz)#delta h due to dynamics error
                     #print('dhd',dhd)
                     if itr==1:
+                        #ji=jces.detach().cpu().numpy()#.item()#jces item
+                        #log.info('j16:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[0],ji[1],ji[2],ji[3],ji[4],ji[5],ji[6],ji[7],ji[8],ji[9],ji[10],ji[11],ji[12],ji[13],ji[14],ji[15]))
+                        #log.info('j32:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[16],ji[17],ji[18],ji[19],ji[20],ji[21],ji[22],ji[23],ji[24],ji[25],ji[26],ji[27],ji[28],ji[29],ji[30],ji[31]))
                         log.info('dhd: %f'%(dhd.item()))
                     dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
+                    dhd=dhd.repeat(predictions.shape[1],cbfhorizon)
                     #print('dz',dz[0])
                     #embs=emb.squeeze()
                     #print('embs',embs)
@@ -1861,14 +1885,60 @@ class CEMSafeSetPolicy(Policy):
                     #print('cbf_alls.shape',cbf_alls.shape)#torch.Size([20, 1000, 5, 1])
                     #print('cbf_alls',cbf_alls)
                     cbf_alls4=cbf_alls[:,:,0:cbfhorizon-1,:]#[:,:,0:self.plan_hor-1,:]#
-                    p0=predictions[0]
+                    if self.idea=='vanilla_var':
+                        '''
+                        predict1=predictions[:, :, 0, :]#torch.mean(predictions,dim=2)#it should be (20,1000,32)
+                        stdp1,meanp1=torch.std_mean(predict1,dim=0)#it should be (1000,32)
+                        #print('mean1pshape',mean1p.shape)#should be (1000,32)
+                        meanp10=meanp1[0]
+                        jcep0ho=jacobian(scft,meanp10)#jacobian(scft,p0,create_graph=True)#
+                        jcep=jcep0ho
+                        for nc in range(meanp1.shape[0]-1):#nc means number of constraints
+                            meanp1nc=meanp1[nc+1]
+                            jcepncho=jacobian(scft,meanp1nc)#jacobian(scft,p0,create_graph=True)#
+                            jcep=torch.vstack((jcep,jcepncho))
+                            #print("zgradp old shape :", jce1pncho.shape)#(1,32)
+                            #jce1pncho=jce1pncho.squeeze()
+                            #print('dzp0ncho',jce1pncho)#will it be 32d as expected? It is (1000,3,32)!#
+                        '''
+                        dhdsa = torch.zeros(size=(predictions.shape[1],cbfhorizon))#torch.empty(size=(predictions.shape[1],cbfhorizon))#(1000,h)#a for array, 3 for 3 sigma
+                        #for i in range(len(items)):
+                            #x[i] = calc_result
+                        #stdp,meanp=torch.std_mean(predictions,dim=0)#it should be (1000,3,32) 
+                        if self.reducerocbfhd=='yes':
+                            rocbfhd=1#robust output cbf horizon dynamics
+                        else:
+                            rocbfhd=cbfhorizon
+                        for h in range(rocbfhd):#not necessarily the full length of cbfhorizon!
+                            predicth=predictions[:, :, h, :]#20,1000,32
+                            stdph,meanph=torch.std_mean(predicth,dim=0)#it should be (1000,32)
+                            #stdph=stdp[:,h,:]#should be (1000,32)
+                            #meanph=meanp[:,h,:]#should be (1000,32)
+                            for nc in range(predictions.shape[1]):#1000#nc means number of constraints
+                                #jcepnc=jcep[nc]#32 dimensional
+                                #jcepnca=torch.abs(jcepnc)#it will be 32 dimensional
+                                #print("zgradp new shape :", jce1pncho.shape)#torch.Size([32])#zgradp shape : torch.Size([1000, 3, 1, 1000, 3, 32])
+                                #print('dzp0nchoa',jce1pnchoa)#will it be 32d as expected? It is (1000,3,32)!#
+                                stdphnc=stdph[nc]#32 dimensional
+                                #print('std1pnc',std1pnc)#32d!
+                                #dhdnc=torch.dot(jce1pncho,std1pnc)#delta h due to dynamics error
+                                #print('dhdnc',dhdnc)#it should be smaller than dhd?
+                                #dhd2nc=torch.dot(jcepnca,2*stdphnc)#delta h due to dynamics error
+                                #log.info('dhd2nc: %f'%(dhd2nc.item()))#it should be smaller than dhd?
+                                #dhd2ncs=torch.dot(jcesa,2*std1pnc)#delta h due to dynamics error
+                                #log.info('dhd2ncs: %f'%(dhd2ncs.item()))#it should be smaller than dhd?#always smaller than dhd2nc?
+                                #dhd3nc=torch.dot(jcepnca,3*stdphnc)#a scalar#delta h due to dynamics error
+                                dhdsnc=torch.dot(jcesa,self.noofsigma*stdphnc)#a scalar#s for simga#delta h due to dynamics error
+                                if nc==1 and h==0:#don't log too much
+                                    log.info('dhd'+str(self.noofsigma)+'nc: %f'%(dhdsnc.item()))#it should be smaller than dhd?
+                                dhdsa[nc,h]=dhdsnc
+                        dhd=dhdsa
+                        device=ptu.TORCH_DEVICE
+                        dhd=dhd.to(device)
+                        #dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
+
+                    
                     #print('p0shape',p0.shape)#(1000,3,32)#
-                    #for nc in range(predictions.shape[1]):
-                        #for ho in range(cbfhorizon-1):#one step less!
-                            #p0ncho=p0[nc,ho]
-                            #jcep0ncho=jacobian(scft,p0ncho)#jacobian(scft,p0,create_graph=True)#
-                            #print("zgradp shape :", jcep0ncho.shape)#torch.Size([1, 32])#zgradp shape : torch.Size([1000, 3, 1, 1000, 3, 32])
-                            #print('dzp0ncho',jcep0ncho)#will it be 32d as expected? It is (1000,3,32)!#
                     #print('dzp',jcep)
                     #print('cbf_alls4.shape', cbf_alls4.shape)#torch.Size([20, 1000, 4, 1])
                     cbf_initalls4=torch.cat((cbf_init,cbf_alls4),dim=-2)#if cbfhorizon-1=0, it should be fine
@@ -1891,23 +1961,26 @@ class CEMSafeSetPolicy(Policy):
                     #cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0),
                                                # the acbfs is subject to change
                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
+                    realdhz=self.dhz*dhz
+                    #log.info('realdhz: %f'%(realdhz))
                     if self.conservative=='conservative':
                         #log.info('conservative!')#it is correct!
                         lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements
                         #print('lhse.shape',lhse.shape)#(1000,5)
                         rhse,rhsi=torch.max(acbfs, dim=0)#rhsi means right hand side indices
-                        #print('rhse.shape', rhse.shape)
-                        cbfdots_violss = torch.sum(( lhse< rhse+self.dhz),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
-                        #print('cbfdots_violss',cbfdots_violss)
+                        #print('rhse.shape', rhse.shape)#(1000,cbfhorizon)
+                        cbfdots_violss = torch.sum(( lhse< rhse+realdhz),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
+                        #log.info('self.dhz: %f'%(self.dhz))#currently it is not passed inside!
+                        #print('cbfdots_violss',cbfdots_violss)#dimension 1000
                     elif self.conservative=='onestd':
                         cbfstd,cbfmean=torch.std_mean(cbfdots_alls, dim=0)#this std is not the std of the latent state prediction error!
                         cbfmeanmstd=cbfmean-cbfstd#cbfmean minus 1 std
-                        acbfstd,acbfmean=torch.std_mean(acbfs,dim=0)
+                        acbfstd,acbfmean=torch.std_mean(acbfs,dim=0)#dim (1000,5)
                         acbfmeanpstd=acbfmean+acbfstd#acbfmean plus 1 std
-                        cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd+self.dhz,# the acbfs is subject to change
-                                                dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
+                        cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd+realdhz,# the acbfs is subject to change
+                                                dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#now dimension only 1000!
                     elif self.conservative=='average':
-                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0)+self.dhz+dhd,# the acbfs is subject to change
+                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0)+realdhz+dhd,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction
@@ -1934,7 +2007,7 @@ class CEMSafeSetPolicy(Policy):
                 values = values.squeeze()#all those violators, assign them with big cost of -1e5
             itr += 1#CEM Evolution method
         # Return the best action
-        action = actions_sorted[-1][0]#the best one
+        action = actions_sorted[-1][0]#the best one#it is a numpy array
         return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
     def actcbfdsquarelatentplanareacheraverage(self, obs):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states

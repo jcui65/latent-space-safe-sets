@@ -64,7 +64,7 @@ class DMCWrapper(core.Env):
 
         # create task
         self._env = suite.load(
-            domain_name=domain_name,#for example, if I want to load reach, then this domain_name will be reacher
+            domain_name=domain_name,#for example, if I want to load reacher, then this domain_name will be reacher
             task_name=task_name,
             task_kwargs=task_kwargs,
             visualize_reward=visualize_reward,
@@ -213,6 +213,8 @@ class DMCWrapper(core.Env):
             if done:
                 break
         obs = self._get_obs(time_step)
+        #print('obs.shape',obs.shape)#(3,64,64), which means it is the image! not the embedding! this is what I want!
+        #print('obs',obs)#a test to see if it is an image or an imbedding?#to see if it is the image or its latent embedding
         self.current_state = _flatten_obs(time_step.observation)
         observation = _flatten_obs(self._env._task.get_observation(self._env.physics))
         #print('old_observation',old_observation,'observation',observation)

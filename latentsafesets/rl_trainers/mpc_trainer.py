@@ -200,17 +200,25 @@ class MPCTrainer(Trainer):
         #self.trainers.append(PETSDynamicsTrainer2(params, modules['dyn2'], loss_plotter))
         #self.trainers.append(VAETrainer(params, modules['enc2'], loss_plotter))
 
-    def initial_train(self, replay_buffer):#by default the replay buffer is the encoded version
+    def initial_train(self, replay_buffer,replay_buffer_unsafe):#by default the replay buffer is the encoded version
         update_dir = os.path.join(self.logdir, 'initial_train')#create that folder!
         os.makedirs(update_dir, exist_ok=True)#mkdir is here!
         for trainer in self.trainers:#type() method returns class type of the argument(object) passed as parameter
             if type(trainer) == VAETrainer:#VAE is trained totally on images from that folder, no use of replay_buffer
                 trainer.initial_train(self.encoder_data_loader, update_dir)
             else:#then it means that the VAE has been trained!
-                trainer.initial_train(replay_buffer, update_dir)
+                if type(trainer)!=CBFdotlatentplanaTrainer:
+                    trainer.initial_train(replay_buffer, update_dir)
+                else:
+                    trainer.initial_train(replay_buffer, update_dir,replay_buffer_unsafe)
 
-    def update(self, replay_buffer, update_num):#the update folder!
+    def update(self, replay_buffer, update_num,replay_buffer_unsafe):#the update folder!
         update_dir = os.path.join(self.logdir, 'update_%d' % update_num)
         os.makedirs(update_dir, exist_ok=True)
         for trainer in self.trainers:
-            trainer.update(replay_buffer, update_dir)
+            #trainer.update(replay_buffer, update_dir)
+            if type(trainer)!=CBFdotlatentplanaTrainer:
+                trainer.update(replay_buffer, update_dir)#pay attention to the details!
+            else:
+                episodiccbfdhz=trainer.update(replay_buffer, update_dir,replay_buffer_unsafe)
+        return episodiccbfdhz

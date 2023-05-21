@@ -44,12 +44,12 @@ if __name__ == '__main__':
         now = datetime.now()
         date_string = now.strftime("%Y-%m-%d-%H-%M-%S")#year month day/hour minute second
         f = open(logdir+"/logjianning"+date_string+"reacherls3.txt", "a")#so that I can write my own comments even when the simulation is still running!!!
-        f.write('The alpha: %1.3f\t'%(params['cbfdot_thresh']))
+        #f.write('The alpha: %1.3f\t'%(params['cbfdot_thresh']))
         f.write('H: %d\t'%(int(params['plan_hor'])))
-        f.write('r_{thres}=1.2\t')
+        #f.write('r_{thres}=1.2\t')
         f.write('action_type: %s\t'%(params['action_type']))
         f.write('conservativeness: %s, reward_type: %s, lightness: %s\n'%(params['conservative'],params['reward_type'],params['light']))
-        f.write('What I want to write: new 2 vae, old data')
+        f.write('What I want to write: %s'%(params['quote']))
         f.close()
         utils.init_logging(logdir)#record started!
         log.info('Training safe set MPC with params...')#at the very very start

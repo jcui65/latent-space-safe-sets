@@ -11,8 +11,8 @@ class LossPlotter:
         self.data = {}
         self.running_avgs = {}
 
-    def add_data(self, data):
-        for key in data:
+    def add_data(self, data):#data is a dictionary with key value pairs
+        for key in data:#e.g., key may be cbfd
             if key in self.running_avgs:
                 ra = self.running_avgs[key]
                 ra = ra * 0.9 + data[key] * 0.1
@@ -20,8 +20,8 @@ class LossPlotter:
                 self.data[key].append(ra)
             else:
                 ra = data[key]
-                self.running_avgs[key] = ra
-                self.data[key] = [ra]
+                self.running_avgs[key] = ra#raw value data
+                self.data[key] = [ra]#
 
     def plot(self):
         import latentsafesets.utils.plot_utils as pu

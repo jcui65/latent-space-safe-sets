@@ -547,7 +547,7 @@ def evaluate_cbfdotlatentunbiased13_func(cbfdot,
     for y in tqdm(range(0, spb.WINDOW_HEIGHT, skip)):
         row_states = []
         row_statesu = []
-        for x in range(0, spb.WINDOW_WIDTH, skip):
+        for x in range(0, spb.WINDOW_WIDTH, skip):#it is actually still in discrete space, but very high resolution
             old_state = np.array((x,y))#env._state_to_image((x, y)) / 255
             old_stateimage = env._state_to_image((x, y)) / 255#, this is for using the global coordinate
             #old_stateimage = env._state_to_image_relative((x, y)) / 255#, this is for using the ego coordinate
