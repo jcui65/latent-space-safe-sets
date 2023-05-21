@@ -301,9 +301,9 @@ if __name__ == '__main__':
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                     #embeval = encoder.encode(obseval)#in latent space now!
                     if params['mean']=='sample':
-                        embeval = encoder.encode(obseval)#in latent space now!#even
+                        embeval = encoder.encode(obseval/255)#encoder.encode(obseval)#in latent space now!#even
                     elif params['mean']=='mean' or params['mean']=='meancbf':
-                        embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
+                        embeval = encoder.encodemean(obseval/255)#encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
                         #embeval2 = encoder.encodemean(obseval)#in latent space now!
                     #print('emb.shape',emb.shape)#torch.Size([1, 32])
                     #cbfdot_function.predict()
