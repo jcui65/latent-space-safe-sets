@@ -296,11 +296,11 @@ if __name__ == '__main__':
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                     if params['mean']=='sample':
-                        embeval = encoder.encode(obseval)#in latent space now!#even
+                        embeval = encoder.encode(obseval/255)#encoder.encode(obseval)#in latent space now!#even
                         #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                         #embeval2 = encoder.encode(obseval)#in latent space now!
                     elif params['mean']=='mean' or params['mean']=='meancbf':
-                        embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
+                        embeval = encoder.encodemean(obseval/255)#encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
                         #embeval2 = encoder.encodemean(obseval)#in latent space now!
                     #embdiff100000=(embeval-embeval2)*100000
                     #print('embdiff100000',embdiff100000)#just for testing!!!
