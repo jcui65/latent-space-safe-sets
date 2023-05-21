@@ -1,8 +1,13 @@
 import torch
 import numpy as np
+
+#import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+#sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
+
 #from latentsafesets.utils.arg_parser_reacher import parse_args
-#from latentsafesets.utils.arg_parser_push import parse_args
 #import latentsafesets.utils as utils
+#from latentsafesets.utils.arg_parser_push import parse_args
 #params = parse_args()#
 gpuno=3#params['gpunumber']#
 if gpuno==0:
