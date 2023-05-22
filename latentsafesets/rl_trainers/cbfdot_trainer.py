@@ -401,9 +401,9 @@ class CBFdotlatentplanaTrainer(Trainer):
             log.info('the average dhz of this epochs: %f'%(dhzepochave))
             if self.params['dynamic_dhz']=='yes':
                 if self.env_name=='reacher':
-                    deal=min(dhzepochave,1*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
-                else:#not decreasing the dhz!
-                    deal=min(dhzepochave,1*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
+                    deal=min(dhzepochave,1.5*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
+                else:#not decreasing the dhz!#1.5 not too big nor too small!
+                    deal=min(dhzepochave,1.5*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
             else:
                 deal=dhzepochave
             log.info('Creating cbf dot function heatmap')
