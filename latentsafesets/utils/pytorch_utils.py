@@ -9,7 +9,7 @@ import numpy as np
 #import latentsafesets.utils as utils
 #from latentsafesets.utils.arg_parser_push import parse_args
 #params = parse_args()#
-gpuno=0#1#2#3#params['gpunumber']#
+gpuno=3#2#1#0#params['gpunumber']#
 if gpuno==0:
     TORCH_DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 elif gpuno==1:

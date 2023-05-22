@@ -96,7 +96,7 @@ if __name__ == '__main__':
             replay_buffer_unsafe=replay_buffer#not loading new buffer!
             log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
         '''
-        if params['unsafebuffer']=='yes':#new version
+        if params['unsafebuffer']=='yes' or params['unsafebuffer']=='yes2':#new version
             replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
             log.info('unsafe buffer!')
         else:
@@ -213,14 +213,14 @@ if __name__ == '__main__':
                     #movie_traj_relative.append({'obs_relative': next_obs_relative.reshape((-1, 3, 64, 64))[0]}) #relative or not # add this image
                     traj_rews.append(reward)#reward is either 0 or 1!
                     constr = info['constraint']#its use is seen a few lines later
-                    rfn=not randflag#rfn means rand flag not
+                    rfn=not randflag#rfn means rand flag not#rfn=0 means action not random, rfn=1 means the action is random
                     action_rand=randflag
                     #constr_cbf = rfn*info['constraint']#(1-randflag)*info['constraint']#its use is seen a few lines later
                     if len(traj_action_rands)==0:
-                        constr_cbf = rfn*info['constraint']#
-                        constr_cbf2=constr_cbf
+                        constr_cbf = rfn*info['constraint']#3when rfn=0, this means that the action is already randomly chosen, CBF has found no solution!
+                        constr_cbf2=constr_cbf#constr_cbf=0 means that CBF has correctly detected the danger, but the action (indeed including recovery actions) sucks!
                     else:
-                        constr_cbf = rfn*info['constraint']#
+                        constr_cbf = rfn*info['constraint']#(1-traj_action_rands[-1]) is the rfn of last step!
                         constr_cbf2 = rfn*info['constraint'] or (1-traj_action_rands[-1])*info['constraint']#one previous step buffer
                         #constr_cbf2 = rfn*info['constraint'] and (1-traj_action_rands[-1])#one previous step buffer
                     traj_action_rands.append(action_rand)#this is really a small bug/inadequacy!

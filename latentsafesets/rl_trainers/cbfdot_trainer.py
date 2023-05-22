@@ -299,6 +299,10 @@ class CBFdotlatentplanaTrainer(Trainer):
             else:
                 rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
             #print('hvn.shape',hvn.shape)
+            hvo=hvo-self.params['rectify']
+            hvn=hvn-self.params['rectify']
+            #print('hvn',hvn)#sanity check passed!#
+            #log.info(hvn)
             if replay_buffer_unsafe!=None:
                 #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
                 if self.params['mean']=='meancbf':
@@ -308,6 +312,9 @@ class CBFdotlatentplanaTrainer(Trainer):
                     out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 obsus=out_dictus['obs']#us means unsafe
                 rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
+                hvous=hvous-self.params['rectify']#thus, the rectify should be 0.05 not -0.05
+                hvnus=hvnus-self.params['rectify']
+                #print('hvnus',hvnus)#sanity check passed!#
                 obs=np.vstack((obs,obsus))
                 hvn=np.concatenate((hvn,hvnus))
                 shuffleind=np.random.permutation(obs.shape[0])
@@ -359,6 +366,8 @@ class CBFdotlatentplanaTrainer(Trainer):
                 else:
                     obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
                     #print('obsold.shape',obs.shape)(128,32)
+                #hvo=hvo-self.params['rectify']
+                hvn=hvn-self.params['rectify']
                 #rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
                 #rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
                 #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
@@ -376,6 +385,8 @@ class CBFdotlatentplanaTrainer(Trainer):
                     obsus=out_dictus['obs']#us means unsafe
                     #print('obsus.shape',obsus.shape)(128,32)
                     rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
+                    hvous=hvous-self.params['rectify']
+                    hvnus=hvnus-self.params['rectify']#already rectified!
                     obs=np.vstack((obs,obsus))
                     #print('obsnew.shape',obs.shape)(256,32)
                     #print('hvnold.shape',hvn.shape)

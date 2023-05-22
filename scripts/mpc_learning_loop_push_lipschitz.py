@@ -278,13 +278,13 @@ if __name__ == '__main__':
                     #print('currentstate',currentstate)#8 dim vector!#the first 2 values are still in configuration space!
                     currentpos=info['rdo']#targetpos-currentstate[2:4]#currentstate[0:2]#now the current pos should have different meaning!
                     ctoobstacle=currentpos-0.4#currentstate[4:6]#
-                    ctodistance=np.linalg.norm(ctoobstacle)#it will just be the absolute value!#
+                    ctodistance=ctoobstacle#np.linalg.norm(ctoobstacle)#it will just be the absolute value!#
                     #print('ctoobstacle',ctoobstacle)#the x and y signed distance to obstacle!
                     #print('currentpos',currentpos)#now it is the state space position of the end effector!
                     nextstate=info['next_state']
                     nextpos=info['rdn']##targetpos-nextstate[2:4]#nextstate[0:2]#
                     ntoobstacle=nextpos-0.4#nextstate[4:6]#
-                    ntodistance=np.linalg.norm(ntoobstacle)#it will just be the absolute value!#
+                    ntodistance=ntoobstacle#np.linalg.norm(ntoobstacle)#it will just be the absolute value!#
                     #print('nextstate',nextstate)
                     #print('nextpos',nextpos)
                     posdiff=nextpos-currentpos
@@ -323,7 +323,7 @@ if __name__ == '__main__':
                     zdiffnorm=np.linalg.norm(zdiff)
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
-
+                    log.info('hobs: %f, hnextobs: %f'%(hobs,hnextobs))
                     gradh2z=lambda nextobs: cbfdot_function(nextobs, True)
                     #jno=jacobian(gradh2z,next_obs,create_graph=True)#jno means jacobian next_obs
                     #jno=hessian(selfforwardtrue, next_obs, create_graph=True)  # jno means jacobian next_obs
@@ -375,7 +375,7 @@ if __name__ == '__main__':
                     lipxq=max(lipxq,slopexhp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
-                    if ntodistance<=0.30 and ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
+                    if ntodistance<=0.30 and ntodistance>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
                         slopexys[piece]=slopexyp
                         slopeyzs[piece]=slopeyzp
                         slopezhs[piece]=slopezhp
@@ -397,7 +397,7 @@ if __name__ == '__main__':
                         pdnsafe=max(pdnsafe,posdiffnorm)
                         log.info('piece:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
                         log.info('piece:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gammadyns:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
-                    elif ntodistance<=0.06:
+                    elif ntodistance<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
                         slopexyu[piece]=slopexyp
                         slopeyzu[piece]=slopeyzp
                         slopezhu[piece]=slopezhp

@@ -1730,7 +1730,7 @@ class CEMSafeSetPolicy(Policy):
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
                         #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,itr:%d,current state x:%f, current state y:%f' % (
                             #tp, fp, fn, tn, tpc, fpc, fnc, tnc,itr,state[0],state[1]))
-                        randflag=1
+                        randflag=1#randflag=1 means the action is "random", that is, either real random or recovery
                         if self.action_type=='random':
                             return self.env.action_space.sample(),randflag#for fair comparison#
                         elif self.action_type=='zero':
