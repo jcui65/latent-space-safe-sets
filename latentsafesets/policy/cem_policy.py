@@ -1854,26 +1854,29 @@ class CEMSafeSetPolicy(Policy):
                     #print('cbf_init.shape',cbf_init.shape)#torch.Size([20, 1000, 1, 1])
                     #cbf_init.backward(torch.ones_like(cbf_init))
                     #dz = embrepeat20.grad#
-                    scft=lambda emb: self.cbfdot_function(emb, already_embedded=True)#self cbfdot function true
-                    #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
-                    #jno=jacobian(selfforwardtrue,next_obs,create_graph=True)#jno means jacobian next_obs
-                    jce=jacobian(scft,emb,create_graph=True)#jacobian cbf vs embedding#jce=jacobian(scft,embrepeat20,create_graph=True)#jacobian cbf vs embedding
-                    #print("zgrad shape :", jce.shape)#(1,1,1,32)
-                    #print('dz[0,0,0]',jce[0,0,0])#will it be 32d as expected? Yes!
-                    jces=jce.squeeze()
-                    #print("zgrads shape :", jces.shape)#(32)
-                    #print('dzs',jces)
-                    jcesa=torch.abs(jces)#just as an approximation
-                    #print('dzsa',jcesa)
-                    dhd=torch.dot(jcesa,dz)#delta h due to dynamics error
-                    #print('dhd',dhd)
-                    if itr==1:
-                        #ji=jces.detach().cpu().numpy()#.item()#jces item
-                        #log.info('j16:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[0],ji[1],ji[2],ji[3],ji[4],ji[5],ji[6],ji[7],ji[8],ji[9],ji[10],ji[11],ji[12],ji[13],ji[14],ji[15]))
-                        #log.info('j32:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[16],ji[17],ji[18],ji[19],ji[20],ji[21],ji[22],ji[23],ji[24],ji[25],ji[26],ji[27],ji[28],ji[29],ji[30],ji[31]))
-                        log.info('dhd: %f'%(dhd.item()))
-                    dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
-                    dhd=dhd.repeat(predictions.shape[1],cbfhorizon)
+                    if self.dhdmax>0:
+                        scft=lambda emb: self.cbfdot_function(emb, already_embedded=True)#self cbfdot function true
+                        #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+                        #jno=jacobian(selfforwardtrue,next_obs,create_graph=True)#jno means jacobian next_obs
+                        jce=jacobian(scft,emb,create_graph=True)#jacobian cbf vs embedding#jce=jacobian(scft,embrepeat20,create_graph=True)#jacobian cbf vs embedding
+                        #print("zgrad shape :", jce.shape)#(1,1,1,32)
+                        #print('dz[0,0,0]',jce[0,0,0])#will it be 32d as expected? Yes!
+                        jces=jce.squeeze()
+                        #print("zgrads shape :", jces.shape)#(32)
+                        #print('dzs',jces)
+                        jcesa=torch.abs(jces)#just as an approximation
+                        #print('dzsa',jcesa)
+                        dhd=torch.dot(jcesa,dz)#delta h due to dynamics error
+                        #print('dhd',dhd)
+                        if itr==1:
+                            #ji=jces.detach().cpu().numpy()#.item()#jces item
+                            #log.info('j16:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[0],ji[1],ji[2],ji[3],ji[4],ji[5],ji[6],ji[7],ji[8],ji[9],ji[10],ji[11],ji[12],ji[13],ji[14],ji[15]))
+                            #log.info('j32:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[16],ji[17],ji[18],ji[19],ji[20],ji[21],ji[22],ji[23],ji[24],ji[25],ji[26],ji[27],ji[28],ji[29],ji[30],ji[31]))
+                            log.info('dhd: %f'%(dhd.item()))
+                        dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
+                        dhd=dhd.repeat(predictions.shape[1],cbfhorizon)
+                    else:
+                        dhd=0
                     #print('dz',dz[0])
                     #embs=emb.squeeze()
                     #print('embs',embs)
