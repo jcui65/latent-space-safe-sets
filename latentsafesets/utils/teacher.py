@@ -109,6 +109,7 @@ class AbstractTeacher(ABC):
             if store_noisy:
                 action = action_input#if it not noisy, then it is just the same
             #import ipdb; ipdb.set_trace()
+            action_input = np.float32(action_input) #I add it beyond original LS3! # has to be like this?#this is important!
             next_obs, reward, done, info = self.env.step(action_input)#about 63 in simple_point_bot.py
             transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
                           'next_obs': next_obs, 'done': int(done),#this is a dictionary

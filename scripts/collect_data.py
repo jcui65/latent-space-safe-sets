@@ -99,8 +99,8 @@ def main():
 
     for teacher, data_dir, count in list(zip(teachers, data_dirs, data_counts)):
         #still 2, always take the least number: https://www.programiz.com/python-programming/methods/built-in/zip
-        #generate_teacher_demo_data(env, data_dir, teacher, count, True, logdir)#see around 31
-        generate_teacher_demo_datasafety(env, data_dir, teacher, count, True, logdir)  # see around 31
+        generate_teacher_demo_data(env, data_dir, teacher, count, True, logdir)#see around 31
+        #generate_teacher_demo_datasafety(env, data_dir, teacher, count, True, logdir)  # see around 31
 
 
 if __name__ == '__main__':

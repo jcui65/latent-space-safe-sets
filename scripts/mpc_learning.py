@@ -35,8 +35,8 @@ if __name__ == '__main__':
     #The result is to have env=SimplePointBot in spb
     # Setting up encoder, around line 172 in utils, get all the parts equipped!
 
-    #modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
-    modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
+    modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
+    #modules = utils.make_modulessafety(params, ss=True, val=True, dyn=True, gi=True, constr=True, cbfd=True)
     #the result is to set up the encoder, etc.
     encoder = modules['enc']#it is a value in a dictionary, uh?
     safe_set = modules['ss']
@@ -44,8 +44,8 @@ if __name__ == '__main__':
     value_func = modules['val']
     constraint_function = modules['constr']
     goal_indicator = modules['gi']
-    cbfdot_function = modules['cbfd']
-
+    #cbfdot_function = modules['cbfd']
+    cbfdot_function=None
     # Populate replay buffer
     #the following is loading replay buffer, rather than loading trajectories
     replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
@@ -92,21 +92,22 @@ if __name__ == '__main__':
             for k in trange(params['horizon']):#default 100 in spb#This is MPC
                 #print('obs.shape',obs.shape)(3,64,64)
                 #print('env.state',env.state)#env.state [35.44344669 54.30340498]
-                #action = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
+                action = policy.act(obs / 255)#the CEM (candidates, elites, etc.) is in here
                 #storch=ptu.torchify(env.state)#state torch
-                action,tp,fp,fn,tn,tpc,fpc,fnc,tnc = policy.actcbfd(obs/255,env.state,tp,fp,fn,tn,tpc,fpc,fnc,tnc)
+                #action,tp,fp,fn,tn,tpc,fpc,fnc,tnc = policy.actcbfd(obs/255,env.state,tp,fp,fn,tn,tpc,fpc,fnc,tnc)
                 # the CEM (candidates, elites, etc.) is in here
-                #next_obs, reward, done, info = env.step(action)#saRSa
-                next_obs, reward, done, info = env.stepsafety(action)  # 63 in simple_point_bot.py
+                next_obs, reward, done, info = env.step(action)#saRSa
+                #next_obs, reward, done, info = env.stepsafety(action)  # 63 in simple_point_bot.py
                 next_obs = np.array(next_obs)#to make this image a numpy array
                 movie_traj.append({'obs': next_obs.reshape((-1, 3, 64, 64))[0]})#add this image
                 traj_rews.append(reward)
 
                 constr = info['constraint']#its use is seen a few lines later
 
-                #transition = {'obs': obs, 'action': action, 'reward': reward,#sARSa
-                              #'next_obs': next_obs, 'done': done,
-                              #'constraint': constr, 'safe_set': 0, 'on_policy': 1}
+                transition = {'obs': obs, 'action': action, 'reward': reward,#sARSa
+                              'next_obs': next_obs, 'done': done,
+                              'constraint': constr, 'safe_set': 0, 'on_policy': 1}
+                '''
                 transition = {'obs': obs, 'action': action, 'reward': reward,
                               'next_obs': next_obs, 'done': done,  # this is a dictionary
                               'constraint': constr, 'safe_set': 0,
@@ -119,7 +120,7 @@ if __name__ == '__main__':
                               'state': info['state'].tolist(),
                               'next_state': info['next_state'].tolist()
                               }  # add key and value into it!
-
+                '''
                 transitions.append(transition)
                 obs = next_obs
                 constr_viol = constr_viol or info['constraint']#a way to update constr_viol
@@ -158,7 +159,7 @@ if __name__ == '__main__':
         std_rewards.append(std_rew)
         log.info('Iteration %d average reward: %.4f' % (i, mean_rew))
         pu.simple_plot(avg_rewards, std=std_rewards, title='Average Rewards',
-                       file=os.path.join(logdir, 'rewards.pdf'),
+                       file=os.path.join(logdir, 'rewards.pdf'),#here it is still OK for the reacher!
                        ylabel='Average Reward', xlabel='# Training updates')
 
         logger.log_tabular('Epoch', i)

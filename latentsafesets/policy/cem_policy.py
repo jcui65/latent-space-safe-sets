@@ -28,7 +28,7 @@ class CEMSafeSetPolicy(Policy):
                  dynamics_model: PETSDynamics,
                  constraint_function: ConstraintEstimator,
                  goal_indicator: GoalIndicator,
-                 cbfdot_function: CBFdotEstimator,
+                 cbfdot_function: None,#CBFdotEstimator,
                  params):
         log.info("setting up safe set and dynamics model")
 
