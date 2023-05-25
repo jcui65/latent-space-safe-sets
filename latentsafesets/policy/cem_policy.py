@@ -368,7 +368,7 @@ class CEMSafeSetPolicy(Policy):
                 else:#if ignoring the cbf dot constraints
                     cbfdots_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)#no constraint violators!
                 #self.ignore_safe_set=True#Including 18:47 Aug 4th as well as 15:14 Aug 5th
-                if torch.max(rdnvi>0) or torch.max(cbfdots_viols)>0:#
+                if torch.max(rdnvi)>0 or torch.max(cbfdots_viols)>0:#
                     #print('rdnvi>0!')
                     #print('rdnvi', rdnvi.reshape(rdnvi.shape[0]))
                     #print('rdnvi-cbfdots_viols',(rdnvi-cbfdots_viols).reshape(rdnvi.shape[0]))

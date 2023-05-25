@@ -72,7 +72,7 @@ def add_encoder_args(parser):
                         help='Initial training iterations')
     parser.add_argument('--enc_checkpoint', type=str, default='/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',
                         #'outputs/2022-07-18/19-38-58/vae.pth',#'/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets/outputs/2022-07-13/17-24-59/vae.pth',#
-                        help='File to load a CEM model from')#None,
+                        help='File to load a CEM model from')#None,#
     parser.add_argument('--enc_data_aug', action='store_true')
 
 
@@ -191,11 +191,12 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_batch_size', type=int, default=256)
     parser.add_argument('--cbfd_thresh', type=float, default=0.2,
                         help='Threshold for an obs to be considered in violation of cbf dots')
-    parser.add_argument('--cbfd_init_iters', type=int, default=320000,#160000,#80000,#40000,#20000,#30000,#10000,#
+    parser.add_argument('--cbfd_init_iters', type=int, default=640000,#320000,#160000,#80000,#40000,#20000,#30000,#10000,#
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
-    parser.add_argument('--cbfd_checkpoint', type=str, default=None)#'outputs/2022-08-06/15-02-09/cbfd_180000.pth')#'outputs/2022-08-07/01-56-19/update_3/cbfd.pth')#'outputs/2022-08-07/01-36-19/update_4/cbfd.pth')#'outputs/2022-08-07/01-09-48/update_5/cbfd.pth')#
+    parser.add_argument('--cbfd_checkpoint', type=str, default=None)#'outputs/2022-08-06/15-02-09/cbfd_180000.pth')#
+    #'outputs/2022-08-07/01-56-19/update_3/cbfd.pth')#'outputs/2022-08-07/01-36-19/update_4/cbfd.pth')#'outputs/2022-08-07/01-09-48/update_5/cbfd.pth')#
     # 'outputs/2022-08-06/22-42-02/update_13/cbfd.pth')#'outputs/2022-08-06/11-44-04/cbfd.pth')#'outputs/2022-08-06/12-29-56/cbfd.pth')#
     #'outputs/2022-08-06/11-44-04/cbfd.pth')#'outputs/2022-08-06/10-21-50/cbfd.pth')#'outputs/2022-08-03/01-06-16/cbfd.pth')#
     #'outputs/2022-07-15/17-41-16/initial_train/constr.pth')#'outputs/2022-07-20/14-46-50/update_16/constr.pth')#

@@ -133,7 +133,7 @@ class AbstractTeacher(ABC):
             frame['safe_set'] = ss#is this dynamic programming?
             frame['rtg'] = rtg#the reward to goal at each frame!#I think this is good
             #add a key value pair to the trajectory(key='rtg', value=rtg
-            rtg = rtg + frame['reward']
+            rtg = rtg + frame['reward']#but it seems there should be a gamma as seen in the paper
 
         # assert done, "Did not reach the goal set on task completion."
         # V = self.env.values()

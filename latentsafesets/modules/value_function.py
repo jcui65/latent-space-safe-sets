@@ -87,7 +87,7 @@ class ValueFunction(nn.Module, EncodedModule):
             emb = obs#latent state
             next_emb = next_obs
 
-        val_out = self.value_net(emb).squeeze()
+        val_out = self.value_net(emb).squeeze()#V theta pi zt
         target_out = self.value_net_target(next_emb).squeeze()#that is our target, value of next emb!
         targets = (rews + (1 - dones) * self.discount * target_out).detach()#see 650 notes!
 
@@ -96,7 +96,7 @@ class ValueFunction(nn.Module, EncodedModule):
         if zero_goal:
             targets = targets * rews.bool().float()
 
-        loss = self.loss_func(val_out, targets)
+        loss = self.loss_func(val_out, targets)#td error!
         return loss
 
     def loss_init(self, obs, rtg, already_embedded=False):

@@ -119,9 +119,29 @@ class VAEDecoder(nn.Module):
 
 class GenericNetcbf(nn.Module):
 
-    def __init__(self, d_in, d_out, n_hidden=2, d_hidden=128, activation=nn.Tanh,
+    def __init__(self, d_in, d_out, n_hidden=2, d_hidden=128, activation=nn.ReLU,
                  last_activation=None, **kwargs):
         super(GenericNetcbf, self).__init__()
+
+        assert n_hidden >= 1, "Must have at least 1 hidden layer"
+        layers = [nn.Linear(d_in, d_hidden), activation()]
+        for _ in range(n_hidden - 1):
+            layers.extend([nn.Linear(d_hidden, d_hidden), activation()])
+        layers.append(nn.Linear(d_hidden, d_out))#the last layer!
+        if last_activation is not None:#additional
+            layers.append(last_activation())
+
+        self.model = nn.Sequential(*layers)#think about the uses of the star
+
+    def forward(self, x):
+ #       print(x.shape)
+        return self.model(x)
+
+class GenericNetcbftanh(nn.Module):
+
+    def __init__(self, d_in, d_out, n_hidden=2, d_hidden=128, activation=nn.Tanh,
+                 last_activation=None, **kwargs):
+        super(GenericNetcbftanh, self).__init__()
 
         assert n_hidden >= 1, "Must have at least 1 hidden layer"
         layers = [nn.Linear(d_in, d_hidden), activation()]
