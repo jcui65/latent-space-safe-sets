@@ -37,7 +37,7 @@ def main(date, time,fh,env):
     tsrarray=np.zeros((fh,))#reacher#np.zeros((1000,))#push#
     #tsrlist=[]#constraint violation rate list
     lastnum=50
-    seedlist=[1,2,3]#[1,2,3,4,5,6,7,8,9,10]#[4,5,6]#[7,8,9,10]#[4,5,6]#[1,2]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    seedlist=[1,2,3,4,5,6,7,8,9,10]#[1,2,3]#[4,5,6]#[7,8,9,10]#[4,5,6]#[1,2]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
 
     for seed in seedlist:
         logdir=os.path.join(logdirbeforeseed, str(seed))

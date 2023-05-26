@@ -343,7 +343,7 @@ if __name__ == '__main__':
                     qdiffnorm=np.linalg.norm(qdiff)
                     hdiff=ptu.to_numpy(hnextobs-hobs)
                     hdiffnorm=np.linalg.norm(hdiff)
-                    if posdiffnorm<5e-4:#2e-3:#1e-2:#1e-3:#posdiffnorm<=1e-4:#otherwise it is meaningless!
+                    if posdiffnorm<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
                         imagediffnormal=0
                         zdiffnorm=0
                         hdiffnorm=0

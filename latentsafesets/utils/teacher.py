@@ -395,7 +395,7 @@ class ReacherConstraintTeacher(AbstractTeacher):
     def _expert_control(self, state, i):
         angle = state[:2]
         goal1 = np.array((np.pi * .53, 0.7 * np.pi))
-        goal2 = np.array((np.pi, -0.7 * np.pi))
+        goal2 = np.array((np.pi, -0.7 * np.pi))#directly heading towards/collide with the obstacle!
         goal = min(goal1, goal2, key=lambda x: np.linalg.norm(angle - x))#key is the judging criteria for max or min
         act = goal - angle#all unsafe demos are similar! Is it good?
         # act = np.random.normal((self.direction, 0), 1)
