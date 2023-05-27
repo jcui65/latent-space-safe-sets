@@ -273,7 +273,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             #log.info('self.batchsize hope 256:%d'% (self.batchsize))
         self.env_name = params['env']
 
-    def initial_train(self, replay_buffer, update_dir,replay_buffer_unsafe):
+    def initial_train(self, replay_buffer, update_dir,replay_buffer_unsafe=None):
         if self.cbfd.trained:
             self.plot(os.path.join(update_dir, "cbfd_start.pdf"), replay_buffer,replay_buffer_unsafe)
             self.plotlatent(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer,replay_buffer_unsafe)
@@ -299,6 +299,10 @@ class CBFdotlatentplanaTrainer(Trainer):
             else:
                 rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
             #print('hvn.shape',hvn.shape)
+            hvo=hvo-self.params['rectify']
+            hvn=hvn-self.params['rectify']
+            #print('hvn',hvn)#sanity check passed!#
+            #log.info(hvn)
             if replay_buffer_unsafe!=None:
                 #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
                 if self.params['mean']=='meancbf':
@@ -308,6 +312,9 @@ class CBFdotlatentplanaTrainer(Trainer):
                     out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 obsus=out_dictus['obs']#us means unsafe
                 rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
+                hvous=hvous-self.params['rectify']#thus, the rectify should be 0.05 not -0.05
+                hvnus=hvnus-self.params['rectify']
+                #print('hvnus',hvnus)#sanity check passed!#
                 obs=np.vstack((obs,obsus))
                 hvn=np.concatenate((hvn,hvnus))
                 shuffleind=np.random.permutation(obs.shape[0])
@@ -335,7 +342,7 @@ class CBFdotlatentplanaTrainer(Trainer):
 
         self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
 
-    def update(self, replay_buffer, update_dir,replay_buffer_unsafe):
+    def update(self, replay_buffer, update_dir,replay_buffer_unsafe=None):
         if self.params['train_cbf']=='no':
             log.info('No episodic cbf dot update optimization!')
         else:
@@ -359,6 +366,8 @@ class CBFdotlatentplanaTrainer(Trainer):
                 else:
                     obs, rdn, hvn = out_dict['obs'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
                     #print('obsold.shape',obs.shape)(128,32)
+                #hvo=hvo-self.params['rectify']
+                hvn=hvn-self.params['rectify']
                 #rdo,rdn, hvo,hvn, hvd = out_dict['rdoef'], out_dict['rdnef'],out_dict['hvoef'],out_dict['hvnef'], out_dict['hvdef']  # 0 or 1
                 #rdo,rdn, hvo,hvn, hvd = out_dict['rdo'], out_dict['rdn'],out_dict['hvo'],out_dict['hvn'], out_dict['hvd']  # 0 or 1
                 #obs, rdn, hvn = out_dict['obs_relative'], out_dict['rdn'], out_dict['hvn']  # 0 or 1
@@ -376,6 +385,8 @@ class CBFdotlatentplanaTrainer(Trainer):
                     obsus=out_dictus['obs']#us means unsafe
                     #print('obsus.shape',obsus.shape)(128,32)
                     rdous,rdnus, hvous,hvnus, hvdus = out_dictus['rdo'], out_dictus['rdn'],out_dictus['hvo'],out_dictus['hvn'], out_dictus['hvd']  # 0 or 1
+                    hvous=hvous-self.params['rectify']
+                    hvnus=hvnus-self.params['rectify']#already rectified!
                     obs=np.vstack((obs,obsus))
                     #print('obsnew.shape',obs.shape)(256,32)
                     #print('hvnold.shape',hvn.shape)
@@ -401,9 +412,9 @@ class CBFdotlatentplanaTrainer(Trainer):
             log.info('the average dhz of this epochs: %f'%(dhzepochave))
             if self.params['dynamic_dhz']=='yes':
                 if self.env_name=='reacher':
-                    deal=min(dhzepochave,1*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
-                else:
-                    deal=min(dhzepochave,1*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
+                    deal=min(dhzepochave,1.5*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
+                else:#not decreasing the dhz!#1.5 not too big nor too small!
+                    deal=min(dhzepochave,1.5*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
             else:
                 deal=dhzepochave
             log.info('Creating cbf dot function heatmap')
@@ -422,7 +433,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             return deal
 
-    def plot(self, file, replay_buffer,replay_buffer_unsafe):
+    def plot(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -446,7 +457,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                              file,
                              env=self.env)
 
-    def plotconly(self, file, replay_buffer,replay_buffer_unsafe):
+    def plotconly(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -471,7 +482,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                              env=self.env)
 
 
-    def plotlatentunbiased(self, file, replay_buffer,replay_buffer_unsafe,coeff):
+    def plotlatentunbiased(self, file, replay_buffer,replay_buffer_unsafe=None,coeff=1):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -496,7 +507,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                              file,
                              env=self.env,coeff=coeff)
 
-    def plotlatentgroundtruth(self, file, replay_buffer,replay_buffer_unsafe):
+    def plotlatentgroundtruth(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -521,7 +532,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                              file,
                              env=self.env)
 
-    def plotlatent(self, file, replay_buffer,replay_buffer_unsafe):
+    def plotlatent(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
             out_dict = replay_buffer.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256

@@ -199,7 +199,8 @@ if __name__ == '__main__':
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
-                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
+                    #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
+                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
                     '''
                     if conservative=='conservative' and reward_type=='sparse':
                         #print('conservative and sparse!')#you get this right!

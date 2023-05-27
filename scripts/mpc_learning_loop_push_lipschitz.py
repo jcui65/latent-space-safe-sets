@@ -7,7 +7,7 @@ from latentsafesets.policy import CEMSafeSetPolicy#this is the class!
 import latentsafesets.utils as utils
 import latentsafesets.utils.plot_utils as pu
 #from latentsafesets.utils.arg_parser import parse_args
-from latentsafesets.utils.arg_parser_reacher import parse_args
+from latentsafesets.utils.arg_parser_push import parse_args
 from latentsafesets.rl_trainers import MPCTrainer
 import latentsafesets.utils.pytorch_utils as ptu
 import torch
@@ -23,7 +23,7 @@ from datetime import datetime
 #provides a capability to “pretty-print” arbitrary Python data structures in a form that can be used as input to the interpreter
 #log = logging.getLogger("main")#some logging stuff
 
-from latentsafesets.utils.teacher import ReacherConstraintdense1Teacher, ReacherConstraintdense2Teacher
+from latentsafesets.utils.teacher import ReacherConstraintdense1Teacher, ReacherConstraintdense2Teacher, OutburstPushTeacher
 import sympy
 
 if __name__ == '__main__':
@@ -31,8 +31,8 @@ if __name__ == '__main__':
     # Misc preliminaries
     repeattimes=1#params['repeat_times']#
     initdhz=params['dhz']
-    traj_per_update = 200#params['traj_per_update']#default 10
-    params['horizon']=300#320#500#400#
+    traj_per_update = 50#100#200#params['traj_per_update']#default 10
+    params['horizon']=200#250#300#320#500#400#
     slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((traj_per_update*params['horizon']))
     slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((traj_per_update*params['horizon']))
     slopezq=slopeyq=slopexq=qzuno=np.zeros((traj_per_update*params['horizon']))
@@ -43,11 +43,9 @@ if __name__ == '__main__':
     lipxy=lipyz=lipzh=lipyh=lipxh=lipzq=lipyq=lipxq=0
     lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=lipxhsafe=lipzqsafe=lipyqsafe=lipxqsafe=0
     lipxyunsafe=lipyzunsafe=lipzhunsafe=lipyhunsafe=lipxhunsafe=0
-    gammadyn=gammadyns=10
+    gammadyn=gammadyns=10#start from a very big number!
     pdnsafe=pdn=0
-    tpx=-0.25*np.sqrt(0.5)
-    tpy=0.25*np.sqrt(0.5)
-    targetpos=np.array([tpx,tpy])
+
     for m in range(repeattimes):
         params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23
@@ -153,18 +151,18 @@ if __name__ == '__main__':
         #print('conservative',conservative)
         action_type=params['action_type']
         cbfalpha=0.2#exponential averaging for CBF
-        dhd=0.13855#0.013855#
-        dhz=0.000545
+        dhd=0.13855#0.135#
+        dhz=0.00285#0.000545#
         for i in range(num_updates):#default 25 in spb
             #if i==0:
                 #teacher=ReacherConstraintdense1Teacher(env,noisy=False)
             #elif i==1:
                 #teacher=ReacherConstraintdense2Teacher(env,noisy=False)
-            teacher=ReacherConstraintdense2Teacher(env,noisy=False)
+            teacher=OutburstPushTeacher(env,noisy=False)#ReacherConstraintdense2Teacher(env,noisy=False)
             log.info('current dhz: %f'%(params['dhz']))
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
             #datasave_dir = os.path.join(update_dir, "ReacherConstraintdense2")#create the corresponding folder!
-            datasave_dir = os.path.join(logdir, "ReacherConstraintdense2")#create the corresponding folder!
+            datasave_dir = os.path.join(logdir, "PushOutbursts2")#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
             os.makedirs(datasave_dir)#mkdir!
             update_rewards = []
@@ -173,55 +171,6 @@ if __name__ == '__main__':
 
             # Collect Data
             for j in range(traj_per_update):#default 10 in spb
-
-
-                angled=-np.pi + 1.5*np.pi*(j+1)/traj_per_update#n#here n is traj_per_update##np.pi/2 - 1.5*np.pi*i/n#d means desired
-                if angled<0 and angled>-np.pi/2:#type(teacher)==ReacherConstraintdense1Teacher:#'ReacherConstraintdense1':
-                    radius=0.045#0.05#0.04#
-                else:
-                    radius=0.12
-                    if j<2:
-                        radius=(0.11+0.005*j)
-                xinc=radius*np.cos(angled)
-                yinc=radius*np.sin(angled)
-                xbase=-0.13*np.sqrt(0.75)
-                ybase=0.065
-                xtotal=xbase+xinc
-                ytotal=ybase+yinc
-                t1,t4=sympy.symbols("t1,t4", real=True)
-                length=0.12
-                eq1=sympy.Eq(length*(sympy.cos(t4)+sympy.cos(t1)),xtotal)#-0.13*np.sqrt(0.75))#-0.169705)#
-                eq2=sympy.Eq(length*(sympy.sin(t4)+sympy.sin(t1)),ytotal)#0.065)#0.169705)#
-                solt=sympy.solve([eq1, eq2])
-                #print('x',x)#print('y',y)#print('solt[0]',solt[0])#print('solt[1]',solt[1])
-                s0=solt[0]#
-                s1=solt[1]
-                #print('s0',s0)#print('s1',s1)print('s0t4',s0[t4])
-                s0t1=s0[t1]
-                s0t2=s0[t4]-s0[t1]
-                if s0t1<-np.pi:
-                    s0t1+=2*np.pi
-                elif s0t1>np.pi:
-                    s0t1-=2*np.pi
-                #print('s0t1',s0t1)
-                if s0t2<-np.pi:
-                    s0t2+=2*np.pi
-                elif s0t2>np.pi:
-                    s0t2-=2*np.pi
-                #print('s0t2',s0t2)#print('s1t1',s1[t1])
-                s1t1=s1[t1]
-                s1t2=s1[t4]-s1[t1]
-                if s1t1<-np.pi:
-                    s1t1+=2*np.pi
-                elif s1t1>np.pi:
-                    s1t1-=2*np.pi
-                #print('s1t1',s1t1)
-                if s1t2<-np.pi:
-                    s1t2+=2*np.pi
-                elif s1t2>np.pi:
-                    s1t2-=2*np.pi
-
-
                 log.info("Collecting trajectory %d for update %d" % (j, i))
                 transitions = []
 
@@ -246,13 +195,16 @@ if __name__ == '__main__':
                 for k in trange(params['horizon']):#default 100 in spb#This is MPC
                     #print('obs.shape',obs.shape)(3,64,64)
                     #print('env.state',env.state)#env.state [35.44344669 54.30340498]
-                    state=env.current_state
+                    state=env.position#env.state#env.current_state#
+                    #print('state',state)#the env.position is the 27 dimensional thing as expected!
                     #print('self.current_state',env.current_state)#it is an 8-dimensional vector
                     #if env.state is None:
                         #action = teacher.env.action_space.sample().astype(np.float64)#sample between -3 and 3
                     #else:#I think the control is usually either -3 or +3
                         #action = self._expert_control_dense(state, i,xa,ya,xa2,ya2,angled).astype(np.float64)
-                    action=teacher._expert_control_dense_lip(state,k,xa=s0t1,ya=s0t2,xa2=s1t1,ya2=s1t2,angled=angled).astype(np.float64)
+                    #action=teacher._expert_control_dense_lip(state,k,xa=s0t1,ya=s0t2,xa2=s1t1,ya2=s1t2,angled=angled).astype(np.float64)
+                    action = teacher._expert_control(state, i).astype(np.float64)
+                    #I need to change the above to fit the setting in pushing!
                     action=np.float32(action)#has to be like this?#this is important!
                     '''
                     if self.noisy:
@@ -273,8 +225,8 @@ if __name__ == '__main__':
                     randflag=0
                     # the CEM (candidates, elites, etc.) is in here
                     #next_obs, reward, done, info = env.step(action)#saRSa#the info is the extra in the reacher wrapper!
-                    next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
-                    #next_obs, reward, done, info = env.stepsafety(action)#applies to pushing and spb  # 63 in simple_point_bot.py
+                    #next_obs, reward, done, info = env.step(action)#for reacher, it is step according to the naming issue. But it is actually the stepsafety # env.stepsafety(action)  # 63 in simple_point_bot.py
+                    next_obs, reward, done, info = env.stepsafety(action)#applies to pushing and spb  # 63 in simple_point_bot.py
                     #next_obs = np.array(next_obs)#to make this image a numpy array
                     #next_obs, reward, done, info,next_obs_relative = env.stepsafety_relative(action)  # 63 in simple_point_bot.py
                     next_obs = np.array(next_obs) #relative or not? # to make this image a numpy array
@@ -322,22 +274,24 @@ if __name__ == '__main__':
                     transitions.append(transition)
 
 
-                    currentstate=info['state']
+                    currentstate=info['state']#the 27 dimensional thing!
                     #print('currentstate',currentstate)#8 dim vector!#the first 2 values are still in configuration space!
-                    currentpos=targetpos-currentstate[2:4]#currentstate[0:2]#
-                    ctoobstacle=currentstate[4:6]
-                    ctodistance=np.linalg.norm(ctoobstacle)
+                    currentpos=info['rdo']#targetpos-currentstate[2:4]#currentstate[0:2]#now the current pos should have different meaning!
+                    ctoobstacle=currentpos-0.4#currentstate[4:6]#
+                    ctodistance=ctoobstacle#np.linalg.norm(ctoobstacle)#it will just be the absolute value!#
                     #print('ctoobstacle',ctoobstacle)#the x and y signed distance to obstacle!
                     #print('currentpos',currentpos)#now it is the state space position of the end effector!
                     nextstate=info['next_state']
-                    nextpos=targetpos-nextstate[2:4]#nextstate[0:2]#
-                    ntoobstacle=nextstate[4:6]
-                    ntodistance=np.linalg.norm(ntoobstacle)
+                    nextpos=info['rdn']##targetpos-nextstate[2:4]#nextstate[0:2]#
+                    ntoobstacle=nextpos-0.4#nextstate[4:6]#
+                    ntodistance=ntoobstacle#np.linalg.norm(ntoobstacle)#it will just be the absolute value!#
                     #print('nextstate',nextstate)
                     #print('nextpos',nextpos)
                     posdiff=nextpos-currentpos
                     posdiffnorm=np.linalg.norm(posdiff)
                     pdnarray[piece]=posdiffnorm
+                    
+
                     #for key in im_dat:#from obs and next_obs
                         #frame[key] = im_dat[key][j]#the frame is the jth frame in 1 traj
                     #frame['obs'] = im_dat['obs'][j]#the frame is the jth frame in 1 traj
@@ -350,7 +304,7 @@ if __name__ == '__main__':
                     #zobs_mean = zobs_mean.squeeze().detach().cpu().numpy()
                     if params['mean']=='sample':
                         zobs = encoder.encode(imobs/255)#in latent space now!#even
-                    elif params['mean']=='mean':
+                    elif params['mean']=='mean' or params['mean']=='meancbf':
                         zobs = encoder.encodemean(imobs/255)#in latent space now!#really zero now! That's what I  want!
                     imnextobs = ptu.torchify(next_obs).reshape(1, *obs.shape)#np.array(frame['next_obs'])#(transition[key])#seems to be the image?
                     #imnextobs = ptu.torchify(imnextobs)
@@ -358,7 +312,7 @@ if __name__ == '__main__':
                     #znext_obs_mean = znext_obs_mean.squeeze().detach().cpu().numpy()
                     if params['mean']=='sample':
                         znextobs = encoder.encode(imnextobs/255)#in latent space now!#even
-                    elif params['mean']=='mean':
+                    elif params['mean']=='mean' or params['mean']=='meancbf':
                         znextobs = encoder.encodemean(imnextobs/255)#in latent space now!#really zero now! That's what I  want!
                     imdiff1=imnextobs/255-imobs/255
                     #print('imdiff1',imdiff1)#3 channel image!
@@ -369,7 +323,7 @@ if __name__ == '__main__':
                     zdiffnorm=np.linalg.norm(zdiff)
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
-
+                    log.info('hobs: %f, hnextobs: %f'%(hobs,hnextobs))
                     gradh2z=lambda nextobs: cbfdot_function(nextobs, True)
                     #jno=jacobian(gradh2z,next_obs,create_graph=True)#jno means jacobian next_obs
                     #jno=hessian(selfforwardtrue, next_obs, create_graph=True)  # jno means jacobian next_obs
@@ -389,6 +343,11 @@ if __name__ == '__main__':
                     qdiffnorm=np.linalg.norm(qdiff)
                     hdiff=ptu.to_numpy(hnextobs-hobs)
                     hdiffnorm=np.linalg.norm(hdiff)
+                    if posdiffnorm<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
+                        imagediffnormal=0
+                        zdiffnorm=0
+                        hdiffnorm=0
+                        qdiffnorm=0
                     slopexyp=imagediffnormal/(posdiffnorm+eps)
                     slopeyzp=zdiffnorm/(imagediffnormal+eps)
                     slopezhp=hdiffnorm/(zdiffnorm+eps)
@@ -416,7 +375,7 @@ if __name__ == '__main__':
                     lipxq=max(lipxq,slopexhp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
-                    if ntodistance<=0.10 and ntodistance>=0.08:#ntodistance<=0.09 and ntodistance>=0.07:#
+                    if np.abs(ntodistance)<=0.30 and np.abs(ntodistance)>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
                         slopexys[piece]=slopexyp
                         slopeyzs[piece]=slopeyzp
                         slopezhs[piece]=slopezhp
@@ -438,7 +397,7 @@ if __name__ == '__main__':
                         pdnsafe=max(pdnsafe,posdiffnorm)
                         log.info('piece:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
                         log.info('piece:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gammadyns:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
-                    elif ntodistance<=0.06:
+                    elif np.abs(ntodistance)<=0.15 and np.abs(ntodistance)>=0.10:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
                         slopexyu[piece]=slopexyp
                         slopeyzu[piece]=slopeyzp
                         slopezhu[piece]=slopezhp
@@ -471,7 +430,7 @@ if __name__ == '__main__':
                         #break
                     piece+=1
                     if constr_viol==1:#one step to avoid redundancy#(oldcviol and constr_viol)==1:#one step buffer/hold
-                        break
+                        break#it may still be less than 300 steps!
                 transitions[-1]['done'] = 1#change the last transition to success/done!
                 traj_reward = sum(traj_rews)#total reward, should be >=-100/-150
                 #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints

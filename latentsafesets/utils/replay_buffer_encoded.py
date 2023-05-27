@@ -184,8 +184,13 @@ class EncodedReplayBuffer:
         #condition=(self.data[key]>=-0.0011) & (self.data[key]<=0.0013) &(self.data[key]!=0)#only 3243!#0.002#
         #ondition=(self.data[key]>=-0.0011) & (self.data[key]<0)#only 2282!!#0.002#
         #condition=(self.data[key]>-0.001) & (self.data[key]<0)#only 2201!!#0.002#
-        condition=(self.data[key]>=-0.0011) & (self.data[key]<=0.0013) &(self.data[key]!=0)##only 2201!!#0.002#
+        #condition=(self.data[key]>=-0.0011) & (self.data[key]<=0.0013) &(self.data[key]!=0)#for reacher!#only 2201!!#0.002#
         #print('condition.shape',condition.shape)
+        #condition=(self.data[key]<=0.02) &(self.data[key]!=0)#this condition is for pushing!!!13.5k
+        #condition=(self.data[key]<=0.025) &(self.data[key]!=0)#this condition is for pushing!!!13.889k
+        #condition=(self.data[key]<=0.05) &(self.data[key]!=0)#this condition is for pushing!!!18.4k
+        condition=(self.data[key]<=0.0675) &(self.data[key]!=0)#this condition is for pushing!!!18.4k#condition 1 0.0675=0.0175+0.05
+        #condition=(self.data[key]<=0.0675) &(self.data[key]>0)#this condition is for pushing!!!18.4k#condition 2
         nonzeros = np.nonzero(condition)[0]#self.data[key].nonzero(condition)[0]#self.data[key] is the value#get the safe ones!
         #print('nonzeros.shape',nonzeros.shape)#2282 to 2201#(17100,) when no process!
         #print('nonzeros',nonzeros)#self.data[key]#[0 1 2 ... 17097 17098 17099]
@@ -223,14 +228,14 @@ class EncodedReplayBuffer:
         if key in self.im_keys:#obs and next_obs
             dat = self.data[key][indices]
             dat_mean, dat_log_std = np.split(dat, 2, axis=-1)
-            if self.mean=='sample' or self.mean=='meancbf':
+            if self.mean=='sample' or self.mean=='meancbf':#this means only the CBF is mean, other is still sampling
                 dat_std = np.exp(dat_log_std)
                 #print('meancbf non cbf should enter here!')
                 return np.random.normal(dat_mean.squeeze(), dat_std.squeeze())#this is already sampled!
             elif self.mean=='mean':
                 #print('dat_log_std',dat_log_std)#it also works for pushing! The implementation for pushing is also right!
                 #print('dat_mean.shape',dat_mean.shape)
-                return dat_mean.squeeze()#double check
+                return dat_mean.squeeze()#double check#mean latent space!
         else:#if it is not an image, then just return the value
             return self.data[key][indices]
 

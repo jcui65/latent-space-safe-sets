@@ -13,8 +13,8 @@ import latentsafesets.utils.plot_utils as pu
 @click.command()
 @click.option('--date1', default='05-01',help='the date when the simulation started', type=str)
 @click.option('--time1', default='01-19-14', help='time of the simulation', type=str)
-@click.option('--date2', default='05-11',help='the date when the simulation started', type=str)
-@click.option('--time2', default='02-13-52', help='time of the simulation', type=str)
+@click.option('--date2', default='05-16',help='the date when the simulation started', type=str)
+@click.option('--time2', default='23-10-18', help='time of the simulation', type=str)
 @click.option('--fh', default=250, help='five hundred or 250', type=int)
 def main(date1, time1,date2, time2,fh):
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
@@ -132,7 +132,7 @@ def main(date1, time1,date2, time2,fh):
     cvrcbflist2=[]#constraint violation rate list
     cvrcbf2list2=[]#constraint violation rate list
     tsrarray2=np.zeros((fh2,))#reacher#np.zeros((1000,))#push#
-    seedlist2=[1,2,3]#[1,2]#[1,2,3,4,5]#24,25#[1,2,3,4,5,6,7,8,9,10]#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    seedlist2=[1,2,3,4,5,6,7,8,9,10]#[1,2,3]#[1,2]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
 
     for seed in seedlist2:
         logdir2=os.path.join(logdirbeforeseed2, str(seed))
@@ -214,7 +214,7 @@ def main(date1, time1,date2, time2,fh):
     tsrcstd2=np.std(tsrcarray2,axis=1)
     #print(rfcstd)
     pu.simple_plot2(rfcmean, std=rfcstd,data2=rfcmean2, std2=rfcstd2, title='Average Rewards',
-                            file=os.path.join(logdirbeforeseed2, 'rewards'+str(lenseed)+'epochs'+date2+'-'+time2+'epochs'+str(fh2)+'compare.pdf'),
+                            file=os.path.join(logdirbeforeseed2, 'rewards'+str(lenseed2)+'epochs'+date2+'-'+time2+'epochs'+str(fh2)+'compare.pdf'),
                             ylabel='Average Reward', xlabel='# Training updates')
     #pu.simple_plot(tsrcmean, std=tsrcstd, title='Average task success rate',
                             #file=os.path.join(logdirbeforeseed, 'tsrc'+str(lenseed)+'epochs'+date2+'-'+time2+'epochs'+str(fh)+'.pdf'),

@@ -41,6 +41,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         self.optimizer = torch.optim.Adam(self.net.parameters(), lr=lr)#,weight_decay=0.0001)#0.001)#0.1)#0.01)#1.0)#
         self.mean=params['mean']
         self.reg_lipschitz=params['reg_lipschitz']
+        self.env=params['env']
     def forward(self, obs, already_embedded=False):
         """
         Returns inputs to sigmoid for probabilities
@@ -51,7 +52,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             if self.mean=='sample':
                 embedding = self.encoder.encode(obs).detach()
                 #print('get sample embedding from images! embedding.shape',embedding.shape)
-            elif self.mean=='mean':
+            elif self.mean=='mean' or self.mean=='meancbf':
                 embedding = self.encoder.encodemean(obs).detach()
                 #print('get mean embedding from images! embedding.shape',embedding.shape)#
         else:
@@ -153,7 +154,11 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             #print('jnon',jnon)
             #epsilon=1e-6#1e-5#1e-4#1#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1e-3#1e-2#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1e-6#
             lamb=50#100#10#I set this to be 50/100!
-            loss2=lamb*torch.nn.functional.relu(jnon-1/900)#I set it to be 1/900
+            if self.env=='reacher':
+                lipthres=1/900
+            elif self.env=='push':
+                lipthres=1/500
+            loss2=lamb*torch.nn.functional.relu(jnon-lipthres)#I set it to be 1/900
             #print('loss2',loss2.item())#the main point is on the global coordinate's case
             #external_grad = torch.ones_like(loss1)
             #loss1.backward(gradient=external_grad)

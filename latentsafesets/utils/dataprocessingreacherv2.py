@@ -11,7 +11,7 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='05-15',help='the date when the simulation started', type=str)
+@click.option('--date', default='05-19',help='the date when the simulation started', type=str)
 @click.option('--time', default='02-41-37', help='time of the simulation', type=str)
 @click.option('--fh', default=500, help='five hundred or 250 or 1000', type=int)#1000, 250#
 @click.option('--env',default='reacher',help='the environment',type=str)#reacher or push#
@@ -38,7 +38,7 @@ def main(date, time,fh,env):
     tsrarray=np.zeros((fh,))#reacher#np.zeros((1000,))#push#
     #tsrlist=[]#constraint violation rate list
     lastnum=50
-    seedlist=[1,2,3]#[1,2]#[1,2,3,4,5]#24,25#[1,2,3,4,5,6,7,8,9,10]#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    seedlist=[1,2,3,4,5,6,7,8,9,10]#[1,2,3]#[4,5,6]#[7,8,9,10]#[4,5,6]#[1,2]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
 
     for seed in seedlist:
         logdir=os.path.join(logdirbeforeseed, str(seed))

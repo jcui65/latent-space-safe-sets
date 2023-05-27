@@ -54,6 +54,7 @@ if __name__ == '__main__':
         f.write('reduce_horizon: %s, 0 or 1: %s\n'%(params['reduce_horizon'],params['zero_one']))
         f.write('episodic train cbf or not: %s\n'%(params['train_cbf']))
         f.write('mean: %s, dhz: %f, dhdmax: %f\n'%(params['mean'],params['dhz'],params['dhdmax']))
+        f.write('nosigma: %f, nosigmadhz: %f, dynamic_dhz: %s, idea: %s, unsafe_buffer:%s, reg_lipschitz:%s\n'%(params['noofsigma'],params['noofsigmadhz'],params['dynamic_dhz'],params['idea'],params['unsafebuffer'],params['reg_lipschitz']))
         f.write('What I want to write: %s'%(params['quote']))
         f.close()
         utils.init_logging(logdir)#record started!
@@ -182,7 +183,8 @@ if __name__ == '__main__':
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     
-                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#,conservative,reward_type)#
+                    #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#,conservative,reward_type)#
+                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
                     '''
                     if conservative=='conservative' and reward_type=='sparse':
                         #print('conservative and sparse!')#you get this right!
@@ -294,11 +296,11 @@ if __name__ == '__main__':
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                     if params['mean']=='sample':
-                        embeval = encoder.encode(obseval)#in latent space now!#even
+                        embeval = encoder.encode(obseval/255)#encoder.encode(obseval)#in latent space now!#even
                         #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                         #embeval2 = encoder.encode(obseval)#in latent space now!
                     elif params['mean']=='mean' or params['mean']=='meancbf':
-                        embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
+                        embeval = encoder.encodemean(obseval/255)#encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
                         #embeval2 = encoder.encodemean(obseval)#in latent space now!
                     #embdiff100000=(embeval-embeval2)*100000
                     #print('embdiff100000',embdiff100000)#just for testing!!!
@@ -388,7 +390,7 @@ if __name__ == '__main__':
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
-                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']
+                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
             log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)

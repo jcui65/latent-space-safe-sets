@@ -53,6 +53,7 @@ if __name__ == '__main__':
         f.write('push_cbf_strategy: %d\n'%(params['push_cbf_strategy']))
         f.write('reduce_horizon: %s, 0 or 1: %s\n'%(params['reduce_horizon'],params['zero_one']))
         f.write('mean: %s, dhz: %f, dhdmax: %f\n'%(params['mean'],params['dhz'],params['dhdmax']))
+        f.write('nosigma: %f, nosigmadhz: %f, dynamic_dhz: %s, idea: %s, unsafe_buffer:%s, reg_lipschitz:%s\n'%(params['noofsigma'],params['noofsigmadhz'],params['dynamic_dhz'],params['idea'],params['unsafebuffer'],params['reg_lipschitz']))
         f.write('What I want to write: %s'%(params['quote']))
         f.close()
         utils.init_logging(logdir)#record started!
@@ -95,7 +96,7 @@ if __name__ == '__main__':
             replay_buffer_unsafe=replay_buffer#not loading new buffer!
             log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
         '''
-        if params['unsafebuffer']=='yes':#new version
+        if params['unsafebuffer']=='yes' or params['unsafebuffer']=='yes2':#new version
             replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
             log.info('unsafe buffer!')
         else:
@@ -181,19 +182,8 @@ if __name__ == '__main__':
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
-                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
-                    '''
-                    if conservative=='conservative' and reward_type=='sparse':
-                        #print('conservative and sparse!')#you get this right!
-                        action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                            #fn, tn, tpc, fpc, fnc, tnc)
-                    elif conservative=='average' and reward_type=='sparse':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
-                    elif conservative=='conservative' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
-                    elif conservative=='average' and reward_type=='dense':
-                        action,randflag= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
-                    '''
+                    #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
+                    action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -223,14 +213,14 @@ if __name__ == '__main__':
                     #movie_traj_relative.append({'obs_relative': next_obs_relative.reshape((-1, 3, 64, 64))[0]}) #relative or not # add this image
                     traj_rews.append(reward)#reward is either 0 or 1!
                     constr = info['constraint']#its use is seen a few lines later
-                    rfn=not randflag#rfn means rand flag not
+                    rfn=not randflag#rfn means rand flag not#rfn=0 means action not random, rfn=1 means the action is random
                     action_rand=randflag
                     #constr_cbf = rfn*info['constraint']#(1-randflag)*info['constraint']#its use is seen a few lines later
                     if len(traj_action_rands)==0:
-                        constr_cbf = rfn*info['constraint']#
-                        constr_cbf2=constr_cbf
+                        constr_cbf = rfn*info['constraint']#3when rfn=0, this means that the action is already randomly chosen, CBF has found no solution!
+                        constr_cbf2=constr_cbf#constr_cbf=0 means that CBF has correctly detected the danger, but the action (indeed including recovery actions) sucks!
                     else:
-                        constr_cbf = rfn*info['constraint']#
+                        constr_cbf = rfn*info['constraint']#(1-traj_action_rands[-1]) is the rfn of last step!
                         constr_cbf2 = rfn*info['constraint'] or (1-traj_action_rands[-1])*info['constraint']#one previous step buffer
                         #constr_cbf2 = rfn*info['constraint'] and (1-traj_action_rands[-1])#one previous step buffer
                     traj_action_rands.append(action_rand)#this is really a small bug/inadequacy!
@@ -311,13 +301,14 @@ if __name__ == '__main__':
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                     #embeval = encoder.encode(obseval)#in latent space now!
                     if params['mean']=='sample':
-                        embeval = encoder.encode(obseval)#in latent space now!#even
-                    elif params['mean']=='mean':
-                        embeval = encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
+                        embeval = encoder.encode(obseval/255)#encoder.encode(obseval)#in latent space now!#even
+                    elif params['mean']=='mean' or params['mean']=='meancbf':
+                        embeval = encoder.encodemean(obseval/255)#encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
                         #embeval2 = encoder.encodemean(obseval)#in latent space now!
                     #print('emb.shape',emb.shape)#torch.Size([1, 32])
                     #cbfdot_function.predict()
                     cbfpredict = cbfdot_function(embeval,already_embedded=True)#
+                    '''
                     cbfgt=hvn
                     if (cbfpredict>=0) and (cbfgt>=0):
                         tn+=1
@@ -336,8 +327,10 @@ if __name__ == '__main__':
                         fpc+=1
                     elif (cbfpredict<0) and (cbfgt<tncvalue):
                         tpc+=1
-                    log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
+                    #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
                     #the evaluation phase ended
+                    '''
+                    log.info('s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d,cbfpredict:%f' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand,cbfpredict))
                     if done:
                         break
                 transitions[-1]['done'] = 1#change the last transition to success/done!
@@ -400,7 +393,7 @@ if __name__ == '__main__':
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
-                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']
+                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz#*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
             log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
