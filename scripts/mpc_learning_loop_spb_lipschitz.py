@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # Misc preliminaries
     repeattimes=1#params['repeat_times']#
     initdhz=params['dhz']
-    traj_per_update = 50#100#200#params['traj_per_update']#default 10
+    traj_per_update = 10#50#100#200#params['traj_per_update']#default 10
     params['horizon']=200#100#250#300#320#500#400#
     slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((traj_per_update*params['horizon']))
     slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((traj_per_update*params['horizon']))
@@ -304,18 +304,17 @@ if __name__ == '__main__':
                     imobs = ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary#np.array(frame['obs'])#(transition[key])#seems to be the image?
                     #zobs_mean, zobs_log_std = self.encoder(imobs[None] / 255)#is it legit?
                     #zobs_mean = zobs_mean.squeeze().detach().cpu().numpy()
-                    if params['mean']=='sample':
-                        zobs = encoder.encode(imobs/255)#in latent space now!#even
-                    elif params['mean']=='mean' or params['mean']=='meancbf':
-                        zobs = encoder.encodemean(imobs/255)#in latent space now!#really zero now! That's what I  want!
                     imnextobs = ptu.torchify(next_obs).reshape(1, *obs.shape)#np.array(frame['next_obs'])#(transition[key])#seems to be the image?
                     #imnextobs = ptu.torchify(imnextobs)
-                    #znext_obs_mean, znext_obs_log_std = self.encoder(imnextobs[None] / 255)#is it legit?
-                    #znext_obs_mean = znext_obs_mean.squeeze().detach().cpu().numpy()
                     if params['mean']=='sample':
+                        zobs = encoder.encode(imobs/255)#in latent space now!#even
                         znextobs = encoder.encode(imnextobs/255)#in latent space now!#even
                     elif params['mean']=='mean' or params['mean']=='meancbf':
+                        #log.info('it is using the mean output from the encoder!')#checked!!
+                        zobs = encoder.encodemean(imobs/255)#in latent space now!#really zero now! That's what I  want!
                         znextobs = encoder.encodemean(imnextobs/255)#in latent space now!#really zero now! That's what I  want!
+                    #znext_obs_mean, znext_obs_log_std = self.encoder(imnextobs[None] / 255)#is it legit?
+                    #znext_obs_mean = znext_obs_mean.squeeze().detach().cpu().numpy()
                     imdiff1=imnextobs/255-imobs/255
                     #print('imdiff1',imdiff1)#3 channel image!
                     imagediff=ptu.to_numpy(imdiff1)#next_obs-obs#frame['next_obs']-frame['obs']

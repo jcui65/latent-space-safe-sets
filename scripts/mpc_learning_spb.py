@@ -148,8 +148,9 @@ if __name__ == '__main__':
                                                                             #fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarecircle(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatent(obs / 255, env.state, tp, fp, fn, tn,tpc,fpc, fnc, tnc)
-                action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                        fn, tn, tpc, fpc, fnc, tnc)
+                #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
+                                                                                        #fn, tn, tpc, fpc, fnc, tnc)
+                action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
                 '''
                 if conservative=='conservative' and reward_type=='sparse':
                     #print('conservative and sparse!')#you get this right!
@@ -242,9 +243,17 @@ if __name__ == '__main__':
                 #Now, I should do the evaluation!
                 obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                 #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
-                embeval = encoder.encode(obseval)#in latent space now!
+                #embeval = encoder.encode(obseval)#in latent space now!
                 #print('emb.shape',emb.shape)#torch.Size([1, 32])
                 #cbfdot_function.predict()
+
+                if params['mean']=='sample':
+                    embeval = encoder.encode(obseval/255)#encoder.encode(obseval)#in latent space now!#even
+                    #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
+                    #embeval2 = encoder.encode(obseval)#in latent space now!
+                elif params['mean']=='mean' or params['mean']=='meancbf':
+                    embeval = encoder.encodemean(obseval/255)#encoder.encodemean(obseval)#in latent space now!#really zero now! That's what I  want!
+
                 cbfpredict = cbfdot_function(embeval,already_embedded=True)#
                 cbfgt=hvn
                 if (cbfpredict>=0) and (cbfgt>=0):
@@ -255,7 +264,7 @@ if __name__ == '__main__':
                     fp+=1
                 elif (cbfpredict<0) and (cbfgt<0):
                     tp+=1
-                tncvalue=0.3**2-0.4**2+1e-3#0.05**2-0.055**2+1e-8#for reacher!
+                tncvalue=-50+0.1#0.3**2-0.4**2+1e-3#0.05**2-0.055**2+1e-8#for reacher!
                 if (cbfpredict>=0) and (cbfgt>=tncvalue):
                     tnc+=1
                 elif (cbfpredict>=0) and (cbfgt<tncvalue):
@@ -264,7 +273,7 @@ if __name__ == '__main__':
                     fpc+=1
                 elif (cbfpredict<0) and (cbfgt<tncvalue):
                     tpc+=1
-                log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,position x:%f,position y:%f' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1]))
+                log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,position x:%f,position y:%f,c_viol:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol))
                 #the evaluation phase ended
                 if done:
                     break

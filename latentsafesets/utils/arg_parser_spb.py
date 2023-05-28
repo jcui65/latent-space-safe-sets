@@ -217,9 +217,9 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_update_iters', type=int, default=512)#512
     parser.add_argument('--reduce_horizon', type=str, default='no')#'alpha')#'horizon')#
     parser.add_argument('--train_cbf', type=str, default='yes')#'no2')#'no')#
-    parser.add_argument('--dhz',type=float,default=0.0015)#
+    parser.add_argument('--dhz',type=float,default=0)#0.0015)#
     parser.add_argument('--sigmaz',type=float,default=0.137)#
-    parser.add_argument('--dhdmax',type=float,default=0.010)#
+    parser.add_argument('--dhdmax',type=float,default=0)#0.010)#
     parser.add_argument('--idea',type=str,default='union_bound')#'vanilla_var')#'pca')#'gamma')#
     parser.add_argument('--noofsigma',type=float,default=3.0)#2.0)#
     parser.add_argument('--noofsigmadhz',type=float,default=2.0)#2.0)#
