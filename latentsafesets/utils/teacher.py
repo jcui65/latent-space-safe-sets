@@ -366,6 +366,15 @@ class ConstraintTeacher(AbstractTeacher):
             to_obstactle_scaled = to_obstacle_normalized * spb.MAX_FORCE / 2
             return to_obstactle_scaled
 
+    def _expert_control_lipschitz(self, state, i):
+        if i < 15:#as said in the paper, random action
+            return self.d
+        else:
+            to_obstactle = np.subtract(self.goal, state)
+            to_obstacle_normalized = to_obstactle / np.linalg.norm(to_obstactle)#direction
+            to_obstactle_scaled = to_obstacle_normalized * spb.MAX_FORCE / 5
+            return to_obstactle_scaled
+        
     def reset(self):
         self.d = (np.random.random(2) * 2 - 1) * spb.MAX_FORCE
 

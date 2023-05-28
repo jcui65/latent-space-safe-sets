@@ -344,6 +344,74 @@ def load_replay_buffer(params, encoder=None, first_only=False):#it doesn't have 
     return replay_buffer
     #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
 
+def load_replay_buffer_success(params, encoder=None, first_only=False):#it doesn't have traj parameter!
+    log.info('Loading data')
+    trajectories = []#SimplePointBot or SimplePointBotConstraints
+    for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe 50 & obstacle 50
+        #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
+        if directory=='Reacher' or directory=='Push' or directory=='SimplePointBot':
+            if params['light']=='ls3':
+                if params['datasetnumber']==1:
+                    real_dir = os.path.join('', 'datals3',directory)  #old data!#',directory)  #new data!#
+                elif params['datasetnumber']==2 or params['datasetnumber']==3:#only load the data, not involving data_images!
+                    real_dir = os.path.join('', 'data',directory)  #new data!#ls3',directory)  #old data!#
+            else:
+                real_dir = os.path.join('', 'data',directory)  #
+            trajectories += load_trajectories(num, file=real_dir)#now you have 50+50=100 pieces of trajs each containing 100 time steps
+            if first_only:
+                print('wahoo')
+                break
+
+    log.info('Populating replay buffer')#find correspondence in the cmd output
+
+    # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
+    random.shuffle(trajectories)
+    if encoder is not None:#replay buffer finally comes in!
+        replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'],params['mean'])#35000 for spb, 25000 for reacher
+        #print('load encoded buffer!')#load encoded buffer!
+    else:
+        replay_buffer = ReplayBuffer(params['buffer_size'])#buffer size is now too much!
+        #print('load plain buffer!')
+    for trajectory in tqdm(trajectories):#trajectory is 1 traj having 100 steps, trajectories is a list of many trajectorys!
+        replay_buffer.store_transitions(trajectory)#22#
+    #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
+    return replay_buffer
+    #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
+
+def load_replay_buffer_interactions(params, encoder=None, first_only=False):#it doesn't have traj parameter!
+    log.info('Loading data')
+    trajectories = []#SimplePointBot or SimplePointBotConstraints
+    for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe 50 & obstacle 50
+        #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
+        if directory=='ReacherInteractions':
+            if params['light']=='ls3':
+                if params['datasetnumber']==1:
+                    real_dir = os.path.join('', 'datals3',directory)  #old data!#',directory)  #new data!#
+                elif params['datasetnumber']==2 or params['datasetnumber']==3:#only load the data, not involving data_images!
+                    real_dir = os.path.join('', 'data',directory)  #new data!#ls3',directory)  #old data!#
+            else:
+                real_dir = os.path.join('', 'data',directory)  #
+            trajectories += load_trajectories(num, file=real_dir)#now you have 50+50=100 pieces of trajs each containing 100 time steps
+            if first_only:
+                print('wahoo')
+                break
+
+    log.info('Populating replay buffer')#find correspondence in the cmd output
+
+    # Shuffle array so that when the replay fills up it doesn't remove one dataset before the other
+    random.shuffle(trajectories)
+    if encoder is not None:#replay buffer finally comes in!
+        replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'],params['mean'])#35000 for spb, 25000 for reacher
+        #print('load encoded buffer!')#load encoded buffer!
+    else:
+        replay_buffer = ReplayBuffer(params['buffer_size'])#buffer size is now too much!
+        #print('load plain buffer!')
+    for trajectory in tqdm(trajectories):#trajectory is 1 traj having 100 steps, trajectories is a list of many trajectorys!
+        replay_buffer.store_transitions(trajectory)#22#
+    #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
+    return replay_buffer
+    #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
+
 def load_replay_buffer_latent(params, encoder=None, first_only=False):#it doesn't have traj parameter!
     log.info('Loading data')
     trajectories = []#SimplePointBot or SimplePointBotConstraints
@@ -387,7 +455,7 @@ def load_replay_buffer_unsafe(params, encoder=None, first_only=False):#it doesn'
     trajectories = []#SimplePointBot or SimplePointBotConstraints
     for directory, num in list(zip(params['data_dirs'], params['data_counts'])):#safe 50 & obstacle 50
         #real_dir = os.path.join('/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets','data', directory)#get the trajectories
-        if directory=='ReacherConstraintdense1' or directory=='ReacherConstraintdense2' or directory=='PushOutbursts2':
+        if directory=='ReacherConstraintdense1' or directory=='ReacherConstraintdense2' or directory=='PushOutbursts2' or directory=='SimplePointBotConstraints':
             if params['light']=='ls3':
                 if params['datasetnumber']==1:
                     real_dir = os.path.join('', 'datals3',directory)  #old data!#',directory)  #new data!#

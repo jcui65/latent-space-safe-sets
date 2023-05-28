@@ -5,7 +5,7 @@ import latentsafesets.utils.plot_utils as pu
 import logging
 from tqdm import trange
 import os
-
+import numpy as np
 log = logging.getLogger("dyn train")
 
 
@@ -14,7 +14,7 @@ class PETSDynamicsTrainer(Trainer):
         self.params = params
         self.dynamics = dynamics
         self.loss_plotter = loss_plotter
-
+        self.batchsize=self.params['dyn_batch_size']
         self.ensemble = params['dyn_n_models']#5 by default
 
         self.env_name = params['env']#spb/reacher/push
@@ -74,7 +74,77 @@ class PETSDynamicsTrainer(Trainer):
         self.visualize(os.path.join(update_dir, "dyn.gif"), replay_buffer)
         self.dynamics.save(os.path.join(update_dir, 'dyn.pth'))
 
-    def visualize(self, file, replay_buffer):
+    def initial_train_m2(self, replay_buffer_success, update_dir,replay_buffer_unsafe):#update_dir is the folder ended in initial_train
+        if self.dynamics.trained:
+            self.visualize(os.path.join(update_dir, "dyn_start.gif"), replay_buffer_success)
+            return
+
+        log.info('Beginning dynamics initial optimization')
+
+        for i in range(self.params['dyn_init_iters']):#10000
+            #nosuccessdata=
+            #nounsafedata=
+            #ratio=nosuccessdata/(nosuccessdata+nounsafedata)
+            ratio=0.7#0.75#
+            successbatch=int(ratio*self.params['dyn_batch_size'])
+            out_dict = replay_buffer.sample(successbatch,#self.params['dyn_batch_size'],#256#get sub-dict of corresponding indices
+                                            ensemble=self.ensemble)#59 in replay_buffer_encoded
+            #print('out_dict',out_dict)
+            obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']#get values of those indices
+            loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
+
+            self.loss_plotter.add_data(info)
+
+            if i % self.params['log_freq'] == 0:#100
+                self.loss_plotter.print(i)
+            if i % self.params['plot_freq'] == 0:#500
+                log.info('Creating dynamics visualization')
+                self.loss_plotter.plot()
+
+                self.visualize(os.path.join(update_dir, "dyn%d.gif" % i), replay_buffer)
+
+            if i % self.params['checkpoint_freq'] == 0 and i > 0:#2000
+                self.dynamics.save(os.path.join(update_dir, 'dynamics_%d.pth' % i))
+
+        self.dynamics.save(os.path.join(update_dir, 'dyn.pth'))
+
+    def update_m2(self, replay_buffer_success, update_dir,replay_buffer_unsafe):#this's for update0/1... after init train
+        log.info('Beginning dynamics optimization')
+
+        for _ in trange(self.params['dyn_update_iters']):#512
+            ratio=0.7#0.75#
+            successbatch=int(ratio*self.params['dyn_batch_size'])
+            out_dict = replay_buffer_success.sample(successbatch,#self.params['dyn_batch_size'],
+                                            ensemble=self.ensemble)#this is dyn trainer specific?
+            obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']
+            #obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['action']
+            #if replay_buffer_unsafe!=None:
+            #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+
+            out_dictus = replay_buffer_unsafe.sample(self.params['dyn_batch_size']-successbatch,ensemble=self.ensemble)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            obsus=out_dictus['obs']#us means unsafe
+            obsus, next_obsus, actus = out_dictus['obs'], out_dictus['next_obs'], out_dictus['action']
+            obs=np.vstack((obs,obsus))
+            next_obs=np.vstack((next_obs,next_obsus))
+            #print('hvnold.shape',hvn.shape)
+            act=np.concatenate((act,actus))
+            #print('hvnnew.shape',hvn.shape)
+            shuffleind=np.random.permutation(obs.shape[0])
+            obs=obs[shuffleind]
+            next_obs=next_obs[shuffleind]
+            act=act[shuffleind]
+
+
+            loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
+            self.loss_plotter.add_data(info)#the update is just the dynamics update
+
+        log.info('Creating dynamics heatmap')
+        self.loss_plotter.plot()
+        self.visualize(os.path.join(update_dir, "dyn.gif"), replay_buffer_success)#replay_buffer)#
+        self.dynamics.save(os.path.join(update_dir, 'dyn.pth'))#not very high priority!
+
+
+    def visualize(self, file, replay_buffer):#
         out_dict = replay_buffer.sample_chunk(8, 10)
 
         obs = out_dict['obs']
@@ -102,11 +172,6 @@ class PETSDynamicsTrainer2(Trainer):
         for i in range(self.params['dyn_init_iters']):#10000
             out_dict = replay_buffer.sample(self.params['dyn_batch_size'],#256#get sub-dict of corresponding indices
                                             ensemble=self.ensemble)#59 in replay_buffer_encoded
-            #print('out_dict',out_dict)
-            #obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']#get values of those indices
-            #print('obs.shape', obs.shape)#(5, 256, 32)#
-            #print('next_obs.shape', next_obs.shape)#(5, 256, 32)#
-            #print('act1.shape', act.shape)#(5, 256, 2)#
             obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['action']  # get values of those indices
             loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
 
