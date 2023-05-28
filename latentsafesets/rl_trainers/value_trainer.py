@@ -110,8 +110,14 @@ class ValueTrainer(Trainer):
         log.info('Beginning value update optimization')
 
         for i in trange(self.params['val_update_iters']):#2000
+
+            out_dict = replay_buffer_success.sample_positive(self.params['constr_batch_size'], 'on_policy', self.n_models)
+            obs, next_obs, rew, done = out_dict['obs'], out_dict['next_obs'], out_dict['reward'], \
+                                       out_dict['done']#just use all safe sample, OK?
+            '''
             ratious=1/8
             unsafebatch=ratious*self.params['dyn_batch_size']
+
             if len(replay_buffer_unsafe)<=unsafebatch:
                 successbatch=self.params['dyn_batch_size']
                 out_dict = replay_buffer_success.sample_positive(successbatch, 'on_policy', self.n_models)
@@ -138,7 +144,7 @@ class ValueTrainer(Trainer):
                 next_obs=next_obs[shuffleind]
                 rew=rew[shuffleind]
                 done=done[shuffleind]
-
+            '''
             loss, info = self.value.update(obs, rew, next_obs, done, already_embedded=True)
             self.loss_plotter.add_data(info)
 

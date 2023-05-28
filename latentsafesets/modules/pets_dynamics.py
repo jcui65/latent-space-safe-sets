@@ -63,7 +63,7 @@ class PETSDynamics(nn.Module, EncodedModule):
         act = ptu.torchify(act)
 
         if not already_embedded:
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs)
                 next_emb = self.encoder.encode(next_obs)
             elif self.mean=='mean':
@@ -111,7 +111,7 @@ class PETSDynamics(nn.Module, EncodedModule):
         if already_embedded:
             emb = obs
         else:
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs).detach()
             elif self.mean=='mean':
                 emb = self.encoder.encodemean(obs).detach()
@@ -150,7 +150,7 @@ class PETSDynamics(nn.Module, EncodedModule):
         if already_embedded:
             emb = obs
         else:
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs).detach()
             elif self.mean=='mean':
                 emb = self.encoder.encodemean(obs).detach()
@@ -344,7 +344,7 @@ class PETSDynamics2(nn.Module, EncodedModule):
         act = ptu.torchify(act)
 
         if not already_embedded:
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs)
                 next_emb = self.encoder.encode(next_obs)
             elif self.mean=='mean':
@@ -392,7 +392,7 @@ class PETSDynamics2(nn.Module, EncodedModule):
         if already_embedded:
             emb = obs
         else:
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs).detach()
             elif self.mean=='mean':
                 emb = self.encoder.encodemean(obs).detach()

@@ -87,10 +87,25 @@ class PETSDynamicsTrainer(Trainer):
             #ratio=nosuccessdata/(nosuccessdata+nounsafedata)
             ratio=0.7#0.75#
             successbatch=int(ratio*self.params['dyn_batch_size'])
-            out_dict = replay_buffer.sample(successbatch,#self.params['dyn_batch_size'],#256#get sub-dict of corresponding indices
+            out_dict = replay_buffer_success.sample(successbatch,#self.params['dyn_batch_size'],#256#get sub-dict of corresponding indices
                                             ensemble=self.ensemble)#59 in replay_buffer_encoded
             #print('out_dict',out_dict)
             obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']#get values of those indices
+            
+            out_dictus = replay_buffer_unsafe.sample(self.params['dyn_batch_size']-successbatch,ensemble=self.ensemble)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            obsus=out_dictus['obs']#us means unsafe
+            obsus, next_obsus, actus = out_dictus['obs'], out_dictus['next_obs'], out_dictus['action']
+            obs=np.vstack((obs,obsus))
+            next_obs=np.vstack((next_obs,next_obsus))
+            #print('hvnold.shape',hvn.shape)
+            act=np.concatenate((act,actus))
+            #print('hvnnew.shape',hvn.shape)
+            shuffleind=np.random.permutation(obs.shape[0])
+            obs=obs[shuffleind]
+            next_obs=next_obs[shuffleind]
+            act=act[shuffleind]
+            
+            
             loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
 
             self.loss_plotter.add_data(info)
@@ -101,7 +116,7 @@ class PETSDynamicsTrainer(Trainer):
                 log.info('Creating dynamics visualization')
                 self.loss_plotter.plot()
 
-                self.visualize(os.path.join(update_dir, "dyn%d.gif" % i), replay_buffer)
+                self.visualize(os.path.join(update_dir, "dyn%d.gif" % i), replay_buffer_success)
 
             if i % self.params['checkpoint_freq'] == 0 and i > 0:#2000
                 self.dynamics.save(os.path.join(update_dir, 'dynamics_%d.pth' % i))
@@ -117,17 +132,20 @@ class PETSDynamicsTrainer(Trainer):
             out_dict = replay_buffer_success.sample(successbatch,#self.params['dyn_batch_size'],
                                             ensemble=self.ensemble)#this is dyn trainer specific?
             obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']
+            #print('act.shape',act.shape)
             #obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['action']
             #if replay_buffer_unsafe!=None:
             #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
 
             out_dictus = replay_buffer_unsafe.sample(self.params['dyn_batch_size']-successbatch,ensemble=self.ensemble)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
-            obsus=out_dictus['obs']#us means unsafe
+            #obsus=out_dictus['obs']#us means unsafe
+
             obsus, next_obsus, actus = out_dictus['obs'], out_dictus['next_obs'], out_dictus['action']
-            obs=np.vstack((obs,obsus))
-            next_obs=np.vstack((next_obs,next_obsus))
+            #print('actus.shape',actus.shape)
+            obs=np.concatenate((obs,obsus),axis=1)
+            next_obs=np.concatenate((next_obs,next_obsus),axis=1)
             #print('hvnold.shape',hvn.shape)
-            act=np.concatenate((act,actus))
+            act=np.concatenate((act,actus),axis=1)#pay attention to the dimension!
             #print('hvnnew.shape',hvn.shape)
             shuffleind=np.random.permutation(obs.shape[0])
             obs=obs[shuffleind]

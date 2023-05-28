@@ -231,7 +231,7 @@ class EncodedReplayBuffer:
         I added this method so I could sample only from data entries in the safe set
         """
         assert len(self.data[key].shape) == 1, 'cannot sample positive from array with >1d values'
-        condition=(self.data[key]<=0.0675) &(self.data[key]!=0)#this condition is for pushing!!!18.4k#condition 1 0.0675=0.0175+0.05
+        condition=(self.data[key]==1)#(self.data[key]<=0.0675) &(self.data[key]!=0)#this condition is for pushing!!!18.4k#condition 1 0.0675=0.0175+0.05
         #condition=(self.data[key]<=0.0675) &(self.data[key]>0)#this condition is for pushing!!!18.4k#condition 2
         nonzeros = np.nonzero(condition)[0]#self.data[key].nonzero(condition)[0]#self.data[key] is the value#get the safe ones!
         #print('nonzeros.shape',nonzeros.shape)#2282 to 2201#(17100,) when no process!

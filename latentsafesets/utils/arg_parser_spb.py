@@ -21,9 +21,9 @@ def parse_args():
                         help='How frequently to save model checkpoints')
     parser.add_argument('--checkpoint_folder', type=str, default=None)
     parser.add_argument('--traj_per_update', default=10, type=int)#2, type=int)#10 is the default value
-    parser.add_argument('--num_updates', type=int, default=50)#2)#25)#1)#100)#10)#200)#250)#150)#500)#1500)#75)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
+    parser.add_argument('--num_updates', type=int, default=75)#50)#2)#25)#1)#100)#10)#200)#250)#150)#500)#1500)##45)#40)#35)#5)#20)#15)#30)#the default is 25#
     parser.add_argument('--exper_name', type=str, default=None)
-    parser.add_argument('--repeat_times',type=int,default=3)#2)#1)#5)#10)#7)#
+    parser.add_argument('--repeat_times',type=int,default=1)#3)#2)#5)#10)#7)#
     parser.add_argument('--light',type=str,default='light')#'normal')#'expensive')#'ls3')#'ls3' means original, no CBF#'nosasfety')#no any safety measures
     parser.add_argument('--action_type',type=str,default='random')#'zero')#'recovery')#
     parser.add_argument('--datasetnumber',type=int,default=3)#2)#1 for old data, 2 for new data, 3 for data 3!
@@ -202,8 +202,8 @@ def add_gi_args(parser):
 
 def add_cbfd_args(parser):
     # Constraint Estimator params
-    parser.add_argument('--cbfdot_thresh', type=float, default=0.5)#1.0)#0.25)#for 1.2 don't do this?#0.75)#0.6)#0.4)#0.8)#0.48)#838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
-    parser.add_argument('--cbfdot_thresh_mult', type=float, default=1.25)#1.2)#1.0)#0.8)#
+    parser.add_argument('--cbfdot_thresh', type=float, default=1.0)#0.5)#0.25)#for 1.2 don't do this?#0.75)#0.6)#0.4)#0.8)#0.48)#838860.8)#209715.2)#819.2)#3.2)#214748364.8)#53687091.2)#13421772.8)#3355443.2)#52428.8)#13107.2)#3276.8)#204.8)#51.2)#12.8)#0.8)#
+    parser.add_argument('--cbfdot_thresh_mult', type=float, default=1.0)#1.25)#1.2)#0.8)#
     parser.add_argument('--cbfd_lr', type=float, default=1e-4,
                         help='Learning rate for cbfd network')
     parser.add_argument('--cbfd_hidden_size', type=int, default=200)
@@ -223,17 +223,23 @@ def add_cbfd_args(parser):
     parser.add_argument('--idea',type=str,default='union_bound')#'vanilla_var')#'pca')#'gamma')#
     parser.add_argument('--noofsigma',type=float,default=3.0)#2.0)#
     parser.add_argument('--noofsigmadhz',type=float,default=2.0)#2.0)#
-    parser.add_argument('--unsafebuffer',type=str,default='no')#'yes2')#'yes')#
+    parser.add_argument('--unsafebuffer',type=str,default='yes2')#'no')#'yes')#
     parser.add_argument('--cbf_thresh_mult_iters', type=int, default=3)#5)#8)#16)#16 is crazy, but fails#
     parser.add_argument('--reducerocbfhd',type=str,default='yes')
     parser.add_argument('--dynamic_dhz',type=str,default='no')#'yes')#
     parser.add_argument('--reg_lipschitz',type=str,default='no')#
     parser.add_argument('--boundary',type=str,default='yes')#'no')##
     parser.add_argument('--rectify',type=float,default=0.0)#
-    parser.add_argument('--gammasafe',type=float,default=0.003)
-    parser.add_argument('--gammaunsafe',type=float,default=0.002)
-    parser.add_argument('--gammadyn',type=float,default=0.0015)
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2023-05-12/08-56-02/1/initial_train/cbfd_50000.pth')#'outputs/2023-05-07/23-06-07/1/initial_train/cbfd_10000.pth')#true#'outputs/2023-04-30/02-35-05/1/initial_train/cbfd_10000.pth')#half mean!#'outputs/2023-05-02/14-49-18/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
+    parser.add_argument('--gammasafe',type=float,default=50)#0.003)
+    parser.add_argument('--gammaunsafe',type=float,default=50)#0.002)
+    parser.add_argument('--gammadyn',type=float,default=15)
+    parser.add_argument('--w1',type=float,default=10000)
+    parser.add_argument('--w2',type=float,default=10000)
+    parser.add_argument('--w3',type=float,default=1)
+    parser.add_argument('--w4',type=float,default=10)
+    parser.add_argument('--w5',type=float,default=10)
+    parser.add_argument('--stepstohell',type=float,default=10)
+    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-05-28/02-29-57/cbfd.pth')#first spb m2!#'outputs/2023-05-28/02-02-18/1/initial_train/cbfd.pth')#first spb m2!#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2023-05-12/08-56-02/1/initial_train/cbfd_50000.pth')#'outputs/2023-05-07/23-06-07/1/initial_train/cbfd_10000.pth')#true#'outputs/2023-04-30/02-35-05/1/initial_train/cbfd_10000.pth')#half mean!#'outputs/2023-05-02/14-49-18/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
     # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.
     # pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#

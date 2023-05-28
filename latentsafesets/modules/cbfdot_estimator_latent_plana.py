@@ -54,11 +54,12 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             self.lipthres=1/500#will subject to change!
         elif self.env=='spb':
             self.lipthres=5
-        self.w1=10000
-        self.w2=10000
-        self.w3=1
-        self.w4=10
-        self.w5=10#50#
+        self.w1=params['w1']
+        self.w2=params['w2']
+        self.w3=params['w3']
+        self.w4=params['w4']
+        self.w5=params['w5']#10#50#
+        self.stepstohell=params['stepstohell']
     def forward(self, obs, already_embedded=False):
         """
         Returns inputs to sigmoid for probabilities
@@ -252,7 +253,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         loss2 =torch.nn.functional.relu(targets-cbfnew)
         loss2=torch.mean(loss2)##
         #print('loss2.shape',loss2.shape)#used to be 128
-        normdiffthres=(self.gammasafe+self.gammaunsafe)/15#I PICK IT TO BE 15#0.05#?
+        normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
         loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)
         loss4=torch.mean(loss4)#
         #print('loss4.shape',loss4.shape)#used to be 128
@@ -307,7 +308,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         #elif targets>=0:
             #loss1=0*torch.nn.functional.relu(targets-cbfold)#don't update this!
             #loss2=0*torch.nn.functional.relu(targets-cbfnew)#just for consistency!
-        normdiffthres=(self.gammasafe+self.gammaunsafe)/10#15#I PICK IT TO BE 15#0.05#?
+        normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
         loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#
         loss4=torch.mean(loss4)#
         #print('next_obs.shape',next_obs.shape)

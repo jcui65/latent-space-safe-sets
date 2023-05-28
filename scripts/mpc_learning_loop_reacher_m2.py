@@ -341,7 +341,11 @@ if __name__ == '__main__':
 
                     rtg = rtg + transition['reward']
 
-                replay_buffer.store_transitions(transitions)#replay buffer online training
+                #replay_buffer.store_transitions(transitions)#replay buffer online training
+                if not constr_viol:
+                    replay_buffer_success.store_transitions(transitions)
+                else:
+                    replay_buffer_unsafe.store_transitions(transitions)
                 update_rewards.append(traj_reward)
 
             mean_rew = float(np.mean(update_rewards))
@@ -368,7 +372,7 @@ if __name__ == '__main__':
 
             # Update models
 
-            episodiccbfdhz=trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?
+            episodiccbfdhz=trainer.update(replay_buffer_success, i,replay_buffer_unsafe)#online training, right?
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
