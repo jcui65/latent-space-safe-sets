@@ -12,7 +12,7 @@ import latentsafesets.utils.plot_utils as pu
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
 @click.option('--date1', default='05-29',help='the date when the simulation started', type=str)#'05-11'
-@click.option('--time1', default='02-42-54', help='time of the simulation', type=str)#'02-13-52'
+@click.option('--time1', default='16-46-59', help='time of the simulation', type=str)#'02-13-52'
 @click.option('--date2', default='05-17',help='the date when the simulation started', type=str)#'05-11'
 @click.option('--time2', default='22-01-54', help='time of the simulation', type=str)#'18-15-09'
 @click.option('--date3', default='05-17',help='the date when the simulation started', type=str)#'05-11'
@@ -21,14 +21,18 @@ import latentsafesets.utils.plot_utils as pu
 @click.option('--time4', default='16-23-39', help='time of the simulation', type=str)#'22-33-23'
 @click.option('--fh', default=500, help='five hundred or 250', type=int)
 @click.option('--seed', default=1, help='the seed to be examined', type=int)
+@click.option('--modifiedlength', default=60000, help='the more suitable length', type=int)
+def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlength):
 
-def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed):
-
-    def data_loading(logdirbeforeseed,lenseed):
+    def data_loading(logdirbeforeseed,lenseed,modifiedlength):
         slopexhs=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopexhs.npy'))
+        slopexhs=slopexhs[0:modifiedlength]
         slopexhu=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopexhu.npy'))
+        slopexhu=slopexhu[0:modifiedlength]
         slopexqs=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopexqs.npy'))
+        slopexqs=slopexqs[0:modifiedlength]
         qzunos=np.load(os.path.join(logdirbeforeseed, str(lenseed),'qzunos.npy'))
+        qzunos=qzunos[0:modifiedlength]
         return slopexhs,slopexhu,slopexqs,qzunos
 
 
@@ -54,10 +58,10 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed):
     rfmean4,cvcmean4,tsrmean4,rfcmean4,tsrcmean4,rfstd4,cvcstd4,tsrstd4,rfcstd4,tsrcstd4=data_loading(logdirbeforeseed4,lenseed)
     '''
 
-    slopexhs,slopexhu,slopexqs,qzunos=data_loading(logdirbeforeseed1,lenseed)
+    slopexhs,slopexhu,slopexqs,qzunos=data_loading(logdirbeforeseed1,lenseed,modifiedlength)
     print(slopexhs.shape)
     print(max(slopexhs))
-    
+
     print(slopexhs)
     pu.simple_plot(slopexhs, title='Slope xh safe',
                             file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexhs'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
