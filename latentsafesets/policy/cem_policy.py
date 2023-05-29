@@ -1936,6 +1936,7 @@ class CEMSafeSetPolicy(Policy):
                                     log.info('dhd'+str(self.noofsigma)+'nc: %f'%(dhdsnc.item()))#it should be smaller than dhd?
                                 dhdsa[nc,h]=dhdsnc
                         dhd=dhdsa
+                        dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
                         device=ptu.TORCH_DEVICE
                         dhd=dhd.to(device)
                         #dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
