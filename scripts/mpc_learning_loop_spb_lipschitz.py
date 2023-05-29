@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # Misc preliminaries
     repeattimes=1#params['repeat_times']#
     initdhz=params['dhz']
-    traj_per_update = 10#50#100#200#params['traj_per_update']#default 10
+    traj_per_update = 50#10#100#200#params['traj_per_update']#default 10
     params['horizon']=200#100#250#300#320#500#400#
     slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((traj_per_update*params['horizon']))
     slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((traj_per_update*params['horizon']))
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     lipxy=lipyz=lipzh=lipyh=lipxh=lipzq=lipyq=lipxq=0
     lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=lipxhsafe=lipzqsafe=lipyqsafe=lipxqsafe=0
     lipxyunsafe=lipyzunsafe=lipzhunsafe=lipyhunsafe=lipxhunsafe=0
-    gammadyn=gammadyns=10#start from a very big number!
+    gammadyn=gammadyns=100#start from a very big number!
     pdnsafe=pdn=0
 
     for m in range(repeattimes):

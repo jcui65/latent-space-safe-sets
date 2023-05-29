@@ -427,8 +427,8 @@ class CBFdotlatentplanaTrainer(Trainer):
 
     def initial_train_m2(self, replay_buffer_success, update_dir,replay_buffer_unsafe):
         if self.cbfd.trained:
-            self.plot(os.path.join(update_dir, "cbfd_start.pdf"), replay_buffer,replay_buffer_unsafe)
-            self.plotlatent(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer,replay_buffer_unsafe)
+            self.plot(os.path.join(update_dir, "cbfd_start.pdf"), replay_buffer_success,replay_buffer_unsafe)
+            self.plotlatent(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer_success,replay_buffer_unsafe)
             return
 
         log.info('Beginning cbfdot initial optimization')
@@ -443,7 +443,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                 out_dict = replay_buffer_success.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']
             cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
-            print('cbfv',cbfv)
+            #print('cbfv',cbfv)#check passed!#
             #print('obs.shape',obs.shape)#(128,32)
             loss, info = self.cbfd.update_m2s(obs,next_obs, cbfv, already_embedded=True)  #
             self.loss_plotter.add_data(info)#self.constr.update, not self.update!
@@ -466,14 +466,14 @@ class CBFdotlatentplanaTrainer(Trainer):
             obsus,next_obsus,construs=out_dictus['obs'],out_dictus['next_obs'],out_dictus['constraint']
             #print('obsus.shape',obsus.shape)#(128,32)#sanity check passed!
             cbfvus=construs*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
-            print('cbfvus',cbfvus)
+            #print('cbfvus',cbfvus)#check passed!#
             loss, info = self.cbfd.update_m2u(obsus,next_obsus, cbfvus, already_embedded=True)  #info is a dictionary
             self.loss_plotter.add_data(info)
             if self.params['boundary']=='yes':
                 obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']
                 #print('obsusb.shape',obsusb.shape)#(128,32)#sanity check passed!
                 cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
-                print('cbfvusb',cbfvusb)
+                #print('cbfvusb',cbfvusb)#check passed!#
                 loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)
 
@@ -482,7 +482,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             if i % self.params['plot_freq'] == 0:
                 log.info('Creating cbfdot function heatmap')
                 self.loss_plotter.plot()
-                self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer,replay_buffer_unsafe)
+                self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer_success,replay_buffer_unsafe)
                 #self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer,replay_buffer_unsafe)#nothing is plotted if not spb
                 #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,replay_buffer_unsafe,
                                         #coeff=1)  # a few lines later

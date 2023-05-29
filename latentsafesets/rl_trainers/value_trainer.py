@@ -99,7 +99,7 @@ class ValueTrainer(Trainer):
             if i % self.params['plot_freq'] == 0:#500
                 log.info('Creating value function heatmap')
                 self.loss_plotter.plot()
-                self.plot(os.path.join(update_dir, "val%d.pdf" % i), replay_buffer)
+                self.plot(os.path.join(update_dir, "val%d.pdf" % i), replay_buffer_success)
             if i % self.params['checkpoint_freq'] == 0 and i > 0:#2000
                 self.value.save(os.path.join(update_dir, 'val_%d.pth' % i))
 
