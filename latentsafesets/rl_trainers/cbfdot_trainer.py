@@ -425,24 +425,26 @@ class CBFdotlatentplanaTrainer(Trainer):
             self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             return deal
 
-    def initial_train_m2(self, replay_buffer, update_dir,replay_buffer_unsafe):
+    def initial_train_m2(self, replay_buffer_success, update_dir,replay_buffer_unsafe):
         if self.cbfd.trained:
             self.plot(os.path.join(update_dir, "cbfd_start.pdf"), replay_buffer,replay_buffer_unsafe)
             self.plotlatent(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer,replay_buffer_unsafe)
             return
 
         log.info('Beginning cbfdot initial optimization')
-
-        self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer,replay_buffer_unsafe)#if not spb, then don't plot
+        #this ground truth only work for milestone1
+        #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer,replay_buffer_unsafe)#if not spb, then don't plot
         for i in range(self.params['cbfd_init_iters']):#10000
             #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
             if self.params['mean']=='meancbf':
-                out_dict = replay_buffer.samplemeancbf(self.batchsize)#sanity check passed!#(self.params['cbfd_batch_size'])#256
+                out_dict = replay_buffer_success.samplemeancbf(self.batchsize)#sanity check passed!#(self.params['cbfd_batch_size'])#256
                 #log.info('training the mean version of the CBF!')
             else:
-                out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                out_dict = replay_buffer_success.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']
             cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+            print('cbfv',cbfv)
+            #print('obs.shape',obs.shape)#(128,32)
             loss, info = self.cbfd.update_m2s(obs,next_obs, cbfv, already_embedded=True)  #
             self.loss_plotter.add_data(info)#self.constr.update, not self.update!
             #if replay_buffer_unsafe!=None:#Now replay_buffe_unsafe is not optional, it is now required!
@@ -462,14 +464,18 @@ class CBFdotlatentplanaTrainer(Trainer):
                     out_dictusb = replay_buffer_unsafe.sample_boundary_m2(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
 
             obsus,next_obsus,construs=out_dictus['obs'],out_dictus['next_obs'],out_dictus['constraint']
+            #print('obsus.shape',obsus.shape)#(128,32)#sanity check passed!
             cbfvus=construs*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+            print('cbfvus',cbfvus)
             loss, info = self.cbfd.update_m2u(obsus,next_obsus, cbfvus, already_embedded=True)  #info is a dictionary
             self.loss_plotter.add_data(info)
-
-            obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']
-            cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
-            loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
-            self.loss_plotter.add_data(info)
+            if self.params['boundary']=='yes':
+                obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']
+                #print('obsusb.shape',obsusb.shape)#(128,32)#sanity check passed!
+                cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                print('cbfvusb',cbfvusb)
+                loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
+                self.loss_plotter.add_data(info)
 
             if i % self.params['log_freq'] == 0:
                 self.loss_plotter.print(i)
@@ -477,12 +483,12 @@ class CBFdotlatentplanaTrainer(Trainer):
                 log.info('Creating cbfdot function heatmap')
                 self.loss_plotter.plot()
                 self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer,replay_buffer_unsafe)
-                self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer,replay_buffer_unsafe)#nothing is plotted if not spb
-                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,replay_buffer_unsafe,
-                                        coeff=1)  # a few lines later
-                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,replay_buffer_unsafe,coeff=1/3)  # a few lines later
-                self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-14.pdf" % i), replay_buffer,replay_buffer_unsafe,
-                                        coeff=1 / 4)  # a few lines later
+                #self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer,replay_buffer_unsafe)#nothing is plotted if not spb
+                #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,replay_buffer_unsafe,
+                                        #coeff=1)  # a few lines later
+                #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,replay_buffer_unsafe,coeff=1/3)  # a few lines later
+                #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-14.pdf" % i), replay_buffer,replay_buffer_unsafe,
+                                        #coeff=1 / 4)  # a few lines later
             if i % self.params['checkpoint_freq'] == 0 and i > 0:
                 self.cbfd.save(os.path.join(update_dir, 'cbfd_%d.pth' % i))
 
@@ -533,9 +539,9 @@ class CBFdotlatentplanaTrainer(Trainer):
                 loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)
                 #cbfloss=info['cbf_total']#this is the real cbf loss
-                loss1=info['old_safe']
-                loss2=info['new_safe']
-                cbfloss=(loss1+loss2)/2
+                loss1=info['old_safe']#notice that it is multiplied by w1!
+                loss2=info['new_safe']#notice that it is multiplied by w2(=w1)!
+                cbfloss=(loss1/self.params['w1']+loss2/self.params['w2'])/2#happens to be the right choice!
                 '''
                 if self.env_name=='reacher':
                     dhzepochave+=np.sqrt(cbfloss)#faithfully record it!#np.sqrt(min(loss,10))#over 10 is too crazy!
@@ -543,29 +549,30 @@ class CBFdotlatentplanaTrainer(Trainer):
                     dhzepochave+=np.sqrt(cbfloss)#
                 elif self.env_name=='spb':
                 '''
-                dhzepochave+=np.sqrt(cbfloss)##print('just hold it now!')
+                dhzepochave+=cbfloss#np.sqrt(cbfloss)##print('just hold it now!')
             dhzepochave=dhzepochave/self.params['cbfd_update_iters']
-            dhzepochave=dhzepochave/100#this 100 is because of 10000^0.5=100
+            if dhzepochave<1e-15:#to avoid any numerical issues!
+                dhzepochave=0#dhzepochave#already done with the processing!#/100#this 100 is because of 10000^0.5=100
             log.info('the average dhz of this epochs: %f'%(dhzepochave))
-            if self.params['dynamic_dhz']=='yes':
-                if self.env_name=='reacher':
-                    deal=min(dhzepochave,1.5*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
-                else:#not decreasing the dhz!#1.5 not too big nor too small!
-                    deal=min(dhzepochave,1.5*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
-            else:
-                deal=dhzepochave
+            #if self.params['dynamic_dhz']=='yes':
+                #if self.env_name=='reacher':
+                    #deal=min(dhzepochave,1.5*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
+                #else:#not decreasing the dhz!#1.5 not too big nor too small!
+                #deal=min(dhzepochave,1.5*self.params['dhz'])#will it work as expected?deal for dhz epoch ave legit
+            #else:
+            deal=dhzepochave#no need to make the above if statement!
             log.info('Creating cbf dot function heatmap')
             self.loss_plotter.plot()
             self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,replay_buffer_unsafe)#this is using plan a
             #self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased.pdf" ), replay_buffer, coeff=1)
             #self.plotconly(os.path.join(update_dir, "cbfdcircle.pdf"), replay_buffer)  # a few lines later
-            self.plotlatent(os.path.join(update_dir, "cbfdlatent.pdf"), replay_buffer_success,replay_buffer_unsafe)
-            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-11.pdf"), replay_buffer_success,replay_buffer_unsafe,
-                                    coeff=1)  # a few lines later
-            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-13.pdf"), replay_buffer_success,replay_buffer_unsafe,coeff=1/3)  # a few lines later
-            self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer_success,replay_buffer_unsafe,
-                                    coeff=1 / 4)  # a few lines later
+            #self.plotlatent(os.path.join(update_dir, "cbfdlatent.pdf"), replay_buffer_success,replay_buffer_unsafe)
+            #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-11.pdf"), replay_buffer_success,replay_buffer_unsafe,
+                                    #coeff=1)  # a few lines later
+            #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-13.pdf"), replay_buffer_success,replay_buffer_unsafe,coeff=1/3)  # a few lines later
+            #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased-14.pdf"), replay_buffer_success,replay_buffer_unsafe,
+                                    #coeff=1 / 4)  # a few lines later
             #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer)
             self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             return deal

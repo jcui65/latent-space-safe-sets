@@ -86,7 +86,7 @@ class ValueTrainer(Trainer):
 
                 loss, info = self.value.update_init(obs, rtg, already_embedded=True)
             else:
-                out_dict = replay_buffer.sample_positive(self.batch_size, 'on_policy', self.n_models)
+                out_dict = replay_buffer_success.sample_positive(self.batch_size, 'on_policy', self.n_models)
                 obs, next_obs, rew, done = out_dict['obs'], out_dict['next_obs'], \
                                            out_dict['reward'], out_dict['done']
                 #obs, next_obs, rew, done = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['reward'], out_dict['done']

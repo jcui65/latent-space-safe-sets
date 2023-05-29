@@ -95,10 +95,10 @@ class PETSDynamicsTrainer(Trainer):
             out_dictus = replay_buffer_unsafe.sample(self.params['dyn_batch_size']-successbatch,ensemble=self.ensemble)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
             obsus=out_dictus['obs']#us means unsafe
             obsus, next_obsus, actus = out_dictus['obs'], out_dictus['next_obs'], out_dictus['action']
-            obs=np.vstack((obs,obsus))
-            next_obs=np.vstack((next_obs,next_obsus))
+            obs=np.concatenate((obs,obsus),axis=1)
+            next_obs=np.concatenate((next_obs,next_obsus),axis=1)
             #print('hvnold.shape',hvn.shape)
-            act=np.concatenate((act,actus))
+            act=np.concatenate((act,actus),axis=1)#pay attention to the dimension!
             #print('hvnnew.shape',hvn.shape)
             shuffleind=np.random.permutation(obs.shape[0])
             obs=obs[shuffleind]

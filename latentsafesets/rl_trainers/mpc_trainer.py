@@ -241,4 +241,4 @@ class MPCTrainer(Trainer):
                 trainer.update_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)#pay attention to the details!
             else:
                 episodiccbfdhz=trainer.update_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)
-        return episodiccbfdhz
+        return episodiccbfdhz#returning dhz only

@@ -119,7 +119,7 @@ if __name__ == '__main__':
         #print('reward_type',reward_type)
         conservative=params['conservative']
         #print('conservative',conservative)
-        action_type=params['action_type']
+        action_type=params['action_type']#can be deleted, not used anymore!!
         cbfalpha=0.2#exponential averaging for CBF
         for i in range(num_updates):#default 25 in spb
             log.info('current dhz: %f'%(params['dhz']))
@@ -372,7 +372,7 @@ if __name__ == '__main__':
 
             # Update models
 
-            episodiccbfdhz=trainer.update(replay_buffer_success, i,replay_buffer_unsafe)#online training, right?
+            episodiccbfdhz=trainer.update(replay_buffer_success, i,replay_buffer_unsafe)#online training, right?#it now only bears the meaning of dhz!
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode

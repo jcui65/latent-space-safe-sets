@@ -214,7 +214,7 @@ class EncodedReplayBuffer:
             nonzeros = np.nonzero(condition)[0]#self.data[key].nonzero(condition)[0]#self.data[key] is the value#get the safe ones!
         else:
             nonzeros=self
-        #print('nonzeros.shape',nonzeros.shape)#2282 to 2201#(17100,) when no process!
+        #print('nonzeros.shape',nonzeros.shape)#(2395,)#2282 to 2201#(17100,) when no process!
         #print('nonzeros',nonzeros)#self.data[key]#[0 1 2 ... 17097 17098 17099]
         if ensemble == 0:
             indices = np.random.randint(len(nonzeros), size=batch_size)

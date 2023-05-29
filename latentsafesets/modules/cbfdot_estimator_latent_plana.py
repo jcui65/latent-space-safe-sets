@@ -53,7 +53,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         elif self.env=='push':
             self.lipthres=1/500#will subject to change!
         elif self.env=='spb':
-            self.lipthres=5
+            self.lipthres=15#5#
         self.w1=params['w1']
         self.w2=params['w2']
         self.w3=params['w3']

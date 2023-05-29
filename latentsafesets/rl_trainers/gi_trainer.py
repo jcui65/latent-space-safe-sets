@@ -68,10 +68,21 @@ class GoalIndicatorTrainer(Trainer):
         log.info('Beginning goal indicator initial optimization')
 
         for i in range(self.params['gi_init_iters']):#10000
-            out_dict = replay_buffer_success.sample(self.params['gi_batch_size'])#256#get 1 step
+            ratio=0.7#0.75#
+            successbatch=int(ratio*self.params['dyn_batch_size'])
+            out_dict = replay_buffer_success.sample(successbatch)#(self.params['gi_batch_size'])#256#get 1 step
             next_obs, rew = out_dict['next_obs'], out_dict['reward']#0/goal or -1/not goal
             #next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
-
+            out_dictus = replay_buffer_unsafe.sample(self.params['dyn_batch_size']-successbatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            #obsus=out_dictus['obs']#us means unsafe
+            next_obsus, rewus = out_dictus['next_obs'], out_dictus['reward']
+            next_obs=np.vstack((next_obs,next_obsus))
+            #print('rew.shape',rew.shape)#179
+            #print('rewus.shape',rewus.shape)#77
+            rew=np.concatenate((rew,rewus))
+            shuffleind=np.random.permutation(next_obs.shape[0])
+            next_obs=next_obs[shuffleind]
+            rew=rew[shuffleind]
             loss, info = self.gi.update(next_obs, rew, already_embedded=True)
             self.loss_plotter.add_data(info)
 

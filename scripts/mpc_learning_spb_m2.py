@@ -103,6 +103,9 @@ if __name__ == '__main__':
     std_rewards = []
     all_rewards = []
     constr_viols = []
+    all_action_rands = []
+    constr_viols_cbf = []
+    constr_viols_cbf2 = []
     task_succ = []
     n_episodes = 0
 
@@ -112,7 +115,9 @@ if __name__ == '__main__':
     #print('reward_type',reward_type)
     conservative=params['conservative']
     #print('conservative',conservative)
+    cbfalpha=0.2#exponential averaging for CBF
     for i in range(num_updates):#default 25 in spb
+        log.info('current dhz: %f'%(params['dhz']))
         update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
         os.makedirs(update_dir)#mkdir!
         update_rewards = []
@@ -134,6 +139,10 @@ if __name__ == '__main__':
             traj_rews = []#rews: rewards
             constr_viol = False
             succ = False
+            traj_action_rands=[]
+            action_rand=False
+            constr_viol_cbf = False
+            constr_viol_cbf2 = False
 
             for k in trange(params['horizon']):#default 100 in spb#This is MPC
                 #print('obs.shape',obs.shape)(3,64,64)
@@ -148,18 +157,7 @@ if __name__ == '__main__':
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplana(obs / 255, env.state, tp, fp,#obs_relative / 255, env.state, tp, fp,#
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
-                '''
-                if conservative=='conservative' and reward_type=='sparse':
-                    #print('conservative and sparse!')#you get this right!
-                    action= policy.actcbfdsquarelatentplanareacher(obs / 255)#, env.state)#, tp, fp,#obs_relative / 255, env.state, tp, fp,#
-                                                                                        #fn, tn, tpc, fpc, fnc, tnc)
-                elif conservative=='average' and reward_type=='sparse':
-                    action= policy.actcbfdsquarelatentplanareacheraverage(obs / 255)#, env.state)#
-                elif conservative=='conservative' and reward_type=='dense':
-                    action= policy.actcbfdsquarelatentplanareachernogoaldense(obs / 255)#, env.state)#
-                elif conservative=='average' and reward_type=='dense':
-                    action= policy.actcbfdsquarelatentplanareacheraveragenogoaldense(obs / 255)#, env.state)#
-                '''
+
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                         #fn, tn, tpc, fpc, fnc, tnc)
                 #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -189,6 +187,16 @@ if __name__ == '__main__':
                 traj_rews.append(reward)#reward is either 0 or 1!
 
                 constr = info['constraint']#its use is seen a few lines later
+                rfn=not randflag#rfn means rand flag not
+                action_rand=randflag
+                #constr_cbf = rfn*info['constraint']#(1-randflag)*info['constraint']#its use is seen a few lines later
+                if len(traj_action_rands)==0:
+                    constr_cbf = rfn*info['constraint']#
+                    constr_cbf2=constr_cbf
+                else:
+                    constr_cbf = rfn*info['constraint']#
+                    constr_cbf2 = rfn*info['constraint'] or (1-traj_action_rands[-1])*info['constraint']#one previous step buffer
+                traj_action_rands.append(action_rand)
                 hvo=info['hvo']#
                 hvn=info['hvn']#
                 hvd=info['hvd']#,#hvd for h value difference
@@ -235,6 +243,8 @@ if __name__ == '__main__':
                 #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                 #obs_relative = next_obs_relative  # don't forget this step!
                 constr_viol = constr_viol or info['constraint']#a way to update constr_viol#either 0 or 1
+                constr_viol_cbf = constr_viol_cbf or constr_cbf#a way to update constr_viol#either 0 or 1
+                constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1  
                 succ = succ or reward == 0#as said in the paper, reward=0 means success!
 
                 #Now, I should do the evaluation!
@@ -269,7 +279,8 @@ if __name__ == '__main__':
                 elif (cbfpredict<0) and (cbfgt<tncvalue):
                     tpc+=1
                 #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,position x:%f,position y:%f' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1]))
-                log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,position x:%f,position y:%f,c_viol:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol))
+                #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,position x:%f,position y:%f,c_viol:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol))
+                log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
                 #the evaluation phase ended
                 if done:
                     break
@@ -278,7 +289,10 @@ if __name__ == '__main__':
             #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints
             logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol))
             all_rewards.append(traj_rews)#does it use any EpLen?
-            constr_viols.append(constr_viol)#whether this 100-length traj violate any constraints
+            all_action_rands.append(traj_action_rands)
+            constr_viols.append(constr_viol)#whether this 100-length traj violate any constraints, then compute the average
+            constr_viols_cbf.append(constr_viol_cbf)#
+            constr_viols_cbf2.append(constr_viol_cbf2)#
             task_succ.append(succ)
             #save the result in the gift form!
             pu.make_movie(movie_traj, file=os.path.join(update_dir, 'trajectory%d.gif' % j))
@@ -319,6 +333,8 @@ if __name__ == '__main__':
         logger.log_tabular('EpLen', average_only=True)
         logger.log_tabular('EpConstr', average_only=True)
         logger.log_tabular('ConstrRate', np.mean(constr_viols))
+        logger.log_tabular('ConstrcbfRate', np.mean(constr_viols_cbf))
+        logger.log_tabular('Constrcbf2Rate', np.mean(constr_viols_cbf2))
         logger.log_tabular('SuccRate', np.mean(task_succ))
         logger.dump_tabular()
         n_episodes += traj_per_update#10 by default
@@ -326,11 +342,19 @@ if __name__ == '__main__':
         # Update models
 
         #trainer.update(replay_buffer_success, i,replay_buffer_unsafe)#online training, right?
-        trainer.update_m2(replay_buffer_success, i,replay_buffer_unsafe)#online training, right?
-
+        episodiccbfdhz=trainer.update_m2(replay_buffer_success, i,replay_buffer_unsafe)#online training, right?
+        if params['dynamic_dhz']=='yes':
+            dhzoriginal=params['dhz']
+            #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
+            #params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
+            params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz#now it is right to only have the meaning of dhz!
+        log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
         np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
         np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
-    
+        np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)
+        np.save(os.path.join(logdir, 'constrcbf2.npy'), constr_viols_cbf2)
+        np.save(os.path.join(logdir, 'action_rands.npy'), all_action_rands)
+        np.save(os.path.join(logdir, 'tasksuccess.npy'), task_succ)
     params['seed']=params['seed']+i+1
     #utils.init_logging(logdir)#record started!
     #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')
