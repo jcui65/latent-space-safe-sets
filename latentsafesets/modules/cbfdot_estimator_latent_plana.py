@@ -59,6 +59,8 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         self.w3=params['w3']
         self.w4=params['w4']
         self.w5=params['w5']#10#50#
+        self.w6=params['w6']
+        self.w7=params['w7']
         self.stepstohell=params['stepstohell']
     def forward(self, obs, already_embedded=False):
         """
@@ -288,6 +290,8 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             'cbf_total': loss.item(),
             'old_safe': max(self.w1*loss1.item(),1e-15),#old safe
             'new_safe': max(self.w2*loss2.item(),1e-15),#for the granularity of plotting
+            'old_unsafe':0,
+            'new_unsafe':0,
             'make_it_a_cbf':self.w3*loss3.item(),
             'closeness':self.w4*loss4.item(),
             'regularization':self.w5*loss5.item()}
@@ -298,10 +302,16 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         cbfnew = self(next_obs, already_embedded).squeeze()#.forward!#prediction
         #print('logits',logits)#the value of the CBF
         targets = cbfv#constr#some function of constr#label
-        loss1=torch.where(targets<0,torch.nn.functional.relu(cbfold-targets),0*torch.nn.functional.relu(targets-cbfold))#
-        loss2=torch.where(targets<0,torch.nn.functional.relu(cbfnew-targets),0*torch.nn.functional.relu(targets-cbfnew))
-        loss1=torch.mean(loss1)#
-        loss2=torch.mean(loss2)#
+        loss1=torch.where(targets<0,torch.nn.functional.relu(cbfold-targets),0*torch.nn.functional.relu(targets-cbfold))#128 dim
+        #print('loss1',loss1)
+        loss2=torch.where(targets<0,torch.nn.functional.relu(cbfnew-targets),0*torch.nn.functional.relu(targets-cbfnew))#128 dim
+        count=torch.count_nonzero(targets<0)#I don't do a zero handling, as I think it is very unlikely to have such case
+        #log.info('count:%d'%(count))#it should be something between 1 and 128
+        if count==0:
+            count+=1#just in case!
+        loss1=torch.sum(loss1)/count#torch.mean(loss1)#this mean operation is a diluting factor!!!
+        #log.info('loss1scalar:%f'%(loss1.item()))#sanity check passed!
+        loss2=torch.sum(loss2)/count#torch.mean(loss2)#I should mean over all the negative label samples!
         #if targets<0:#you meet the unsafe point!
             #loss1 =torch.nn.functional.relu(cbfold-targets)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
             #loss2 =torch.nn.functional.relu(cbfnew-targets)#
@@ -338,11 +348,13 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             loss5=torch.mean(loss5)#
         else:
             loss5=0*loss4
-        loss=self.w1*loss1+self.w2*loss2+self.w4*loss4+self.w5*loss5##
+        loss=self.w6*loss1+self.w7*loss2+self.w4*loss4+self.w5*loss5##
         data = {
             'cbf_total': loss.item(),
-            'old_safe': max(self.w1*loss1.item(),1e-15),#old safe
-            'new_safe': max(self.w2*loss2.item(),1e-15),
+            'old_safe':0,
+            'new_safe':0,
+            'old_unsafe': max(self.w6*loss1.item(),1e-15),#old safe
+            'new_unsafe': max(self.w7*loss2.item(),1e-15),
             'make_it_a_cbf':0,#-0.001,#just for consistency in plotting!
             'closeness':self.w4*loss4.item(),
             'regularization':self.w5*loss5.item()}

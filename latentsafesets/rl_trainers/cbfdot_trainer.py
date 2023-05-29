@@ -591,9 +591,11 @@ class CBFdotlatentplanaTrainer(Trainer):
                 if self.params['boundary']=='no':
                     out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 elif self.params['boundary']=='yes':
-                    out_dictus = replay_buffer_unsafe.sample_boundary_meancbf(self.batchsize,'hvn')#(self.params['cbfd_batch_size'])#256
+                    #out_dictus = replay_buffer_unsafe.sample_boundary_meancbf(self.batchsize,'hvn')#(self.params['cbfd_batch_size'])#256
+                    out_dictus = replay_buffer_unsafe.sample_boundary_meancbf_m2(self.batchsize,'constraint')#
             else:
-                out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                out_dictus = replay_buffer_unsafe.sample_boundary_m2(self.batchsize,'constraint')#
             next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
             next_obs=np.vstack((next_obs,next_obsus))
         #next_obs = out_dict['next_obs_relative']  # rdo = out_dict['rdo']

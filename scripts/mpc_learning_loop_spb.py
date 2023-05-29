@@ -378,7 +378,7 @@ if __name__ == '__main__':
             log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
-            np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)
+            np.save(os.path.join(logdir, 'constrcbf.npy'), constr_viols_cbf)#modify if needed!
             np.save(os.path.join(logdir, 'constrcbf2.npy'), constr_viols_cbf2)
             np.save(os.path.join(logdir, 'action_rands.npy'), all_action_rands)
             np.save(os.path.join(logdir, 'tasksuccess.npy'), task_succ)
