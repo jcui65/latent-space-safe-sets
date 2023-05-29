@@ -367,6 +367,7 @@ if __name__ == '__main__':
                     zdiffnorm=np.linalg.norm(zdiff)
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
+                    log.info('hobs: %f, hnextobs: %f'%(hobs,hnextobs))
 
                     gradh2z=lambda nextobs: cbfdot_function(nextobs, True)
                     #jno=jacobian(gradh2z,next_obs,create_graph=True)#jno means jacobian next_obs

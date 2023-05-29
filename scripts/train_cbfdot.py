@@ -7,8 +7,8 @@ sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 from latentsafesets.rl_trainers import CBFdotlatentplanaTrainer#CBFdotTrainer, 
 import latentsafesets.utils as utils
 #from latentsafesets.utils.arg_parser import parse_args
-from latentsafesets.utils.arg_parser_spb import parse_args
-#from latentsafesets.utils.arg_parser_reacher import parse_args
+#from latentsafesets.utils.arg_parser_spb import parse_args
+from latentsafesets.utils.arg_parser_reacher import parse_args
 #from latentsafesets.utils.arg_parser_push import parse_args
 #from latentsafesets.modules import CBFdotEstimator
 

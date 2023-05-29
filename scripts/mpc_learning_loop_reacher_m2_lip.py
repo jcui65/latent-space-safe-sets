@@ -138,8 +138,8 @@ if __name__ == '__main__':
         #print('conservative',conservative)
         action_type=params['action_type']#can be deleted, not used anymore!!
         cbfalpha=0.2#exponential averaging for CBF
-        dhd=0.13855#0.013855#
-        dhz=0.000545
+        dhd=0.135#0.013855#
+        dhz=params['dhz']#0.000545#
         gradh2z=lambda nextobs: cbfdot_function(nextobs, True)
         gradjh2z=lambda obs: torch.norm(jacobian(gradh2z,obs,create_graph=True))
         for i in range(num_updates):#default 25 in spb
@@ -323,9 +323,12 @@ if __name__ == '__main__':
                         zdiffnorm=np.linalg.norm(zdiff)
                         hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                         hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
-
-                        bzuop=hobs-gradjh2z(zobs)*dhd
-                        bzunop=hnextobs-gradjh2z(znextobs)*dhd
+                        #log.info('hobs: %f, hnextobs: %f'%(hobs,hnextobs))
+                        dtzobs=gradjh2z(zobs)*dhd
+                        bzuop=hobs-dtzobs
+                        dtznextobs=gradjh2z(znextobs)*dhd
+                        bzunop=hnextobs-dtznextobs
+                        log.info('hobs: %f, hnextobs: %f, dtzobs: %f, dtznextobs: %f'%(hobs,hnextobs,dtzobs,dtznextobs))
                         qzuop=bzuop-dhz
                         qzunop=bzunop-dhz
                         qdiff=ptu.to_numpy(qzunop-qzuop)
@@ -397,7 +400,7 @@ if __name__ == '__main__':
                         else:
                             log.info('piece:%d,sxyp:%f,syzp:%f,szhp:%f,syhp:%f,sxhp:%f,szqp:%f,syqp:%f,sxqp:%f,pdnorm:%f,qzuno:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
                             log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f,lipxh:%f,lipzq:%f,lipyq:%f,lipxq:%f,pdn:%f,gammadyn:%f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh,lipzq,lipyq,lipxq,pdn,gammadyn))
-
+                        piece+=1
 
 
 
@@ -408,9 +411,8 @@ if __name__ == '__main__':
                     constr_viol_cbf = constr_viol_cbf or constr_cbf#a way to update constr_viol#either 0 or 1
                     constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1
                     succ = succ or reward == 0#as said in the paper, reward=0 means success!
-
-                    
-                    #Now, I should do the evaluation!
+                    '''
+                    #Now, I should do the evaluation!#this is only valid in milestone 1, but not in milestone 2
                     obseval= ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary
                     #obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing#pay attention to its shape!#prepare to be used!
                     if params['mean']=='sample':
@@ -446,8 +448,10 @@ if __name__ == '__main__':
                     elif (cbfpredict<0) and (cbfgt<tncvalue):
                         tpc+=1
                     log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
-                    
+                    '''
+                    log.info('s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
                     #the evaluation phase ended
+                    #piece+=1
                     if done:
                         break
                 transitions[-1]['done'] = 1#change the last transition to success/done!
@@ -512,7 +516,8 @@ if __name__ == '__main__':
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
-                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
+                #params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
+                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz#now it is as expected!
             log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
