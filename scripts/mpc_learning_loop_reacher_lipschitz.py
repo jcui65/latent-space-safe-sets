@@ -346,20 +346,18 @@ if __name__ == '__main__':
                     #imagediffnorm=np.linalg.norm(imagediff)
                     #imagediffnormal=imagediffnorm/255
                     imobs = ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary#np.array(frame['obs'])#(transition[key])#seems to be the image?
+                    imnextobs = ptu.torchify(next_obs).reshape(1, *obs.shape)#np.array(frame['next_obs'])#(transition[key])#seems to be the image?
                     #zobs_mean, zobs_log_std = self.encoder(imobs[None] / 255)#is it legit?
                     #zobs_mean = zobs_mean.squeeze().detach().cpu().numpy()
                     if params['mean']=='sample':
                         zobs = encoder.encode(imobs/255)#in latent space now!#even
-                    elif params['mean']=='mean':
+                        znextobs = encoder.encode(imnextobs/255)#in latent space now!#even
+                    elif params['mean']=='mean' or params['mean']=='meancbf':
                         zobs = encoder.encodemean(imobs/255)#in latent space now!#really zero now! That's what I  want!
-                    imnextobs = ptu.torchify(next_obs).reshape(1, *obs.shape)#np.array(frame['next_obs'])#(transition[key])#seems to be the image?
+                        znextobs = encoder.encodemean(imnextobs/255)#in latent space now!#really zero now! That's what I  want!
                     #imnextobs = ptu.torchify(imnextobs)
                     #znext_obs_mean, znext_obs_log_std = self.encoder(imnextobs[None] / 255)#is it legit?
                     #znext_obs_mean = znext_obs_mean.squeeze().detach().cpu().numpy()
-                    if params['mean']=='sample':
-                        znextobs = encoder.encode(imnextobs/255)#in latent space now!#even
-                    elif params['mean']=='mean':
-                        znextobs = encoder.encodemean(imnextobs/255)#in latent space now!#really zero now! That's what I  want!
                     imdiff1=imnextobs/255-imobs/255
                     #print('imdiff1',imdiff1)#3 channel image!
                     imagediff=ptu.to_numpy(imdiff1)#next_obs-obs#frame['next_obs']-frame['obs']

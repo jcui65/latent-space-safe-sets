@@ -222,7 +222,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--dhdmax',type=float,default=0)#0.010)#
     parser.add_argument('--idea',type=str,default='union_bound')#'vanilla_var')#'pca')#'gamma')#
     parser.add_argument('--noofsigma',type=float,default=3.0)#2.0)#
-    parser.add_argument('--noofsigmadhz',type=float,default=2.0)#2.0)#
+    parser.add_argument('--noofsigmadhz',type=float,default=3.0)#2.0)#
     parser.add_argument('--unsafebuffer',type=str,default='yes2')#'yesm2')#'no')#'yes')#
     parser.add_argument('--cbf_thresh_mult_iters', type=int, default=3)#5)#8)#16)#16 is crazy, but fails#
     parser.add_argument('--reducerocbfhd',type=str,default='yes')
@@ -239,7 +239,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--w4',type=float,default=10)
     parser.add_argument('--w5',type=float,default=10)
     parser.add_argument('--stepstohell',type=float,default=10)
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-05-28/20-21-13/1/initial_train/cbfd.pth')#'outputs/2023-05-28/02-29-57/cbfd.pth')#first spb m2!#'outputs/2023-05-28/02-02-18/1/initial_train/cbfd.pth')#first spb m2!#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2023-05-12/08-56-02/1/initial_train/cbfd_50000.pth')#'outputs/2023-05-07/23-06-07/1/initial_train/cbfd_10000.pth')#true#'outputs/2023-04-30/02-35-05/1/initial_train/cbfd_10000.pth')#half mean!#'outputs/2023-05-02/14-49-18/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
+    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-05-28/19-28-54/cbfd_30000.pth')#'outputs/2023-05-28/20-21-13/1/initial_train/cbfd.pth')#'outputs/2023-05-28/02-29-57/cbfd.pth')#first spb m2!#'outputs/2023-05-28/02-02-18/1/initial_train/cbfd.pth')#first spb m2!#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2023-05-12/08-56-02/1/initial_train/cbfd_50000.pth')#'outputs/2023-05-07/23-06-07/1/initial_train/cbfd_10000.pth')#true#'outputs/2023-04-30/02-35-05/1/initial_train/cbfd_10000.pth')#half mean!#'outputs/2023-05-02/14-49-18/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
     # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.
     # pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#
