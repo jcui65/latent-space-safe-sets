@@ -106,6 +106,7 @@ class AbstractTeacher(ABC):
         # state = np.zeros((0, 0))
         state = None
         done = False
+        sth=10#sth means steps to hell
         for i in range(self.horizon):
             if state is None:
                 action = self.env.action_space.sample().astype(np.float64)#sample between -3 and 3
@@ -128,8 +129,8 @@ class AbstractTeacher(ABC):
             
             transition = {'obs': obs, 'action': tuple(action), 'reward': float(reward),
                           'next_obs': next_obs, 'done': int(done),#this is a dictionary
-                          'constraint': int(info['constraint']), 'safe_set': 0,
-                          'on_policy': int(self.on_policy),##
+                          'constraint': float(info['constraint']), 'safe_set': 0,#int(info['constraint']), 'safe_set': 0,#
+                          'on_policy': int(self.on_policy),##now the constraint is a float thing!
                           'rdo': info['rdo'].tolist(),
                           'rdn': info['rdn'].tolist(),
                           'hvo': info['hvo'],
@@ -169,6 +170,8 @@ class AbstractTeacher(ABC):
 
         rtg = 0#reward to goal?
         ss = 0
+        '''
+        #old way
         for frame in reversed(transitions):
             if frame['reward'] >= 0:
                 ss = 1
@@ -177,6 +180,23 @@ class AbstractTeacher(ABC):
             frame['rtg'] = rtg#the reward to goal at each frame!#I think this is good
             #add a key value pair to the trajectory(key='rtg', value=rtg
             rtg = rtg + frame['reward']
+        '''
+        #new way
+        for n in reversed(range(self.horizon)):
+            frame=transitions[n]
+            if frame['reward'] >= 0:
+                ss = 1
+            #along the way of the trajectroy, the trajectory is safe
+            frame['safe_set'] = ss#is this dynamic programming?
+            frame['rtg'] = rtg#the reward to goal at each frame!#I think this is good
+            #add a key value pair to the trajectory(key='rtg', value=rtg
+            rtg = rtg + frame['reward']
+            #now the new things start!
+            if n>=2:#1:#frame[0]'s constraint is always 0! initial condition is always safe!
+                frameprevious=transitions[n-1]
+                if (frame['constraint']-frameprevious['constraint'])>0 and frame['constraint']>1e-6:#to avoid numerical issues!
+                    frameprevious['constraint']=frame['constraint']-1/sth#it is still self supervised!#
+
         #print('transitions[obs]',transitions[0]['obs'])#it looks normal
         # assert done, "Did not reach the goal set on task completion."
         # V = self.env.values()

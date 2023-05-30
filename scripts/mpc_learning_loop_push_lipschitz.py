@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # Misc preliminaries
     repeattimes=1#params['repeat_times']#
     initdhz=params['dhz']
-    traj_per_update = 50#100#200#params['traj_per_update']#default 10
+    traj_per_update = 100#50#200#params['traj_per_update']#default 10
     params['horizon']=200#250#300#320#500#400#
     slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((traj_per_update*params['horizon']))
     slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((traj_per_update*params['horizon']))

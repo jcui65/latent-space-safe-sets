@@ -51,7 +51,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         if self.env=='reacher':
             self.lipthres=1/200#tune this parameter!
         elif self.env=='push':
-            self.lipthres=1/500#will subject to change!
+            self.lipthres=1/100#1/500#will subject to change!
         elif self.env=='spb':
             self.lipthres=15#5#
         self.w1=params['w1']
@@ -205,7 +205,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             #jnon=torch.norm(hno)
             #print('jnon',jnon)
             #epsilon=1e-6#1e-5#1e-4#1#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1e-3#1e-2#this is for showing the effectiveness of the loss term on the magnitude of the gradient#1e-6#
-            #lamb=50#100#10#I set this to be 50/100!
+            lamb=50#100#10#I set this to be 50/100!
             if self.env=='reacher':
                 lipthres=1/900
             elif self.env=='push':
@@ -319,7 +319,11 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             #loss1=0*torch.nn.functional.relu(targets-cbfold)#don't update this!
             #loss2=0*torch.nn.functional.relu(targets-cbfnew)#just for consistency!
         normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
-        loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#
+        #loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#
+        loss41=torch.nn.functional.relu(cbfnew-cbfold,0)#I want cbfnew<cbfold in this case
+        loss42=torch.nn.functional.relu(cbfold-cbfnew-normdiffthres,0)#I want cbfnew<cbfold not too much!
+        loss43=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#I want the difference of the 2 not too much!
+        loss4=torch.where(targets<0,loss41+loss42,loss43)
         loss4=torch.mean(loss4)#
         #print('next_obs.shape',next_obs.shape)
         if self.reg_lipschitz=='yes':
