@@ -11,7 +11,7 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='05-30',help='the date when the simulation started', type=str)
+@click.option('--date', default='05-31',help='the date when the simulation started', type=str)
 @click.option('--time', default='08-38-11', help='time of the simulation', type=str)
 @click.option('--fh', default=500, help='five hundred or 250 or 1000', type=int)#1000, 250#
 @click.option('--env',default='reacher',help='the environment',type=str)#reacher or push#
@@ -63,7 +63,7 @@ def main(date, time,fh,env):
         #print('constri.shape',constri.shape)#250
         totalconstri=np.sum(constri[0:fh])
         cvarray=np.vstack((cvarray,constri[0:fh]))#reacher#np.zeros((1000,))#push#
-        constrirate=totalconstri/constri.shape[0]
+        constrirate=totalconstri/constri[0:fh].shape[0]
         #print('constrirate',constrirate)
         if env!='spbbbb':
             constrcbfi=np.load(os.path.join(logdir, "constrcbf.npy"))

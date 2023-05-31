@@ -11,7 +11,7 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date1', default='05-29',help='the date when the simulation started', type=str)#'05-11'
+@click.option('--date1', default='05-31',help='the date when the simulation started', type=str)#'05-11'
 @click.option('--time1', default='16-46-59', help='time of the simulation', type=str)#'02-13-52'
 @click.option('--date2', default='05-17',help='the date when the simulation started', type=str)#'05-11'
 @click.option('--time2', default='22-01-54', help='time of the simulation', type=str)#'18-15-09'
@@ -21,7 +21,7 @@ import latentsafesets.utils.plot_utils as pu
 @click.option('--time4', default='16-23-39', help='time of the simulation', type=str)#'22-33-23'
 @click.option('--fh', default=500, help='five hundred or 250', type=int)
 @click.option('--seed', default=1, help='the seed to be examined', type=int)
-@click.option('--modifiedlength', default=18000, help='the more suitable length', type=int)
+@click.option('--modifiedlength', default=150000, help='the more suitable length', type=int)
 def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlength):
 
     def data_loading(logdirbeforeseed,lenseed,modifiedlength):

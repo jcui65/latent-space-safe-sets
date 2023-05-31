@@ -290,8 +290,8 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             'cbf_total': loss.item(),
             'old_safe': max(self.w1*loss1.item(),1e-15),#old safe
             'new_safe': max(self.w2*loss2.item(),1e-15),#for the granularity of plotting
-            'old_unsafe':0,
-            'new_unsafe':0,
+            'old_unsafe':1e-15,#want to show the log plots!#0,#
+            'new_unsafe':1e-15,#0,#
             'make_it_a_cbf':self.w3*loss3.item(),
             'closeness':self.w4*loss4.item(),
             'regularization':self.w5*loss5.item()}
@@ -355,8 +355,8 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         loss=self.w6*loss1+self.w7*loss2+self.w4*loss4+self.w5*loss5##
         data = {
             'cbf_total': loss.item(),
-            'old_safe':0,
-            'new_safe':0,
+            'old_safe':1e-15,#want to show the log plots!#0,#
+            'new_safe':1e-15,#0,#
             'old_unsafe': max(self.w6*loss1.item(),1e-15),#old safe
             'new_unsafe': max(self.w7*loss2.item(),1e-15),
             'make_it_a_cbf':0,#-0.001,#just for consistency in plotting!
