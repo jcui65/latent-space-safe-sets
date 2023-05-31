@@ -2,7 +2,7 @@
 import sys
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
-
+sys.path.insert(1, '/home/jianning/PycharmProjects/pythonProject6/latent-space-safe-sets')
 from latentsafesets.policy import CEMSafeSetPolicy#this is the class!
 import latentsafesets.utils as utils
 import latentsafesets.utils.plot_utils as pu
