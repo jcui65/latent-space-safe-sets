@@ -62,10 +62,10 @@ def main(date, time,fh,env):
         constri=np.load(os.path.join(logdir, "constr.npy"))
         #print('constri.shape',constri.shape)#250
         totalconstri=np.sum(constri[0:fh])
-        cvarray=np.vstack((cvarray,constri))#reacher#np.zeros((1000,))#push#
+        cvarray=np.vstack((cvarray,constri[0:fh]))#reacher#np.zeros((1000,))#push#
         constrirate=totalconstri/constri.shape[0]
         #print('constrirate',constrirate)
-        if env!='spb':
+        if env!='spbbbb':
             constrcbfi=np.load(os.path.join(logdir, "constrcbf.npy"))
             #print('constri.shape',constri.shape)#250
             totalconstrcbfi=np.sum(constrcbfi[0:fh])
@@ -80,7 +80,7 @@ def main(date, time,fh,env):
         #print('constrirate',constrirate)
         srlist.append(successratei)
         cvrlist.append(constrirate)
-        if env!='spb':
+        if env!='spbbbbb':
             cvrcbflist.append(constrcbfirate)
             cvrcbf2list.append(constrcbf2irate)
         #tsrlist.append(tasksuccirate)
@@ -155,7 +155,7 @@ def main(date, time,fh,env):
                             ylabel='Average  task success rate', xlabel='# Training updates')
     sra=np.array(srlist)
     cvra=np.array(cvrlist)
-    if env!='spb':
+    if env!='spbbbbb':
         cvrcbfa=np.array(cvrcbflist)
         cvrcbf2a=np.array(cvrcbf2list)
     #tsra=np.array(tsrlist)
@@ -178,7 +178,7 @@ def main(date, time,fh,env):
     pu.simple_plot(cvra, title='Constraint violation rate %f'%(cvraave)+"\u00B1"+'%f'%(cvrastd),
                             file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'epochs'+str(fh)+'.pdf'),
                             ylabel='constraint violation rate', xlabel='# seeds',nonreward=True)
-    if env!='spb':
+    if env!='spbbbbbb':
         cvrcbfaave=np.mean(cvrcbfa)
         cvrcbfastd=np.std(cvrcbfa)
         print('constraint rate cbf ave',cvrcbfaave,'constraint rate cbf std',cvrcbfastd)
