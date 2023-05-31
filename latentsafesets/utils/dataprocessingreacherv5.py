@@ -21,7 +21,7 @@ import latentsafesets.utils.plot_utils as pu
 @click.option('--time4', default='16-23-39', help='time of the simulation', type=str)#'22-33-23'
 @click.option('--fh', default=500, help='five hundred or 250', type=int)
 @click.option('--seed', default=1, help='the seed to be examined', type=int)
-@click.option('--modifiedlength', default=15000, help='the more suitable length', type=int)
+@click.option('--modifiedlength', default=18000, help='the more suitable length', type=int)
 def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlength):
 
     def data_loading(logdirbeforeseed,lenseed,modifiedlength):

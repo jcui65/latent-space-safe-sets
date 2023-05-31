@@ -236,9 +236,9 @@ def add_cbfd_args(parser):
     parser.add_argument('--gammadyn',type=float,default=0.0015)
     parser.add_argument('--w1',type=float,default=10000)
     parser.add_argument('--w2',type=float,default=10000)
-    parser.add_argument('--w3',type=float,default=1)
-    parser.add_argument('--w4',type=float,default=10)
-    parser.add_argument('--w5',type=float,default=10)
+    parser.add_argument('--w3',type=float,default=10)#1)#old#
+    parser.add_argument('--w4',type=float,default=10000)#10)##
+    parser.add_argument('--w5',type=float,default=10000)#10)
     parser.add_argument('--w6',type=float,default=10000)#w1 for unsafe data points!
     parser.add_argument('--w7',type=float,default=10000)#w2 for unsafe data points!
     parser.add_argument('--stepstohell',type=float,default=10)
