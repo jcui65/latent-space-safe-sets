@@ -116,8 +116,8 @@ if __name__ == '__main__':
                                 #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
                                 #constraint_function, goal_indicator, cbfdot_function, encoder2,dynamics_model2, params)
-        num_updates = params['num_updates']#default 25
-        traj_per_update = params['traj_per_update']#default 10
+        #num_updates = params['num_updates']#default 25
+        #traj_per_update = params['traj_per_update']#default 10
 
         losses = {}
         avg_rewards = []

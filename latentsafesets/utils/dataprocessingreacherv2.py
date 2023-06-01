@@ -37,7 +37,7 @@ def main(date, time,fh,env):
     tsrarray=np.zeros((fh,))#reacher#np.zeros((1000,))#push#
     #tsrlist=[]#constraint violation rate list
     lastnum=50
-    seedlist=[1,2,3]#[1,2]#[1,2,3,4,5,6,7,8,9,10]#[4,5,6]#[7,8,9,10]#[4,5,6]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    seedlist=[1,2,3]#[1,2,3,4,5,6,7,8,9,10]#[1,2]#[4,5,6]#[7,8,9,10]#[4,5,6]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
 
     for seed in seedlist:
         logdir=os.path.join(logdirbeforeseed, str(seed))
@@ -65,12 +65,19 @@ def main(date, time,fh,env):
         cvarray=np.vstack((cvarray,constri[0:fh]))#reacher#np.zeros((1000,))#push#
         constrirate=totalconstri/constri[0:fh].shape[0]
         #print('constrirate',constrirate)
+        method='rolscbf'#'ls3'#
         if env!='spbbbb':
-            constrcbfi=np.load(os.path.join(logdir, "constrcbf.npy"))
+            if method=='ls3':
+                constrcbfi=np.load(os.path.join(logdir, "constrsafety.npy"))
+            else:
+                constrcbfi=np.load(os.path.join(logdir, "constrcbf.npy"))
             #print('constri.shape',constri.shape)#250
             totalconstrcbfi=np.sum(constrcbfi[0:fh])
             constrcbfirate=totalconstrcbfi/constrcbfi.shape[0]
-            constrcbf2i=np.load(os.path.join(logdir, "constrcbf2.npy"))
+            if method=='ls3':
+                constrcbf2i=np.load(os.path.join(logdir, "constrsafety2.npy"))
+            else:
+                constrcbf2i=np.load(os.path.join(logdir, "constrcbf2.npy"))
             totalconstrcbf2i=np.sum(constrcbf2i[0:fh])
             constrcbf2irate=totalconstrcbf2i/constrcbf2i.shape[0]
         #tasksucci=np.load(os.path.join(logdir, "tasksuccess.npy"))
