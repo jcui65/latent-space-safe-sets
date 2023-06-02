@@ -31,12 +31,38 @@ if __name__ == '__main__':
     initdhz=params['dhz']
     num_updates = params['num_updates']#default 25
     traj_per_update = params['traj_per_update']#default 10
+    params['horizon']=20#just for testing!
     for m in range(repeattimes):
-        slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
-        slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
-        slopezq=slopeyq=slopexq=qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
-        slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
-        slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyh=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezh=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyz=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexy=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyzs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexys=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexq=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyq=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezq=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopezq=slopeyq=slopexq=qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
+        pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
+        qzunos=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexqs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyqs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezqs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyzu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexyu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #print('slopexq',slopexq)
         piece=0#which piece of trajectory? this piece
         eps=1e-10
         lipxy=lipyz=lipzh=lipyh=lipxh=lipzq=lipyq=lipxq=0
@@ -136,12 +162,12 @@ if __name__ == '__main__':
         conservative=params['conservative']
         #print('conservative',conservative)
         action_type=params['action_type']#can be deleted, not used anymore!!
-        cbfalpha=0.2#exponential averaging for CBF
+        cbfalpha=0.2#exponential averaging for dhz term involving the CBF
         dhd=0.135#0.013855#
         dhz=params['dhz']#0.000545#
-        gradh2z=lambda nextobs: cbfdot_function(nextobs, True)
-        gradjh2z=lambda obs: torch.norm(jacobian(gradh2z,obs,create_graph=True))
-        sth=params['stepstohell']
+        gradh2z=lambda nextobs: cbfdot_function(nextobs, True)#jacobian
+        gradjh2z=lambda obs: torch.norm(jacobian(gradh2z,obs,create_graph=True))#norm of jacobian!
+        sth=params['stepstohell']#sth for steps to hell
         for i in range(num_updates):#default 25 in spb
             log.info('current dhz: %f'%(params['dhz']))
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
@@ -348,14 +374,19 @@ if __name__ == '__main__':
                     slopezqp=qdiffnorm/(zdiffnorm+eps)
                     slopeyqp=qdiffnorm/(imagediffnormal+eps)
                     slopexqp=qdiffnorm/(posdiffnorm+eps)
+                    log.info('slopexqp:%f'%(slopexqp))
                     slopexy[piece]=slopexyp
                     slopeyz[piece]=slopeyzp
                     slopezh[piece]=slopezhp
                     slopeyh[piece]=slopeyhp
                     slopexh[piece]=slopexhp
+                    log.info('slopexh[piece]:%f'%(slopexh[piece]))
+                    print('slopexh',slopexh)#something brakes
                     slopezq[piece]=slopezqp
                     slopeyq[piece]=slopeyqp
                     slopexq[piece]=slopexqp
+                    log.info('slopexq[piece]:%f'%(slopexq[piece]))
+                    print('slopexq',slopexq)#something brakes
                     qzuno[piece]=qzunop
                     lipxy=max(lipxy,slopexyp)
                     lipyz=max(lipyz,slopeyzp)
@@ -376,6 +407,7 @@ if __name__ == '__main__':
                         slopezqs[piece]=slopezqp
                         slopeyqs[piece]=slopeyqp
                         slopexqs[piece]=slopexqp
+                        log.info('slopexqs[piece]:%f'%(slopexqs[piece]))#looks normal, as expected!
                         qzunos[piece]=qzunop
                         lipxysafe=max(lipxysafe,slopexyp)
                         lipyzsafe=max(lipyzsafe,slopeyzp)
@@ -412,7 +444,7 @@ if __name__ == '__main__':
                     obs = next_obs#don't forget this step!
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                     #obs_relative = next_obs_relative  # don't forget this step!
-                    
+                    #1 means violation happens!
                     constr_viol = constr_viol or info['constraint']#a way to update constr_viol#either 0 or 1
                     constr_viol_cbf = constr_viol_cbf or constr_cbf#a way to update constr_viol#either 0 or 1
                     constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1
@@ -509,8 +541,8 @@ if __name__ == '__main__':
 
                 #replay_buffer.store_transitions(transitions)#replay buffer online training
                 if not constr_viol:
-                    replay_buffer_success.store_transitions(transitions)
-                else:
+                    replay_buffer_success.store_transitions(transitions)#should I change this also?
+                else:#should I use success buffer only to store those trajectories who reach the goal?
                     replay_buffer_unsafe.store_transitions(transitions)
                 update_rewards.append(traj_reward)
 
@@ -552,6 +584,8 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'action_rands.npy'), all_action_rands)
             np.save(os.path.join(logdir, 'tasksuccess.npy'), task_succ)
         #save after one seed!
+        print('slopexh',slopexh)#something brakes
+        print('slopexq',slopexq)#something brakes
         np.save(os.path.join(logdir, 'slopexy.npy'), slopexy)
         np.save(os.path.join(logdir, 'slopeyz.npy'), slopeyz)
         np.save(os.path.join(logdir, 'slopezh.npy'), slopezh)
