@@ -370,9 +370,9 @@ if __name__ == '__main__':
                     lipzh=max(lipzh,slopezhp)
                     lipyh=max(lipyh,slopeyhp)
                     lipxh=max(lipxh,slopexhp)
-                    lipzq=max(lipzq,slopezhp)
-                    lipyq=max(lipyq,slopeyhp)
-                    lipxq=max(lipxq,slopexhp)
+                    lipzq=max(lipzq,slopezqp)#used to be a bug!
+                    lipyq=max(lipyq,slopeyqp)
+                    lipxq=max(lipxq,slopexqp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
                     if np.abs(ntodistance)<=0.30 and np.abs(ntodistance)>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#

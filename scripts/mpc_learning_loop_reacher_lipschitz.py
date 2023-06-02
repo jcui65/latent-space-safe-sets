@@ -410,9 +410,9 @@ if __name__ == '__main__':
                     lipzh=max(lipzh,slopezhp)
                     lipyh=max(lipyh,slopeyhp)
                     lipxh=max(lipxh,slopexhp)
-                    lipzq=max(lipzq,slopezhp)
-                    lipyq=max(lipyq,slopeyhp)
-                    lipxq=max(lipxq,slopexhp)
+                    lipzq=max(lipzq,slopezqp)#used to be a bug!
+                    lipyq=max(lipyq,slopeyqp)
+                    lipxq=max(lipxq,slopexqp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
                     if ntodistance<=0.10 and ntodistance>=0.08:#ntodistance<=0.09 and ntodistance>=0.07:#

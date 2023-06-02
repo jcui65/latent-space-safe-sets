@@ -285,7 +285,7 @@ if __name__ == '__main__':
                     '''
                     transitions.append(transition)
 
-
+                    old_constr_viol=constr_viol
                     #sample all trajectories!#if j==0:#just sample one trajectory, other trajectories are basicly replications
                     currentstate=info['state']
                     #print('currentstate',currentstate)#8 dim vector!#the first 2 values are still in configuration space!
@@ -300,8 +300,8 @@ if __name__ == '__main__':
                     ntodistance=np.linalg.norm(ntoobstacle)
                     #print('nextstate',nextstate)
                     #print('nextpos',nextpos)
-                    posdiff=nextpos-currentpos
-                    posdiffnorm=np.linalg.norm(posdiff)
+                    posdiff=nextpos-currentpos#x diff, 2d vector/array
+                    posdiffnorm=np.linalg.norm(posdiff)#its l2 norm, scalar, non negative
                     pdnarray[piece]=posdiffnorm
 
                     imobs = ptu.torchify(obs).reshape(1, *obs.shape)#it seems that this reshaping is necessary#np.array(frame['obs'])#(transition[key])#seems to be the image?
@@ -318,13 +318,13 @@ if __name__ == '__main__':
                     #print('imdiff1',imdiff1)#3 channel image!
                     imagediff=ptu.to_numpy(imdiff1)#next_obs-obs#frame['next_obs']-frame['obs']
                     #imagediffnorm=np.linalg.norm(imagediff)#
-                    imagediffnormal=np.linalg.norm(imagediff)#imagediffnorm/255#
-                    zdiff=ptu.to_numpy(znextobs-zobs)
-                    zdiffnorm=np.linalg.norm(zdiff)
+                    imagediffnormal=np.linalg.norm(imagediff)#imagediffnorm/255#non negative
+                    zdiff=ptu.to_numpy(znextobs-zobs)#32d vector
+                    zdiffnorm=np.linalg.norm(zdiff)#the norm of zdiff, a scalar, non negative
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
                     #log.info('hobs: %f, hnextobs: %f'%(hobs,hnextobs))
-                    dtzobs=gradjh2z(zobs)*dhd
+                    dtzobs=gradjh2z(zobs)*dhd#I set the dhd
                     bzuop=hobs-dtzobs
                     dtznextobs=gradjh2z(znextobs)*dhd
                     bzunop=hnextobs-dtznextobs
@@ -332,9 +332,14 @@ if __name__ == '__main__':
                     qzuop=bzuop-dhz
                     qzunop=bzunop-dhz
                     qdiff=ptu.to_numpy(qzunop-qzuop)
-                    qdiffnorm=np.linalg.norm(qdiff)
+                    qdiffnorm=np.linalg.norm(qdiff)#non negiatve
                     hdiff=ptu.to_numpy(hnextobs-hobs)
-                    hdiffnorm=np.linalg.norm(hdiff)
+                    hdiffnorm=np.linalg.norm(hdiff)#non negative
+                    if posdiffnorm<1e-5:# and old_constr_viol==1:# or imagediffnormal<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
+                        imagediffnormal=0#this new condition will be more reasonable!
+                        zdiffnorm=0
+                        hdiffnorm=0
+                        qdiffnorm=0
                     slopexyp=imagediffnormal/(posdiffnorm+eps)
                     slopeyzp=zdiffnorm/(imagediffnormal+eps)
                     slopezhp=hdiffnorm/(zdiffnorm+eps)
@@ -357,9 +362,9 @@ if __name__ == '__main__':
                     lipzh=max(lipzh,slopezhp)
                     lipyh=max(lipyh,slopeyhp)
                     lipxh=max(lipxh,slopexhp)
-                    lipzq=max(lipzq,slopezhp)
-                    lipyq=max(lipyq,slopeyhp)
-                    lipxq=max(lipxq,slopexhp)
+                    lipzq=max(lipzq,slopezqp)#used to be a bug!
+                    lipyq=max(lipyq,slopeyqp)
+                    lipxq=max(lipxq,slopexqp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
                     if ntodistance<=0.10 and ntodistance>=0.08:#ntodistance<=0.09 and ntodistance>=0.07:#
@@ -384,7 +389,7 @@ if __name__ == '__main__':
                         pdnsafe=max(pdnsafe,posdiffnorm)
                         log.info('piece:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
                         log.info('piece:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gammadyns:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
-                    elif ntodistance<=0.06:
+                    elif ntodistance<=0.065:#0.06:#0.065 will be more reasonable!#
                         slopexyu[piece]=slopexyp
                         slopeyzu[piece]=slopeyzp
                         slopezhu[piece]=slopezhp
@@ -407,6 +412,7 @@ if __name__ == '__main__':
                     obs = next_obs#don't forget this step!
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)
                     #obs_relative = next_obs_relative  # don't forget this step!
+                    
                     constr_viol = constr_viol or info['constraint']#a way to update constr_viol#either 0 or 1
                     constr_viol_cbf = constr_viol_cbf or constr_cbf#a way to update constr_viol#either 0 or 1
                     constr_viol_cbf2 = constr_viol_cbf2 or constr_cbf2#a way to update constr_viol#either 0 or 1

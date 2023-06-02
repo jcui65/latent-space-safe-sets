@@ -98,8 +98,8 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlengt
                             file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopezhu'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
                             ylabel='slope zh unsafe', xlabel='# of points examined')
     pu.simple_plot(slopezh, title='Slope zh all',
-                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexh'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
-                            ylabel='slope zh all', xlabel='# of points examined')
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopezh'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope zh all', xlabel='# of points examined')#there is a bug! Be patient!
     '''
     pu.simple_plot4(rfmean1,rfmean2, rfmean3,rfmean4, std=rfstd1, std2=rfstd2,std3=rfstd3, std4=rfstd4, title='Average Rewards',
                             file=os.path.join(logdirbeforeseed4, 'rewards'+str(lenseed)+'trajs'+date4+'-'+time4+'epochs'+str(fh)+'compare.pdf'),
