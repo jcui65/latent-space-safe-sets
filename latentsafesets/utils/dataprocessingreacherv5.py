@@ -11,7 +11,7 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date1', default='06-02',help='the date when the simulation started', type=str)#'05-11'
+@click.option('--date1', default='06-03',help='the date when the simulation started', type=str)#'05-11'
 @click.option('--time1', default='16-46-59', help='time of the simulation', type=str)#'02-13-52'
 @click.option('--date2', default='05-17',help='the date when the simulation started', type=str)#'05-11'
 @click.option('--time2', default='22-01-54', help='time of the simulation', type=str)#'18-15-09'
