@@ -243,7 +243,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--w1',type=float,default=10000)
     parser.add_argument('--w2',type=float,default=10000)
     parser.add_argument('--w3',type=float,default=1)
-    parser.add_argument('--w4',type=float,default=20)#10)#
+    parser.add_argument('--w4',type=float,default=10)#20)#
     parser.add_argument('--w5',type=float,default=10)
     parser.add_argument('--w6',type=float,default=10000)
     parser.add_argument('--w7',type=float,default=10000)

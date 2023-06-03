@@ -541,7 +541,9 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #cbfloss=info['cbf_total']#this is the real cbf loss
                 loss1=info['old_safe']#notice that it is multiplied by w1!
                 loss2=info['new_safe']#notice that it is multiplied by w2(=w1)!
-                cbfloss=(loss1/self.params['w1']+loss2/self.params['w2'])/2#happens to be the right choice!
+                loss6=info['old_unsafe']#notice that it is multiplied by w1!
+                loss7=info['new_unsafe']#notice that it is multiplied by w2(=w1)!
+                cbfloss=(loss6/self.params['w6']+loss7/self.params['w7'])/2#happens to be the right choice!
                 '''
                 if self.env_name=='reacher':
                     dhzepochave+=np.sqrt(cbfloss)#faithfully record it!#np.sqrt(min(loss,10))#over 10 is too crazy!

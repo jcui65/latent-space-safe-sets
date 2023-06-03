@@ -32,11 +32,35 @@ if __name__ == '__main__':
     for m in range(repeattimes):
         num_updates = params['num_updates']#default 25 in spb reacher/100 in push
         traj_per_update = params['traj_per_update']#default 10
-        slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
-        slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
-        slopezq=slopeyq=slopexq=qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
-        slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
-        slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyh=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezh=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyz=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexy=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyzs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexys=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexq=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyq=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezq=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopezq=slopeyq=slopexq=qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
+        pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
+        qzunos=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexqs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyqs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezqs=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopezhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopeyzu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        slopexyu=np.zeros((num_updates*traj_per_update*params['horizon']))
+        #slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))
         piece=0#which piece of trajectory? this piece
         eps=1e-10
         lipxy=lipyz=lipzh=lipyh=lipxh=lipzq=lipyq=lipxq=0
@@ -116,8 +140,8 @@ if __name__ == '__main__':
                                 #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
                                 #constraint_function, goal_indicator, cbfdot_function, encoder2,dynamics_model2, params)
-        num_updates = params['num_updates']#default 25
-        traj_per_update = params['traj_per_update']#default 10
+        #num_updates = params['num_updates']#default 25
+        #traj_per_update = params['traj_per_update']#default 10
 
         losses = {}
         avg_rewards = []
@@ -350,9 +374,9 @@ if __name__ == '__main__':
                     lipzh=max(lipzh,slopezhp)
                     lipyh=max(lipyh,slopeyhp)
                     lipxh=max(lipxh,slopexhp)
-                    lipzq=max(lipzq,slopezhp)
-                    lipyq=max(lipyq,slopeyhp)
-                    lipxq=max(lipxq,slopexhp)
+                    lipzq=max(lipzq,slopezqp)#used to be a bug!
+                    lipyq=max(lipyq,slopeyqp)
+                    lipxq=max(lipxq,slopexqp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
                     if np.abs(ntodistance)<=0.30 and np.abs(ntodistance)>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#

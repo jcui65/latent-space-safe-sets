@@ -11,7 +11,7 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date1', default='05-31',help='the date when the simulation started', type=str)#'05-11'
+@click.option('--date1', default='06-03',help='the date when the simulation started', type=str)#'05-11'
 @click.option('--time1', default='16-46-59', help='time of the simulation', type=str)#'02-13-52'
 @click.option('--date2', default='05-17',help='the date when the simulation started', type=str)#'05-11'
 @click.option('--time2', default='22-01-54', help='time of the simulation', type=str)#'18-15-09'
@@ -37,7 +37,13 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlengt
         slopexh=slopexh[0:modifiedlength]
         slopexq=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopexq.npy'))
         slopexq=slopexq[0:modifiedlength]
-        return slopexhs,slopexhu,slopexqs,qzunos,slopexh,slopexq
+        slopezhs=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopezhs.npy'))
+        slopezhs=slopezhs[0:modifiedlength]
+        slopezhu=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopezhu.npy'))
+        slopezhu=slopezhu[0:modifiedlength]
+        slopezh=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopezh.npy'))
+        slopezh=slopezh[0:modifiedlength]
+        return slopexhs,slopexhu,slopexqs,qzunos,slopexh,slopexq,slopezhs,slopezhu,slopezh
 
 
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
@@ -62,11 +68,12 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlengt
     rfmean4,cvcmean4,tsrmean4,rfcmean4,tsrcmean4,rfstd4,cvcstd4,tsrstd4,rfcstd4,tsrcstd4=data_loading(logdirbeforeseed4,lenseed)
     '''
 
-    slopexhs,slopexhu,slopexqs,qzunos,slopexh,slopexq=data_loading(logdirbeforeseed1,lenseed,modifiedlength)
-    print(slopexhs.shape)
-    print(max(slopexhs))
-
-    print(slopexhs)
+    slopexhs,slopexhu,slopexqs,qzunos,slopexh,slopexq,slopezhs,slopezhu,slopezh=data_loading(logdirbeforeseed1,lenseed,modifiedlength)
+    print(slopexh.shape)
+    #print(max(slopexq))
+    #print(np.argmax(slopexq))
+    #print(slopexh[400:450])
+    #print(slopexq[400:450])
     pu.simple_plot(slopexhs, title='Slope xh safe',
                             file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexhs'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
                             ylabel='slope xh safe', xlabel='# of points examined')
@@ -85,6 +92,15 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlengt
     pu.simple_plot(slopexq, title='Slope xq all',
                             file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexq'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
                             ylabel='slope xq all', xlabel='# of points examined')
+    pu.simple_plot(slopezhs, title='Slope zh safe',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopezhs'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope zh safe', xlabel='# of points examined')
+    pu.simple_plot(slopezhu, title='Slope zh unsafe',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopezhu'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope zh unsafe', xlabel='# of points examined')
+    pu.simple_plot(slopezh, title='Slope zh all',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopezh'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope zh all', xlabel='# of points examined')#there is a bug! Be patient!
     '''
     pu.simple_plot4(rfmean1,rfmean2, rfmean3,rfmean4, std=rfstd1, std2=rfstd2,std3=rfstd3, std4=rfstd4, title='Average Rewards',
                             file=os.path.join(logdirbeforeseed4, 'rewards'+str(lenseed)+'trajs'+date4+'-'+time4+'epochs'+str(fh)+'compare.pdf'),

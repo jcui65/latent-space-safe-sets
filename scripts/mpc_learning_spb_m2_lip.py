@@ -28,11 +28,35 @@ if __name__ == '__main__':
     params = parse_args()#get the parameters from parse_args, see arg_parser.py
     num_updates = params['num_updates']#default 25
     traj_per_update = params['traj_per_update']#default 10
-    slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((num_updates*params['horizon']))
-    slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((num_updates*params['horizon']))
-    slopezq=slopeyq=slopexq=qzuno=np.zeros((num_updates*params['horizon']))
-    slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((num_updates*params['horizon']))
-    slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*params['horizon']))
+    slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopeyh=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopezh=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopeyz=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexy=np.zeros((num_updates*traj_per_update*params['horizon']))
+    #slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopeyhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopezhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopeyzs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexys=np.zeros((num_updates*traj_per_update*params['horizon']))
+    #slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexq=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopeyq=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopezq=np.zeros((num_updates*traj_per_update*params['horizon']))
+    #slopezq=slopeyq=slopexq=qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
+    pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
+    qzunos=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexqs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopeyqs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopezqs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    #slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopeyhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopezhu=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopeyzu=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexyu=np.zeros((num_updates*traj_per_update*params['horizon']))
+    #slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))
     piece=0#which piece of trajectory? this piece
     eps=1e-10
     lipxy=lipyz=lipzh=lipyh=lipxh=lipzq=lipyq=lipxq=0
@@ -346,7 +370,7 @@ if __name__ == '__main__':
             transitions[-1]['done'] = 1#change the last transition to success/done!
             traj_reward = sum(traj_rews)#total reward, should be >=-100/-150
             #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints
-            logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol))
+            logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol), EpConstrcbf=float(constr_viol_cbf), EpConstrcbf2=float(constr_viol_cbf2))
             all_rewards.append(traj_rews)#does it use any EpLen?
             all_action_rands.append(traj_action_rands)
             constr_viols.append(constr_viol)#whether this 100-length traj violate any constraints, then compute the average
@@ -391,6 +415,8 @@ if __name__ == '__main__':
         logger.log_tabular('EpRet')
         logger.log_tabular('EpLen', average_only=True)
         logger.log_tabular('EpConstr', average_only=True)
+        logger.log_tabular('EpConstrcbf', average_only=True)
+        logger.log_tabular('EpConstrcbf2', average_only=True)
         logger.log_tabular('ConstrRate', np.mean(constr_viols))
         logger.log_tabular('ConstrcbfRate', np.mean(constr_viols_cbf))
         logger.log_tabular('Constrcbf2Rate', np.mean(constr_viols_cbf2))
