@@ -268,11 +268,11 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
                 jnoi=jacobian(selfforwardtrue,next_obs[i],create_graph=True)#jnoi means jacobian next_obs ith
                 jno[i]=jnoi#jnoi should be 32 dimensional
             #jnon=torch.norm(jno)#jnon means  norm of jacobian next_obs
-            jnon=torch.norm(jno,dim=-1)#128 now!
+            #jnon=torch.norm(jno,dim=-1)#128 now!
             #print('jno.shape',jno.shape)#jno.shape torch.Size([128, 1, 128, 32])
             #print('jnon.shape',jnon.shape)#it use to be a scalar, 0.6009, with shape 0
-            loss5=torch.nn.functional.relu(jnon-self.lipthres)
-            loss5=torch.mean(loss5)#I set it to be 1/900
+            #loss5=torch.nn.functional.relu(jnon-self.lipthres)
+            loss5=0*loss4##torch.mean(loss5)#I set it to be 1/900
             bztut=cbfnew+(self.alpha-1)*cbfold-torch.matmul(jno,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
             qztut=bztut-(2-self.alpha)*self.dhz#cbfnew has its first dimension to be 128
             loss3=torch.nn.functional.relu(self.gammadyn-qztut)
@@ -327,7 +327,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         loss4=torch.mean(loss4)#
         #print('next_obs.shape',next_obs.shape)
         if self.reg_lipschitz=='yes':
-            selfforwardtrue=lambda nextobs: self(nextobs, True)
+            #selfforwardtrue=lambda nextobs: self(nextobs, True)
             #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
             '''
             jno=jacobian(selfforwardtrue,next_obs,create_graph=True)#jno means jacobian next_obs
@@ -340,6 +340,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
                 lipthres=1/5
             loss5=torch.nn.functional.relu(jnon-lipthres)#I set it to be 1/900
             '''
+            '''
             jno=torch.zeros_like(next_obs)
             for i in range(next_obs.shape[0]):
                 jnoi=jacobian(selfforwardtrue,next_obs[i],create_graph=True)#jnoi means jacobian next_obs ith
@@ -349,7 +350,8 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             #print('jno.shape',jno.shape)#jno.shape torch.Size([128, 1, 128, 32])
             #print('jnon.shape',jnon.shape)#it use to be a scalar, 0.6009, with shape 0
             loss5=torch.nn.functional.relu(jnon-self.lipthres)
-            loss5=torch.mean(loss5)#
+            '''
+            loss5=0*loss4#torch.mean(loss5)#
         else:
             loss5=0*loss4
         loss=self.w6*loss1+self.w7*loss2+self.w4*loss4+self.w5*loss5##
@@ -359,7 +361,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             'new_safe':1e-15,#0,#
             'old_unsafe': max(self.w6*loss1.item(),1e-15),#old safe
             'new_unsafe': max(self.w7*loss2.item(),1e-15),
-            'make_it_a_cbf':0,#-0.001,#just for consistency in plotting!
+            'make_it_a_cbf':1e-15,#want to show the log plots!#0,#0,#-0.001,#just for consistency in plotting!
             'closeness':self.w4*loss4.item(),
             'regularization':self.w5*loss5.item()}
         return loss,data

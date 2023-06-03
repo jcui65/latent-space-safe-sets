@@ -70,10 +70,10 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlengt
 
     slopexhs,slopexhu,slopexqs,qzunos,slopexh,slopexq,slopezhs,slopezhu,slopezh=data_loading(logdirbeforeseed1,lenseed,modifiedlength)
     print(slopexh.shape)
-    print(max(slopexq))
-    print(np.argmax(slopexq))
-    print(slopexh[400:450])
-    print(slopexq[400:450])
+    #print(max(slopexq))
+    #print(np.argmax(slopexq))
+    #print(slopexh[400:450])
+    #print(slopexq[400:450])
     pu.simple_plot(slopexhs, title='Slope xh safe',
                             file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexhs'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
                             ylabel='slope xh safe', xlabel='# of points examined')

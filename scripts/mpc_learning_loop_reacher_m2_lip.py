@@ -31,7 +31,7 @@ if __name__ == '__main__':
     initdhz=params['dhz']
     num_updates = params['num_updates']#default 25
     traj_per_update = params['traj_per_update']#default 10
-    params['horizon']=20#just for testing!
+    #params['horizon']=20#just for testing!
     for m in range(repeattimes):
         slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
         slopeyh=np.zeros((num_updates*traj_per_update*params['horizon']))
@@ -374,19 +374,19 @@ if __name__ == '__main__':
                     slopezqp=qdiffnorm/(zdiffnorm+eps)
                     slopeyqp=qdiffnorm/(imagediffnormal+eps)
                     slopexqp=qdiffnorm/(posdiffnorm+eps)
-                    log.info('slopexqp:%f'%(slopexqp))
+                    #log.info('slopexqp:%f'%(slopexqp))
                     slopexy[piece]=slopexyp
                     slopeyz[piece]=slopeyzp
                     slopezh[piece]=slopezhp
                     slopeyh[piece]=slopeyhp
                     slopexh[piece]=slopexhp
-                    log.info('slopexh[piece]:%f'%(slopexh[piece]))
-                    print('slopexh',slopexh)#something brakes
+                    #log.info('slopexh[piece]:%f'%(slopexh[piece]))
+                    #print('slopexh',slopexh)#something brakes
                     slopezq[piece]=slopezqp
                     slopeyq[piece]=slopeyqp
                     slopexq[piece]=slopexqp
-                    log.info('slopexq[piece]:%f'%(slopexq[piece]))
-                    print('slopexq',slopexq)#something brakes
+                    #log.info('slopexq[piece]:%f'%(slopexq[piece]))
+                    #print('slopexq',slopexq)#something brakes
                     qzuno[piece]=qzunop
                     lipxy=max(lipxy,slopexyp)
                     lipyz=max(lipyz,slopeyzp)
@@ -407,7 +407,7 @@ if __name__ == '__main__':
                         slopezqs[piece]=slopezqp
                         slopeyqs[piece]=slopeyqp
                         slopexqs[piece]=slopexqp
-                        log.info('slopexqs[piece]:%f'%(slopexqs[piece]))#looks normal, as expected!
+                        #log.info('slopexqs[piece]:%f'%(slopexqs[piece]))#looks normal, as expected!
                         qzunos[piece]=qzunop
                         lipxysafe=max(lipxysafe,slopexyp)
                         lipyzsafe=max(lipyzsafe,slopeyzp)
@@ -584,8 +584,8 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'action_rands.npy'), all_action_rands)
             np.save(os.path.join(logdir, 'tasksuccess.npy'), task_succ)
         #save after one seed!
-        print('slopexh',slopexh)#something brakes
-        print('slopexq',slopexq)#something brakes
+        #print('slopexh',slopexh)#something brakes
+        #print('slopexq',slopexq)#something brakes
         np.save(os.path.join(logdir, 'slopexy.npy'), slopexy)
         np.save(os.path.join(logdir, 'slopeyz.npy'), slopeyz)
         np.save(os.path.join(logdir, 'slopezh.npy'), slopezh)
