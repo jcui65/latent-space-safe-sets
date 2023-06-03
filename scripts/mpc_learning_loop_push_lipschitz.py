@@ -31,14 +31,37 @@ if __name__ == '__main__':
     # Misc preliminaries
     repeattimes=1#params['repeat_times']#
     initdhz=params['dhz']
-    traj_per_update = 50#100#200#params['traj_per_update']#default 10
-    params['horizon']=250#200#300#320#500#400#
-    slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((traj_per_update*params['horizon']))
-    slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((traj_per_update*params['horizon']))
-    slopezq=slopeyq=slopexq=qzuno=np.zeros((traj_per_update*params['horizon']))
-    slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((traj_per_update*params['horizon']))
-    slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((traj_per_update*params['horizon']))
-    piece=0#which piece of trajectory? this piece
+    traj_per_update = 100#50#200#params['traj_per_update']#default 10
+    params['horizon']=200#250#300#320#500#400#
+    slopexh=np.zeros((traj_per_update*params['horizon']))
+    slopeyh=np.zeros((traj_per_update*params['horizon']))
+    slopezh=np.zeros((traj_per_update*params['horizon']))
+    slopeyz=np.zeros((traj_per_update*params['horizon']))
+    slopexy=np.zeros((traj_per_update*params['horizon']))
+    #slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexhs=np.zeros((traj_per_update*params['horizon']))
+    slopeyhs=np.zeros((traj_per_update*params['horizon']))
+    slopezhs=np.zeros((traj_per_update*params['horizon']))
+    slopeyzs=np.zeros((traj_per_update*params['horizon']))
+    slopexys=np.zeros((traj_per_update*params['horizon']))
+    #slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    qzuno=np.zeros((traj_per_update*params['horizon']))
+    slopexq=np.zeros((traj_per_update*params['horizon']))
+    slopeyq=np.zeros((traj_per_update*params['horizon']))
+    slopezq=np.zeros((traj_per_update*params['horizon']))
+    #slopezq=slopeyq=slopexq=qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
+    pdnarray=np.zeros((traj_per_update*params['horizon']))
+    qzunos=np.zeros((traj_per_update*params['horizon']))
+    slopexqs=np.zeros((traj_per_update*params['horizon']))
+    slopeyqs=np.zeros((traj_per_update*params['horizon']))
+    slopezqs=np.zeros((traj_per_update*params['horizon']))
+    #slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexhu=np.zeros((traj_per_update*params['horizon']))
+    slopeyhu=np.zeros((traj_per_update*params['horizon']))
+    slopezhu=np.zeros((traj_per_update*params['horizon']))
+    slopeyzu=np.zeros((traj_per_update*params['horizon']))
+    slopexyu=np.zeros((traj_per_update*params['horizon']))
+    #slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))    piece=0#which piece of trajectory? this piece
     eps=1e-10
     lipxy=lipyz=lipzh=lipyh=lipxh=lipzq=lipyq=lipxq=0
     lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=lipxhsafe=lipzqsafe=lipyqsafe=lipxqsafe=0
@@ -278,13 +301,13 @@ if __name__ == '__main__':
                     #print('currentstate',currentstate)#8 dim vector!#the first 2 values are still in configuration space!
                     currentpos=info['rdo']#targetpos-currentstate[2:4]#currentstate[0:2]#now the current pos should have different meaning!
                     ctoobstacle=currentpos-0.4#currentstate[4:6]#
-                    ctodistance=np.linalg.norm(ctoobstacle)#it will just be the absolute value!#
+                    ctodistance=ctoobstacle#np.linalg.norm(ctoobstacle)#it will just be the absolute value!#
                     #print('ctoobstacle',ctoobstacle)#the x and y signed distance to obstacle!
                     #print('currentpos',currentpos)#now it is the state space position of the end effector!
                     nextstate=info['next_state']
                     nextpos=info['rdn']##targetpos-nextstate[2:4]#nextstate[0:2]#
                     ntoobstacle=nextpos-0.4#nextstate[4:6]#
-                    ntodistance=np.linalg.norm(ntoobstacle)#it will just be the absolute value!#
+                    ntodistance=ntoobstacle#np.linalg.norm(ntoobstacle)#it will just be the absolute value!#
                     #print('nextstate',nextstate)
                     #print('nextpos',nextpos)
                     posdiff=nextpos-currentpos
@@ -323,7 +346,7 @@ if __name__ == '__main__':
                     zdiffnorm=np.linalg.norm(zdiff)
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
-
+                    log.info('hobs: %f, hnextobs: %f'%(hobs,hnextobs))
                     gradh2z=lambda nextobs: cbfdot_function(nextobs, True)
                     #jno=jacobian(gradh2z,next_obs,create_graph=True)#jno means jacobian next_obs
                     #jno=hessian(selfforwardtrue, next_obs, create_graph=True)  # jno means jacobian next_obs
@@ -343,7 +366,7 @@ if __name__ == '__main__':
                     qdiffnorm=np.linalg.norm(qdiff)
                     hdiff=ptu.to_numpy(hnextobs-hobs)
                     hdiffnorm=np.linalg.norm(hdiff)
-                    if posdiffnorm<1e-2:#1e-3:#posdiffnorm<=1e-4:#otherwise it is meaningless!
+                    if posdiffnorm<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
                         imagediffnormal=0
                         zdiffnorm=0
                         hdiffnorm=0
@@ -370,12 +393,12 @@ if __name__ == '__main__':
                     lipzh=max(lipzh,slopezhp)
                     lipyh=max(lipyh,slopeyhp)
                     lipxh=max(lipxh,slopexhp)
-                    lipzq=max(lipzq,slopezhp)
-                    lipyq=max(lipyq,slopeyhp)
-                    lipxq=max(lipxq,slopexhp)
+                    lipzq=max(lipzq,slopezqp)#used to be a bug!
+                    lipyq=max(lipyq,slopeyqp)
+                    lipxq=max(lipxq,slopexqp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
-                    if ntodistance<=0.30 and ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
+                    if np.abs(ntodistance)<=0.30 and np.abs(ntodistance)>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
                         slopexys[piece]=slopexyp
                         slopeyzs[piece]=slopeyzp
                         slopezhs[piece]=slopezhp
@@ -397,7 +420,7 @@ if __name__ == '__main__':
                         pdnsafe=max(pdnsafe,posdiffnorm)
                         log.info('piece:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
                         log.info('piece:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gammadyns:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
-                    elif ntodistance<=0.06:
+                    elif np.abs(ntodistance)<=0.15 and np.abs(ntodistance)>=0.10:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
                         slopexyu[piece]=slopexyp
                         slopeyzu[piece]=slopeyzp
                         slopezhu[piece]=slopezhp

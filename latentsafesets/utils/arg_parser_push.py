@@ -34,6 +34,7 @@ def parse_args():
     parser.add_argument('--jobs',type=int,default=1)#1/2/3/4, I think that is enough
     parser.add_argument('--offset',type=int,default=0)#0 means cold start! if no preemption happens, then this is it!
     parser.add_argument('--gpunumber',type=int,default=1)
+    parser.add_argument('--ways',type=int,default=1)#default is the first way
     add_controller_args(parser)
     add_encoder_args(parser)
     add_ss_args(parser)
@@ -217,7 +218,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_batch_size', type=int, default=256)
     parser.add_argument('--cbfd_thresh', type=float, default=0.2,
                         help='Threshold for an obs to be considered in violation of cbf dots')
-    parser.add_argument('--cbfd_init_iters', type=int, default=100000,#500000,#200000,#100000,#50000,#10000,#1,#to test RLSA#2000,#4001,#20000,#40000,#80000,#640000,#320000,#200000,#10000,#30000,#160000,#100000,#1000,#
+    parser.add_argument('--cbfd_init_iters', type=int, default=100000,#200000,#500000,#100000,#50000,#10000,#1,#to test RLSA#2000,#4001,#20000,#40000,#80000,#640000,#320000,#200000,#10000,#30000,#160000,#100000,#1000,#
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)
@@ -229,13 +230,25 @@ def add_cbfd_args(parser):
     parser.add_argument('--idea',type=str,default='union_bound')#'vanilla_var')#'pca')#'gamma')#
     parser.add_argument('--noofsigma',type=float,default=3.0)#2.0)#
     parser.add_argument('--noofsigmadhz',type=float,default=2.0)#2.0)#
-    parser.add_argument('--unsafebuffer',type=str,default='no')#'yes')#
+    parser.add_argument('--unsafebuffer',type=str,default='yes2')#'no')#'yes')#
     parser.add_argument('--cbf_thresh_mult_iters', type=int, default=3)#4)#5)#8)#16)#16 is crazy, but fails#
     parser.add_argument('--reducerocbfhd',type=str,default='yes')
     parser.add_argument('--dynamic_dhz',type=str,default='no')#'yes')#
     parser.add_argument('--reg_lipschitz',type=str,default='no')#
-    parser.add_argument('--boundary',type=str,default='no')##
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-05-21/20-57-55/cbfd.pth')#'outputs/2023-05-21/13-02-12/cbfd.pth')#'outputs/2023-05-18/23-25-33/cbfd.pth')#actually 50000 epochs!#'outputs/2023-05-08/00-38-51/1/initial_train/cbfd.pth')#'outputs/2023-05-13/12-03-00/3/update_91/cbfd.pth')#'outputs/2023-05-08/00-38-51/1/initial_train/cbfd_10000.pth')#'outputs/2023-05-12/22-18-44/2/update_6/cbfd.pth')#'outputs/2023-04-27/00-52-54/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#push#'outputs/2023-04-02/01-42-26/1/initial_train/cbfd.pth')#push strategy 2#None)#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#
+    parser.add_argument('--boundary',type=str,default='yes')#'no')##
+    parser.add_argument('--rectify',type=float,default=0.05)#0.05 default for pushing#0.0)#
+    parser.add_argument('--gammasafe',type=float,default=0.03)
+    parser.add_argument('--gammaunsafe',type=float,default=0.15)#0.015)#0.012)#
+    parser.add_argument('--gammadyn',type=float,default=0.01)#0.0015)#
+    parser.add_argument('--w1',type=float,default=10000)
+    parser.add_argument('--w2',type=float,default=10000)
+    parser.add_argument('--w3',type=float,default=1)
+    parser.add_argument('--w4',type=float,default=10)#20)#
+    parser.add_argument('--w5',type=float,default=10)
+    parser.add_argument('--w6',type=float,default=10000)
+    parser.add_argument('--w7',type=float,default=10000)
+    parser.add_argument('--stepstohell',type=float,default=10)#5)#
+    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-05-29/23-07-59/cbfd.pth')#not regularized!#'outputs/2023-05-29/23-00-42/cbfd.pth')#light w5!#'outputs/2023-05-29/23-00-42/cbfd_78000.pth')#light w5!#'outputs/2023-05-31/01-58-28/cbfd.pth')#heavy w5#'outputs/2023-05-29/23-07-59/cbfd.pth')#'outputs/2023-05-22/15-10-29/cbfd_186000.pth')#rectify0.05!#'outputs/2023-05-22/15-04-10/cbfd.pth')#200k+300k#'outputs/2023-05-22/14-38-07/cbfd.pth')#200*5k#'outputs/2023-05-21/20-57-55/cbfd.pth')#222k#'outputs/2023-05-21/13-02-12/cbfd.pth')#600k#'outputs/2023-05-18/23-25-33/cbfd.pth')#actually 50000 epochs!#'outputs/2023-05-08/00-38-51/1/initial_train/cbfd.pth')#'outputs/2023-05-13/12-03-00/3/update_91/cbfd.pth')#'outputs/2023-05-08/00-38-51/1/initial_train/cbfd_10000.pth')#'outputs/2023-05-12/22-18-44/2/update_6/cbfd.pth')#'outputs/2023-04-27/00-52-54/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#push#'outputs/2023-04-02/01-42-26/1/initial_train/cbfd.pth')#push strategy 2#None)#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#
     #None)#'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
     # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.
     # pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#

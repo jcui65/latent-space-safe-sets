@@ -11,8 +11,8 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='05-19',help='the date when the simulation started', type=str)
-@click.option('--time', default='02-41-37', help='time of the simulation', type=str)
+@click.option('--date', default='06-02',help='the date when the simulation started', type=str)
+@click.option('--time', default='08-38-11', help='time of the simulation', type=str)
 @click.option('--fh', default=500, help='five hundred or 250 or 1000', type=int)#1000, 250#
 @click.option('--env',default='reacher',help='the environment',type=str)#reacher or push#
 def main(date, time,fh,env):
@@ -37,7 +37,7 @@ def main(date, time,fh,env):
     tsrarray=np.zeros((fh,))#reacher#np.zeros((1000,))#push#
     #tsrlist=[]#constraint violation rate list
     lastnum=50
-    seedlist=[4,5,6]#[1,2,3]#[1,2,3,4,5,6,7,8,9,10]#[7,8,9,10]#[4,5,6]#[1,2]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    seedlist=[1,2,3]#[1,2,3,4,5,6,7,8,9,10]#[1,2]#[4,5,6]#[7,8,9,10]#[4,5,6]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
 
     for seed in seedlist:
         logdir=os.path.join(logdirbeforeseed, str(seed))
@@ -47,7 +47,7 @@ def main(date, time,fh,env):
         rewardsumi=np.sum(rewardi[0:fh],axis=1)
         #print('rewardsumi.shape',rewardsumi.shape)#250
         rfarray=np.vstack((rfarray,rewardsumi))
-        if env=='reacher':
+        if env=='reacher' or env=='spb':
             successi=rewardsumi>-100#reacher-150#push#shape 250
         elif env=='push':
             successi=rewardsumi>-150#reacher-150#push#shape 250
@@ -62,16 +62,24 @@ def main(date, time,fh,env):
         constri=np.load(os.path.join(logdir, "constr.npy"))
         #print('constri.shape',constri.shape)#250
         totalconstri=np.sum(constri[0:fh])
-        cvarray=np.vstack((cvarray,constri))#reacher#np.zeros((1000,))#push#
-        constrirate=totalconstri/constri.shape[0]
+        cvarray=np.vstack((cvarray,constri[0:fh]))#reacher#np.zeros((1000,))#push#
+        constrirate=totalconstri/constri[0:fh].shape[0]
         #print('constrirate',constrirate)
-        constrcbfi=np.load(os.path.join(logdir, "constrcbf.npy"))
-        #print('constri.shape',constri.shape)#250
-        totalconstrcbfi=np.sum(constrcbfi[0:fh])
-        constrcbfirate=totalconstrcbfi/constrcbfi.shape[0]
-        constrcbf2i=np.load(os.path.join(logdir, "constrcbf2.npy"))
-        totalconstrcbf2i=np.sum(constrcbf2i[0:fh])
-        constrcbf2irate=totalconstrcbf2i/constrcbf2i.shape[0]
+        method='rolscbf'#'ls3'#
+        if env!='spbbbb':
+            if method=='ls3':
+                constrcbfi=np.load(os.path.join(logdir, "constrsafety.npy"))
+            else:
+                constrcbfi=np.load(os.path.join(logdir, "constrcbf.npy"))
+            #print('constri.shape',constri.shape)#250
+            totalconstrcbfi=np.sum(constrcbfi[0:fh])
+            constrcbfirate=totalconstrcbfi/constrcbfi.shape[0]
+            if method=='ls3':
+                constrcbf2i=np.load(os.path.join(logdir, "constrsafety2.npy"))
+            else:
+                constrcbf2i=np.load(os.path.join(logdir, "constrcbf2.npy"))
+            totalconstrcbf2i=np.sum(constrcbf2i[0:fh])
+            constrcbf2irate=totalconstrcbf2i/constrcbf2i.shape[0]
         #tasksucci=np.load(os.path.join(logdir, "tasksuccess.npy"))
         #print('constri.shape',constri.shape)#250
         #totaltasksucci=np.sum(tasksucci)
@@ -79,8 +87,9 @@ def main(date, time,fh,env):
         #print('constrirate',constrirate)
         srlist.append(successratei)
         cvrlist.append(constrirate)
-        cvrcbflist.append(constrcbfirate)
-        cvrcbf2list.append(constrcbf2irate)
+        if env!='spbbbbb':
+            cvrcbflist.append(constrcbfirate)
+            cvrcbf2list.append(constrcbf2irate)
         #tsrlist.append(tasksuccirate)
         ralist.append(rewardaveragei)
         ralastlist.append(rewardaveragelasti)
@@ -153,8 +162,9 @@ def main(date, time,fh,env):
                             ylabel='Average  task success rate', xlabel='# Training updates')
     sra=np.array(srlist)
     cvra=np.array(cvrlist)
-    cvrcbfa=np.array(cvrcbflist)
-    cvrcbf2a=np.array(cvrcbf2list)
+    if env!='spbbbbb':
+        cvrcbfa=np.array(cvrcbflist)
+        cvrcbf2a=np.array(cvrcbf2list)
     #tsra=np.array(tsrlist)
     raa=np.array(ralist)
     ralasta=np.array(ralastlist)
@@ -175,18 +185,19 @@ def main(date, time,fh,env):
     pu.simple_plot(cvra, title='Constraint violation rate %f'%(cvraave)+"\u00B1"+'%f'%(cvrastd),
                             file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'epochs'+str(fh)+'.pdf'),
                             ylabel='constraint violation rate', xlabel='# seeds',nonreward=True)
-    cvrcbfaave=np.mean(cvrcbfa)
-    cvrcbfastd=np.std(cvrcbfa)
-    print('constraint rate cbf ave',cvrcbfaave,'constraint rate cbf std',cvrcbfastd)
-    pu.simple_plot(cvrcbfa, title='Constraint violation cbf rate %f'%(cvrcbfaave)+"\u00B1"+'%f'%(cvrcbfastd),
-                            file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'epochs'+str(fh)+'cbf.pdf'),
-                            ylabel='constraint violation cbf rate', xlabel='# seeds',nonreward=True)
-    cvrcbf2aave=np.mean(cvrcbf2a)
-    cvrcbf2astd=np.std(cvrcbf2a)
-    print('constraint rate cbf2 ave',cvrcbf2aave,'constraint rate cbf2 std',cvrcbfastd)
-    pu.simple_plot(cvrcbf2a, title='Constraint violation cbf2 rate %f'%(cvrcbf2aave)+"\u00B1"+'%f'%(cvrcbf2astd),
-                            file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'epochs'+str(fh)+'cbf2.pdf'),
-                            ylabel='constraint violation cbf2 rate', xlabel='# seeds',nonreward=True)
+    if env!='spbbbbbb':
+        cvrcbfaave=np.mean(cvrcbfa)
+        cvrcbfastd=np.std(cvrcbfa)
+        print('constraint rate cbf ave',cvrcbfaave,'constraint rate cbf std',cvrcbfastd)
+        pu.simple_plot(cvrcbfa, title='Constraint violation cbf rate %f'%(cvrcbfaave)+"\u00B1"+'%f'%(cvrcbfastd),
+                                file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'epochs'+str(fh)+'cbf.pdf'),
+                                ylabel='constraint violation cbf rate', xlabel='# seeds',nonreward=True)
+        cvrcbf2aave=np.mean(cvrcbf2a)
+        cvrcbf2astd=np.std(cvrcbf2a)
+        print('constraint rate cbf2 ave',cvrcbf2aave,'constraint rate cbf2 std',cvrcbfastd)
+        pu.simple_plot(cvrcbf2a, title='Constraint violation cbf2 rate %f'%(cvrcbf2aave)+"\u00B1"+'%f'%(cvrcbf2astd),
+                                file=os.path.join(logdirbeforeseed, 'violation'+str(lenseed)+'rate'+date+'-'+time+'epochs'+str(fh)+'cbf2.pdf'),
+                                ylabel='constraint violation cbf2 rate', xlabel='# seeds',nonreward=True)
     print('reward ave',np.mean(raa),'reward std',np.std(raa))
     print('reward last ave',np.mean(ralasta),'reward last std',np.std(ralasta))
     #making plots

@@ -11,8 +11,8 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date1', default='05-16',help='the date when the simulation started', type=str)#'05-11'
-@click.option('--time1', default='23-10-18', help='time of the simulation', type=str)#'02-13-52'
+@click.option('--date1', default='06-03',help='the date when the simulation started', type=str)#'05-11'
+@click.option('--time1', default='16-46-59', help='time of the simulation', type=str)#'02-13-52'
 @click.option('--date2', default='05-17',help='the date when the simulation started', type=str)#'05-11'
 @click.option('--time2', default='22-01-54', help='time of the simulation', type=str)#'18-15-09'
 @click.option('--date3', default='05-17',help='the date when the simulation started', type=str)#'05-11'
@@ -20,34 +20,37 @@ import latentsafesets.utils.plot_utils as pu
 @click.option('--date4', default='05-17',help='the date when the simulation started', type=str)#'05-11'
 @click.option('--time4', default='16-23-39', help='time of the simulation', type=str)#'22-33-23'
 @click.option('--fh', default=500, help='five hundred or 250', type=int)
+@click.option('--seed', default=1, help='the seed to be examined', type=int)
+@click.option('--modifiedlength', default=150000, help='the more suitable length', type=int)
+def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlength):
 
-
-def main(date1, time1,date2, time2,date3,time3,date4,time4,fh):
-
-    def data_loading(logdirbeforeseed,lenseed):
-        rfarray=np.load(os.path.join(logdirbeforeseed, 'rewards'+str(lenseed)+'.npy'))
-        cvarray=np.load(os.path.join(logdirbeforeseed, 'cv'+str(lenseed)+'.npy'))
-        tsrarray=np.load(os.path.join(logdirbeforeseed, 'tsr'+str(lenseed)+'.npy'))
-        cvcarray=np.load(os.path.join(logdirbeforeseed, 'cvc'+str(lenseed)+'.npy'))
-        rfmean=np.load(os.path.join(logdirbeforeseed, 'rewardsmean'+str(lenseed)+'.npy'))
-        cvcmean=np.load(os.path.join(logdirbeforeseed, 'cvcmean'+str(lenseed)+'.npy'))
-        tsrmean=np.load(os.path.join(logdirbeforeseed, 'tsrmean'+str(lenseed)+'.npy'))
-        rfstd=np.load(os.path.join(logdirbeforeseed, 'rewardsstd'+str(lenseed)+'.npy'))
-        cvcstd=np.load(os.path.join(logdirbeforeseed, 'cvcstd'+str(lenseed)+'.npy'))
-        tsrstd=np.load(os.path.join(logdirbeforeseed, 'tsrstd'+str(lenseed)+'.npy'))
-        rfcarray=np.load(os.path.join(logdirbeforeseed, 'rewardsc'+str(lenseed)+'.npy'))
-        tsrcarray=np.load(os.path.join(logdirbeforeseed, 'tsrc'+str(lenseed)+'.npy'), )
-        rfcmean=np.load(os.path.join(logdirbeforeseed, 'rewardscmean'+str(lenseed)+'.npy'))
-        tsrcmean=np.load(os.path.join(logdirbeforeseed, 'tsrcmean'+str(lenseed)+'.npy'))
-        rfcstd=np.load(os.path.join(logdirbeforeseed, 'rewardscstd'+str(lenseed)+'.npy'))
-        tsrcstd=np.load(os.path.join(logdirbeforeseed, 'tsrcstd'+str(lenseed)+'.npy'))
-        #return rfarray,cvarray,tsrarray,cvcarray,rfmean,cvcmean,tsrmean,rfstd,cvcstd,tsrstd
-        return rfmean,cvcmean,tsrmean,rfcmean,tsrcmean,rfstd,cvcstd,tsrstd,rfcstd,tsrcstd
+    def data_loading(logdirbeforeseed,lenseed,modifiedlength):
+        slopexhs=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopexhs.npy'))
+        slopexhs=slopexhs[0:modifiedlength]
+        slopexhu=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopexhu.npy'))
+        slopexhu=slopexhu[0:modifiedlength]
+        slopexqs=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopexqs.npy'))
+        slopexqs=slopexqs[0:modifiedlength]
+        qzunos=np.load(os.path.join(logdirbeforeseed, str(lenseed),'qzunos.npy'))
+        qzunos=qzunos[0:modifiedlength]
+        slopexh=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopexh.npy'))
+        slopexh=slopexh[0:modifiedlength]
+        slopexq=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopexq.npy'))
+        slopexq=slopexq[0:modifiedlength]
+        slopezhs=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopezhs.npy'))
+        slopezhs=slopezhs[0:modifiedlength]
+        slopezhu=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopezhu.npy'))
+        slopezhu=slopezhu[0:modifiedlength]
+        slopezh=np.load(os.path.join(logdirbeforeseed, str(lenseed),'slopezh.npy'))
+        slopezh=slopezh[0:modifiedlength]
+        return slopexhs,slopexhu,slopexqs,qzunos,slopexh,slopexq,slopezhs,slopezhu,slopezh
 
 
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
     logdirbeforeseed1 = os.path.join(outputdir+date1,time1) #params['logdir']#around line 35
     print('logdirbeforeseed1',logdirbeforeseed1)
+
+    '''
     logdirbeforeseed2 = os.path.join(outputdir+date2,time2) #params['logdir']#around line 35
     print('logdirbeforeseed2',logdirbeforeseed2)
     logdirbeforeseed3 = os.path.join(outputdir+date3,time3) #params['logdir']#around line 35
@@ -55,30 +58,63 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh):
     logdirbeforeseed4 = os.path.join(outputdir+date4,time4) #params['logdir']#around line 35
     print('logdirbeforeseed4',logdirbeforeseed4)
     seedlist=[1,2,3]#[1,2]#[1,2,3,4,5]#24,25#[1,2,3,4,5,6,7,8,9,10]#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    '''
+    lenseed=seed#1#len(seedlist)
 
-    lenseed=10#len(seedlist)
-    lenseed2=3#10#
+    '''
     rfmean1,cvcmean1,tsrmean1,rfcmean1,tsrcmean1,rfstd1,cvcstd1,tsrstd1,rfcstd1,tsrcstd1=data_loading(logdirbeforeseed1,lenseed)
     rfmean2,cvcmean2,tsrmean2,rfcmean2,tsrcmean2,rfstd2,cvcstd2,tsrstd2,rfcstd2,tsrcstd2=data_loading(logdirbeforeseed2,lenseed)
-    rfmean3,cvcmean3,tsrmean3,rfcmean3,tsrcmean3,rfstd3,cvcstd3,tsrstd3,rfcstd3,tsrcstd3=data_loading(logdirbeforeseed3,lenseed2)
-    #rfmean4,cvcmean4,tsrmean4,rfcmean4,tsrcmean4,rfstd4,cvcstd4,tsrstd4,rfcstd4,tsrcstd4=data_loading(logdirbeforeseed4,lenseed)
-    
-    rfmean4,cvcmean4,tsrmean4,rfcmean4,tsrcmean4,rfstd4,cvcstd4,tsrstd4,rfcstd4,tsrcstd4=None,None,None,None,None,None,None,None,None,None
+    rfmean3,cvcmean3,tsrmean3,rfcmean3,tsrcmean3,rfstd3,cvcstd3,tsrstd3,rfcstd3,tsrcstd3=data_loading(logdirbeforeseed3,lenseed)
+    rfmean4,cvcmean4,tsrmean4,rfcmean4,tsrcmean4,rfstd4,cvcstd4,tsrstd4,rfcstd4,tsrcstd4=data_loading(logdirbeforeseed4,lenseed)
+    '''
 
-
+    slopexhs,slopexhu,slopexqs,qzunos,slopexh,slopexq,slopezhs,slopezhu,slopezh=data_loading(logdirbeforeseed1,lenseed,modifiedlength)
+    print(slopexh.shape)
+    #print(max(slopexq))
+    #print(np.argmax(slopexq))
+    #print(slopexh[400:450])
+    #print(slopexq[400:450])
+    pu.simple_plot(slopexhs, title='Slope xh safe',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexhs'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope xh safe', xlabel='# of points examined')
+    pu.simple_plot(slopexhu, title='Slope xh unsafe',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexhu'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope xh unsafe', xlabel='# of points examined')
+    pu.simple_plot(slopexqs, title='Slope xq safe',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexqs'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope xq safe', xlabel='# of points')
+    pu.simple_plot(qzunos, title='qzuno safe',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'qzunos'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='qzuno safe', xlabel='# of points')
+    pu.simple_plot(slopexh, title='Slope xh all',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexh'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope xh all', xlabel='# of points examined')
+    pu.simple_plot(slopexq, title='Slope xq all',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopexq'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope xq all', xlabel='# of points examined')
+    pu.simple_plot(slopezhs, title='Slope zh safe',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopezhs'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope zh safe', xlabel='# of points examined')
+    pu.simple_plot(slopezhu, title='Slope zh unsafe',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopezhu'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope zh unsafe', xlabel='# of points examined')
+    pu.simple_plot(slopezh, title='Slope zh all',
+                            file=os.path.join(logdirbeforeseed1,str(lenseed), 'slopezh'+date1+'-'+time1+'epochs'+str(fh)+'.pdf'),
+                            ylabel='slope zh all', xlabel='# of points examined')#there is a bug! Be patient!
+    '''
     pu.simple_plot4(rfmean1,rfmean2, rfmean3,rfmean4, std=rfstd1, std2=rfstd2,std3=rfstd3, std4=rfstd4, title='Average Rewards',
-                            file=os.path.join(logdirbeforeseed3, 'rewards'+str(lenseed)+'trajs'+date3+'-'+time3+'epochs'+str(fh)+'compare.pdf'),
+                            file=os.path.join(logdirbeforeseed4, 'rewards'+str(lenseed)+'trajs'+date4+'-'+time4+'epochs'+str(fh)+'compare.pdf'),
                             ylabel='Average Reward', xlabel='# Training updates')
     pu.simple_plot4(cvcmean1, cvcmean2, cvcmean3, cvcmean4, std=cvcstd1,std2=cvcstd2,std3=cvcstd3,std4=cvcstd4, title='Constraint Violations',
-                            file=os.path.join(logdirbeforeseed3, 'cvc'+str(lenseed)+'trajs'+date3+'-'+time3+'epochs'+str(fh)+'compare.pdf'),
+                            file=os.path.join(logdirbeforeseed4, 'cvc'+str(lenseed)+'trajs'+date4+'-'+time4+'epochs'+str(fh)+'compare.pdf'),
                             ylabel='No. of constraint violations', xlabel='# Trajectories')
     pu.simple_plot4(rfcmean1,rfcmean2, rfcmean3,rfcmean4, std=rfcstd1, std2=rfcstd2,std3=rfcstd3, std4=rfcstd4, title='Average Rewards',
-                            file=os.path.join(logdirbeforeseed3, 'rewards'+str(lenseed)+'epochs'+date3+'-'+time3+'epochs'+str(fh)+'compare.pdf'),
+                            file=os.path.join(logdirbeforeseed4, 'rewards'+str(lenseed)+'epochs'+date4+'-'+time4+'epochs'+str(fh)+'compare.pdf'),
                             ylabel='Average Reward', xlabel='# Training updates')
     #pu.simple_plot(tsrmean, std=tsrstd, title='Average task success rate',
                             #file=os.path.join(logdirbeforeseed4, 'tsr'+str(lenseed)+'trajs'+date+'-'+time+'epochs'+str(fh)+'.pdf'),
                             #ylabel='Average task success rate', xlabel='# Training updates')
-    
+    '''
     
     '''
     rfcarray=np.zeros((lenseed,))#c means corse

@@ -4,7 +4,7 @@ import latentsafesets.utils.plot_utils as pu
 import logging
 from tqdm import trange
 import os
-
+import numpy as np
 log = logging.getLogger("val train")
 
 
@@ -70,6 +70,89 @@ class ValueTrainer(Trainer):
         self.loss_plotter.plot()
         self.plot(os.path.join(update_dir, "val.pdf"), replay_buffer)
         self.value.save(os.path.join(update_dir, 'val.pth'))
+
+    def initial_train_m2(self, replay_buffer_success, update_dir,replay_buffer_unsafe):
+        if self.value.trained:
+            self.plot(os.path.join(update_dir, "val_start.pdf"), replay_buffer_success)
+            return#I don't see the above thing
+
+        log.info('Beginning value initial optimization')
+
+        for i in range(2 * self.params['val_init_iters']):#2*10000=20000
+            if i < self.params['val_init_iters']:#the first 10000 iterations
+                out_dict = replay_buffer_success.sample_positive(self.batch_size, 'on_policy', self.n_models)
+                obs, rtg = out_dict['obs'], out_dict['rtg']
+                #obs, rtg = out_dict['obs_relative'], out_dict['rtg']
+
+                loss, info = self.value.update_init(obs, rtg, already_embedded=True)
+            else:
+                out_dict = replay_buffer_success.sample_positive(self.batch_size, 'on_policy', self.n_models)
+                obs, next_obs, rew, done = out_dict['obs'], out_dict['next_obs'], \
+                                           out_dict['reward'], out_dict['done']
+                #obs, next_obs, rew, done = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['reward'], out_dict['done']
+
+                loss, info = self.value.update(obs, rew, next_obs, done, already_embedded=True)
+            self.loss_plotter.add_data(info)
+
+            if i % self.params['log_freq'] == 0:#100
+                self.loss_plotter.print(i)
+            if i % self.params['plot_freq'] == 0:#500
+                log.info('Creating value function heatmap')
+                self.loss_plotter.plot()
+                self.plot(os.path.join(update_dir, "val%d.pdf" % i), replay_buffer_success)
+            if i % self.params['checkpoint_freq'] == 0 and i > 0:#2000
+                self.value.save(os.path.join(update_dir, 'val_%d.pth' % i))
+
+        self.value.save(os.path.join(update_dir, 'val.pth'))
+
+
+    def update_m2(self, replay_buffer_success, update_dir,replay_buffer_unsafe):
+        log.info('Beginning value update optimization')
+
+        for i in trange(self.params['val_update_iters']):#2000
+
+            out_dict = replay_buffer_success.sample_positive(self.params['constr_batch_size'], 'on_policy', self.n_models)
+            obs, next_obs, rew, done = out_dict['obs'], out_dict['next_obs'], out_dict['reward'], \
+                                       out_dict['done']#just use all safe sample, OK?
+            '''
+            ratious=1/8
+            unsafebatch=ratious*self.params['dyn_batch_size']
+
+            if len(replay_buffer_unsafe)<=unsafebatch:
+                successbatch=self.params['dyn_batch_size']
+                out_dict = replay_buffer_success.sample_positive(successbatch, 'on_policy', self.n_models)
+                obs, next_obs, rew, done = out_dict['obs'], out_dict['next_obs'], out_dict['reward'], \
+                                       out_dict['done']
+                if i==0:
+                    log.info('not yet having online unsafe trajectories!')#pass
+            else:
+                out_dictus = replay_buffer_unsafe.sample_positive(unsafebatch, 'on_policy', self.n_models)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                #obsus=out_dictus['obs']#us means unsafe
+                obsus, next_obsus, rewus, doneus = out_dictus['obs'], out_dictus['next_obs'], out_dictus['reward'], \
+                                       out_dictus['done']
+                #ratio=7/8#0.75#0.7#
+                successbatch=self.params['dyn_batch_size']-unsafebatch
+                out_dict = replay_buffer_success.sample_positive(successbatch, 'on_policy', self.n_models)
+                obs, next_obs, rew, done = out_dict['obs'], out_dict['next_obs'], out_dict['reward'], \
+                                        out_dict['done']
+                obs=np.vstack((obs,obsus))
+                next_obs=np.vstack((next_obs,next_obsus))
+                rew=np.vstack((rew,rewus))
+                done=np.concatenate((done,doneus))
+                shuffleind=np.random.permutation(obs.shape[0])
+                obs=obs[shuffleind]
+                next_obs=next_obs[shuffleind]
+                rew=rew[shuffleind]
+                done=done[shuffleind]
+            '''
+            loss, info = self.value.update(obs, rew, next_obs, done, already_embedded=True)
+            self.loss_plotter.add_data(info)
+
+        log.info('Creating value function heatmap')
+        self.loss_plotter.plot()
+        self.plot(os.path.join(update_dir, "val.pdf"), replay_buffer_success)
+        self.value.save(os.path.join(update_dir, 'val.pth'))
+
 
     def plot(self, file, replay_buffer):
         obs = replay_buffer.sample(30)['obs']

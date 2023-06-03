@@ -212,6 +212,15 @@ class MPCTrainer(Trainer):
                 else:
                     trainer.initial_train(replay_buffer, update_dir,replay_buffer_unsafe)
 
+    def initial_train_m2(self, replay_buffer_success,replay_buffer_unsafe):#by default the replay buffer is the encoded version
+        update_dir = os.path.join(self.logdir, 'initial_train')#create that folder!
+        os.makedirs(update_dir, exist_ok=True)#mkdir is here!
+        for trainer in self.trainers:#type() method returns class type of the argument(object) passed as parameter
+            if type(trainer) == VAETrainer:#VAE is trained totally on images from that folder, no use of replay_buffer
+                trainer.initial_train(self.encoder_data_loader, update_dir)
+            else:#then it means that the VAE has been trained!#now both success and unsafe are required!
+                trainer.initial_train_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)
+
     def update(self, replay_buffer, update_num,replay_buffer_unsafe):#the update folder!
         update_dir = os.path.join(self.logdir, 'update_%d' % update_num)
         os.makedirs(update_dir, exist_ok=True)
@@ -222,3 +231,14 @@ class MPCTrainer(Trainer):
             else:
                 episodiccbfdhz=trainer.update(replay_buffer, update_dir,replay_buffer_unsafe)
         return episodiccbfdhz
+
+    def update_m2(self, replay_buffer_success, update_num,replay_buffer_unsafe):#the update folder!
+        update_dir = os.path.join(self.logdir, 'update_%d' % update_num)
+        os.makedirs(update_dir, exist_ok=True)
+        for trainer in self.trainers:
+            #trainer.update(replay_buffer, update_dir)
+            if type(trainer)!=CBFdotlatentplanaTrainer:
+                trainer.update_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)#pay attention to the details!
+            else:
+                episodiccbfdhz=trainer.update_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)
+        return episodiccbfdhz#returning dhz only
