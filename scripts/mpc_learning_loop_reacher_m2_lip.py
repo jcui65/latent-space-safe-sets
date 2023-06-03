@@ -495,7 +495,7 @@ if __name__ == '__main__':
                 transitions[-1]['done'] = 1#change the last transition to success/done!
                 traj_reward = sum(traj_rews)#total reward, should be >=-100/-150
                 #EpRet is episode reward, EpLen=Episode Length, EpConstr=Episode constraints
-                logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol))
+                logger.store(EpRet=traj_reward, EpLen=k+1, EpConstr=float(constr_viol), EpConstrcbf=float(constr_viol_cbf), EpConstrcbf2=float(constr_viol_cbf2))
                 all_rewards.append(traj_rews)#does it use any EpLen?
                 all_action_rands.append(traj_action_rands)
                 constr_viols.append(constr_viol)#whether this 100-length traj violate any constraints, then compute the average
@@ -561,6 +561,8 @@ if __name__ == '__main__':
             logger.log_tabular('EpRet')
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('EpConstr', average_only=True)
+            logger.log_tabular('EpConstrcbf', average_only=True)
+            logger.log_tabular('EpConstrcbf2', average_only=True)
             logger.log_tabular('ConstrRate', np.mean(constr_viols))
             logger.log_tabular('ConstrcbfRate', np.mean(constr_viols_cbf))
             logger.log_tabular('Constrcbf2Rate', np.mean(constr_viols_cbf2))
