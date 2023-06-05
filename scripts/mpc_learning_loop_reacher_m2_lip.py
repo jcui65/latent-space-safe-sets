@@ -552,7 +552,8 @@ if __name__ == '__main__':
             std_rewards.append(std_rew)
             log.info('Iteration %d average reward: %.4f' % (i, mean_rew))
             pu.simple_plot(avg_rewards, std=std_rewards, title='Average Rewards',
-                        file=os.path.join(logdir, 'rewards.pdf'),
+                        #file=os.path.join(logdir, 'rewards.pdf'),
+                        file=os.path.join(logdir, 'rewards%dthepoch%1.5f.pdf'%(i,np.mean(constr_viols))),
                         ylabel='Average Reward', xlabel='# Training updates')
 
             logger.log_tabular('Epoch', i)
