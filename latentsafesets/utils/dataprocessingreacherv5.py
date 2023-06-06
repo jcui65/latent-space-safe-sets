@@ -2,8 +2,8 @@
 import sys
 import click
 # insert at 1, 0 is the script path (or '' in REPL)
-sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
-
+#sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
+sys.path.insert(1, '/home/jcui65/latent-space-safe-sets')
 import os
 import numpy as np
 from latentsafesets.utils.arg_parser import parse_args
@@ -46,7 +46,7 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh,seed,modifiedlengt
         return slopexhs,slopexhu,slopexqs,qzunos,slopexh,slopexq,slopezhs,slopezhu,slopezh
 
 
-    outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
+    outputdir='/home/jcui65/latent-space-safe-sets/outputs/2023-'#'/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
     logdirbeforeseed1 = os.path.join(outputdir+date1,time1) #params['logdir']#around line 35
     print('logdirbeforeseed1',logdirbeforeseed1)
 
