@@ -326,7 +326,7 @@ if __name__ == '__main__':
                     ntodistance=np.linalg.norm(ntoobstacle)
                     #print('nextstate',nextstate)
                     #print('nextpos',nextpos)
-                    posdiff=nextpos-currentpos#x diff, 2d vector/array
+                    posdiff=nextpos-currentpos#x diff, 2d vector/array#there might be a sign issue, but its norm will be the same!
                     posdiffnorm=np.linalg.norm(posdiff)#its l2 norm, scalar, non negative
                     pdnarray[piece]=posdiffnorm
 
@@ -541,7 +541,7 @@ if __name__ == '__main__':
 
                 #replay_buffer.store_transitions(transitions)#replay buffer online training
                 if not constr_viol:
-                    replay_buffer_success.store_transitions(transitions)#should I change this also?
+                    replay_buffer_success.store_transitions(transitions)#should I change this also?#I think you should!
                 else:#should I use success buffer only to store those trajectories who reach the goal?
                     replay_buffer_unsafe.store_transitions(transitions)
                 update_rewards.append(traj_reward)
