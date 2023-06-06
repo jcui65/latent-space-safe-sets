@@ -124,7 +124,7 @@ class ValueFunction(nn.Module, EncodedModule):
         """
         if not already_embedded:
             #emb = self.encoder.encode(obs).detach()
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs).detach()
                 #print('sample mode')
             elif self.mean=='mean':

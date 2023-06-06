@@ -89,6 +89,9 @@ class VAETrainer(Trainer):
     def update(self, replay_buffer, update_dir):
         pass#it means that for the VAE the initial train is enough to achieve the aim
 
+    def update_m2(self, replay_buffer_success, update_dir,replay_buffer_unsafe):
+        pass#it means that for the VAE the initial train is enough to achieve the aim
+
     def plot_vae(self, obs, update_dir, i=0):#plot that figure!
         if self.frame_stack == 1:
             obs = np.array([np.array(im).transpose((2, 0, 1)) for im in obs]) / 255

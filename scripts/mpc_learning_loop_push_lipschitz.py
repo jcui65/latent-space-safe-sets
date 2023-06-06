@@ -31,14 +31,37 @@ if __name__ == '__main__':
     # Misc preliminaries
     repeattimes=1#params['repeat_times']#
     initdhz=params['dhz']
-    traj_per_update = 50#100#200#params['traj_per_update']#default 10
+    traj_per_update = 100#50#200#params['traj_per_update']#default 10
     params['horizon']=200#250#300#320#500#400#
-    slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((traj_per_update*params['horizon']))
-    slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((traj_per_update*params['horizon']))
-    slopezq=slopeyq=slopexq=qzuno=np.zeros((traj_per_update*params['horizon']))
-    slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((traj_per_update*params['horizon']))
-    slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((traj_per_update*params['horizon']))
-    piece=0#which piece of trajectory? this piece
+    slopexh=np.zeros((traj_per_update*params['horizon']))
+    slopeyh=np.zeros((traj_per_update*params['horizon']))
+    slopezh=np.zeros((traj_per_update*params['horizon']))
+    slopeyz=np.zeros((traj_per_update*params['horizon']))
+    slopexy=np.zeros((traj_per_update*params['horizon']))
+    #slopexy=slopeyz=slopezh=slopeyh=slopexh=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexhs=np.zeros((traj_per_update*params['horizon']))
+    slopeyhs=np.zeros((traj_per_update*params['horizon']))
+    slopezhs=np.zeros((traj_per_update*params['horizon']))
+    slopeyzs=np.zeros((traj_per_update*params['horizon']))
+    slopexys=np.zeros((traj_per_update*params['horizon']))
+    #slopexys=slopeyzs=slopezhs=slopeyhs=slopexhs=np.zeros((num_updates*traj_per_update*params['horizon']))
+    qzuno=np.zeros((traj_per_update*params['horizon']))
+    slopexq=np.zeros((traj_per_update*params['horizon']))
+    slopeyq=np.zeros((traj_per_update*params['horizon']))
+    slopezq=np.zeros((traj_per_update*params['horizon']))
+    #slopezq=slopeyq=slopexq=qzuno=np.zeros((num_updates*traj_per_update*params['horizon']))
+    pdnarray=np.zeros((traj_per_update*params['horizon']))
+    qzunos=np.zeros((traj_per_update*params['horizon']))
+    slopexqs=np.zeros((traj_per_update*params['horizon']))
+    slopeyqs=np.zeros((traj_per_update*params['horizon']))
+    slopezqs=np.zeros((traj_per_update*params['horizon']))
+    #slopezqs=slopeyqs=slopexqs=qzunos=pdnarray=np.zeros((num_updates*traj_per_update*params['horizon']))
+    slopexhu=np.zeros((traj_per_update*params['horizon']))
+    slopeyhu=np.zeros((traj_per_update*params['horizon']))
+    slopezhu=np.zeros((traj_per_update*params['horizon']))
+    slopeyzu=np.zeros((traj_per_update*params['horizon']))
+    slopexyu=np.zeros((traj_per_update*params['horizon']))
+    #slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))    piece=0#which piece of trajectory? this piece
     eps=1e-10
     lipxy=lipyz=lipzh=lipyh=lipxh=lipzq=lipyq=lipxq=0
     lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=lipxhsafe=lipzqsafe=lipyqsafe=lipxqsafe=0
@@ -370,9 +393,9 @@ if __name__ == '__main__':
                     lipzh=max(lipzh,slopezhp)
                     lipyh=max(lipyh,slopeyhp)
                     lipxh=max(lipxh,slopexhp)
-                    lipzq=max(lipzq,slopezhp)
-                    lipyq=max(lipyq,slopeyhp)
-                    lipxq=max(lipxq,slopexhp)
+                    lipzq=max(lipzq,slopezqp)#used to be a bug!
+                    lipyq=max(lipyq,slopeyqp)
+                    lipxq=max(lipxq,slopexqp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
                     if np.abs(ntodistance)<=0.30 and np.abs(ntodistance)>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#

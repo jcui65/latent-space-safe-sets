@@ -51,7 +51,8 @@ def generate_teacher_demo_data(env, data_dir, teacher, n=100, noisy=False, logdi
 
 def generate_teacher_demo_datasafety(env, data_dir, teacher, n=100, noisy=False, logdir=None):
     log.info("Generating teacher demo trajectories")
-    file = os.path.join('data', data_dir)#create the data folder!
+    #file = os.path.join('data', data_dir)#create the data folder!
+    file = os.path.join('datam2', data_dir)#create the data folder!
     if not os.path.exists(file):#['SimplePointBot','SimplePointBotConstraints',]#
         os.makedirs(file)#data/SimplePointBot or data/SimplePointBotConstraints
     else:

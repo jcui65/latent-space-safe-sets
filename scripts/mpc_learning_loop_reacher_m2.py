@@ -55,7 +55,7 @@ if __name__ == '__main__':
         f.write('episodic train cbf or not: %s\n'%(params['train_cbf']))
         f.write('mean: %s, dhz: %f, dhdmax: %f\n'%(params['mean'],params['dhz'],params['dhdmax']))
         f.write('nosigma: %f, nosigmadhz: %f, dynamic_dhz: %s, idea: %s, unsafe_buffer:%s, reg_lipschitz:%s\n'%(params['noofsigma'],params['noofsigmadhz'],params['dynamic_dhz'],params['idea'],params['unsafebuffer'],params['reg_lipschitz']))
-        f.write('What I want to write: %s'%(params['quote']))
+        f.write('What I want to write in m2: %s'%(params['quote']))
         f.close()
         utils.init_logging(logdir)#record started!
         log.info('Training safe set MPC with params...')#at the very very start
@@ -81,42 +81,24 @@ if __name__ == '__main__':
         value_func = modules['val']
         goal_indicator = modules['gi']
         cbfdot_function = modules['cbfd']
-        #encoder2 = modules['enc2']  # it is a value in a dictionary, uh?
-        #dynamics_model2 = modules['dyn2']
-        # Populate replay buffer
-        #the following is loading replay buffer, rather than loading trajectories
-        replay_buffer = utils.load_replay_buffer(params, encoder)#around line 123 in utils.py
+        replay_buffer_success = utils.load_replay_buffer_success(params, encoder)#around line 123 in utils.py
+        #if reacher:
+        #then also load random interactions
         #replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
-        #replay_buffer2 = utils.load_replay_buffer_relative(params, encoder2)  # around line 123 in utils.py
-        #replay_buffer = utils.load_replay_buffer_relative_expensive2(params, encoder, encoder2)  # around line 123 in utils.py
-        '''
-        if params['unsafebuffer']=='yes':#old version
-            replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
-            log.info('unsafe buffer!')
-        else:
-            replay_buffer_unsafe=replay_buffer
-            log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
-        '''
-        if params['unsafebuffer']=='yes' or params['unsafebuffer']=='yes2':#new version
-            replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
-            log.info('unsafe buffer!')
-        else:
-            replay_buffer_unsafe=None#replay_buffer
-            log.info('the same buffer!')#have checked np.random.randint, it is completely random! This is what I want!
-        #replay_buffer_unsafe=None
+        replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
+        log.info('unsafe buffer!')
+
         trainer = MPCTrainer(env, params, modules)#so that we can train MPC!
 
-        trainer.initial_train(replay_buffer,replay_buffer_unsafe)#initialize all the parts!
+        #trainer.initial_train(replay_buffer_success,replay_buffer_unsafe)#initialize all the parts!
+        trainer.initial_train_m2(replay_buffer_success,replay_buffer_unsafe)#initialize all the parts!
 
         log.info("Creating policy")
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
                                 #constraint_function, goal_indicator, params)
         policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
                                 constraint_function, goal_indicator, cbfdot_function, params)
-        #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
-                                #constraint_function, goal_indicator, cbfdot_function, encoder2,params)
-        #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,#forever banned!
-                                #constraint_function, goal_indicator, cbfdot_function, encoder2,dynamics_model2, params)
+
         num_updates = params['num_updates']#default 25
         traj_per_update = params['traj_per_update']#default 10
 
@@ -137,7 +119,7 @@ if __name__ == '__main__':
         #print('reward_type',reward_type)
         conservative=params['conservative']
         #print('conservative',conservative)
-        action_type=params['action_type']
+        action_type=params['action_type']#can be deleted, not used anymore!!
         cbfalpha=0.2#exponential averaging for CBF
         for i in range(num_updates):#default 25 in spb
             log.info('current dhz: %f'%(params['dhz']))
@@ -359,7 +341,11 @@ if __name__ == '__main__':
 
                     rtg = rtg + transition['reward']
 
-                replay_buffer.store_transitions(transitions)#replay buffer online training
+                #replay_buffer.store_transitions(transitions)#replay buffer online training
+                if not constr_viol:
+                    replay_buffer_success.store_transitions(transitions)
+                else:
+                    replay_buffer_unsafe.store_transitions(transitions)
                 update_rewards.append(traj_reward)
 
             mean_rew = float(np.mean(update_rewards))
@@ -386,12 +372,11 @@ if __name__ == '__main__':
 
             # Update models
 
-            episodiccbfdhz=trainer.update(replay_buffer, i,replay_buffer_unsafe)#online training, right?
+            episodiccbfdhz=trainer.update_m2(replay_buffer_success, i,replay_buffer_unsafe)#online training, right?#it now only bears the meaning of dhz!
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
-                #params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
-                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz#
+                params['dhz']=(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz*params['noofsigmadhz']*(2-params['cbfdot_thresh'])
             log.info('new dhz: %f'%(params['dhz']))#if dynamic_dhz=='no', then it will be still the old dhz
             np.save(os.path.join(logdir, 'rewards.npy'), all_rewards)
             np.save(os.path.join(logdir, 'constr.npy'), constr_viols)
