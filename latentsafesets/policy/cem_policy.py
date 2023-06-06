@@ -100,6 +100,7 @@ class CEMSafeSetPolicy(Policy):
         self.noofsigma=params['noofsigma']
         self.reducerocbfhd=params['reducerocbfhd']
         self.sample=params['mean']#self.mean has been occupied for other uses!#
+        self.rewrite=params['rewrite']
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1851,7 +1852,7 @@ class CEMSafeSetPolicy(Policy):
                     #cbfdots_alls = self.cbfdot_function(rdas,
                                                         #already_embedded=True)  # all the candidates#torch.sigmoid()#each in the model#(20,1000,5)
                     cbf_init = self.cbfdot_function(embrepeat20, already_embedded=True)#should have dim (20,1000,1,32) to (20,1000,1,1)
-                    #print('cbf_init.shape',cbf_init.shape)#torch.Size([20, 1000, 1, 1])
+                    #print('cbf_init.shape',cbf_init.shape)#torch.Size([20, 1000, 1, 1])#initial CBF value at time 0!
                     #cbf_init.backward(torch.ones_like(cbf_init))
                     #dz = embrepeat20.grad#
                     if self.dhdmax>0:
@@ -1873,7 +1874,8 @@ class CEMSafeSetPolicy(Policy):
                             #log.info('j16:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[0],ji[1],ji[2],ji[3],ji[4],ji[5],ji[6],ji[7],ji[8],ji[9],ji[10],ji[11],ji[12],ji[13],ji[14],ji[15]))
                             #log.info('j32:%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(ji[16],ji[17],ji[18],ji[19],ji[20],ji[21],ji[22],ji[23],ji[24],ji[25],ji[26],ji[27],ji[28],ji[29],ji[30],ji[31]))
                             log.info('dhd: %f'%(dhd.item()))
-                        dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
+                        if self.rewrite=='no':#a major change!
+                            dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
                         dhd=dhd.repeat(predictions.shape[1],cbfhorizon)
                     else:
                         dhd=0
@@ -1885,9 +1887,9 @@ class CEMSafeSetPolicy(Policy):
                     #print('emb max',torch.max(emb))
                     #print('emb min',torch.min(emb))
                     cbf_alls = self.cbfdot_function(predictions,already_embedded=True) #with the reformulated cbfd estimator
-                    #print('cbf_alls.shape',cbf_alls.shape)#torch.Size([20, 1000, 5, 1])
+                    #print('cbf_alls.shape',cbf_alls.shape)#torch.Size([20, 1000, 5, 1])#from t+1 to t+5
                     #print('cbf_alls',cbf_alls)
-                    cbf_alls4=cbf_alls[:,:,0:cbfhorizon-1,:]#[:,:,0:self.plan_hor-1,:]#
+                    cbf_alls4=cbf_alls[:,:,0:cbfhorizon-1,:]#[:,:,0:self.plan_hor-1,:]#from t+1 to t+cbfhorizon-1
                     if self.idea=='vanilla_var':
                         '''
                         predict1=predictions[:, :, 0, :]#torch.mean(predictions,dim=2)#it should be (20,1000,32)
@@ -1936,7 +1938,8 @@ class CEMSafeSetPolicy(Policy):
                                     log.info('dhd'+str(self.noofsigma)+'nc: %f'%(dhdsnc.item()))#it should be smaller than dhd?
                                 dhdsa[nc,h]=dhdsnc
                         dhd=dhdsa
-                        dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
+                        if self.rewrite=='no':#if not in the rewrite mode!
+                            dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
                         device=ptu.TORCH_DEVICE
                         dhd=dhd.to(device)
                         #dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
@@ -1945,9 +1948,11 @@ class CEMSafeSetPolicy(Policy):
                     #print('p0shape',p0.shape)#(1000,3,32)#
                     #print('dzp',jcep)
                     #print('cbf_alls4.shape', cbf_alls4.shape)#torch.Size([20, 1000, 4, 1])
-                    cbf_initalls4=torch.cat((cbf_init,cbf_alls4),dim=-2)#if cbfhorizon-1=0, it should be fine
+                    cbf_initalls4=torch.cat((cbf_init,cbf_alls4),dim=-2)#if cbfhorizon-1=0, it should be fine#from 0 to cbfhorizon-1
                     #print('cbf_initalls.shape', cbf_initalls.shape)#torch.Size([20, 1000, 5, 1])
-                    cbfdots_alls=cbf_alls[:,:,0:cbfhorizon,:]-cbf_initalls4#the mean is also subject to change#I think it is correct!
+                    cbf_allscbfhorizon=cbf_alls[:,:,0:cbfhorizon,:]
+                    cbfdots_alls=cbf_allscbfhorizon-cbf_initalls4#the mean is also subject to change#I think it is correct!
+                    cbf_allscbfhorizon=cbf_allscbfhorizon.reshape(cbf_allscbfhorizon.shape[0], cbf_allscbfhorizon.shape[1],cbf_allscbfhorizon.shape[2])
                     cbfdots_alls = cbfdots_alls.reshape(cbfdots_alls.shape[0], cbfdots_alls.shape[1],cbfdots_alls.shape[2])  #
                     #print('cbfdots_alls.shape',cbfdots_alls.shape)#torch.Size([20, 1000, 5])
                     #print('cbfdots_alls', cbfdots_alls)  #
@@ -1966,26 +1971,45 @@ class CEMSafeSetPolicy(Policy):
                                                # the acbfs is subject to change
                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
                     realdhz=self.dhz*dhz
+                    if self.rewrite=='yes':
+                        onemacbfs=(1-act_cbfd_thresh) * cbf_initalls4  #the dim should be consistent#onemacbfs is one minues acbfs
                     #log.info('realdhz: %f'%(realdhz))
                     if self.conservative=='conservative':
                         #log.info('conservative!')#it is correct!
-                        lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements
-                        #print('lhse.shape',lhse.shape)#(1000,5)
-                        rhse,rhsi=torch.max(acbfs, dim=0)#rhsi means right hand side indices
-                        #print('rhse.shape', rhse.shape)#(1000,cbfhorizon)
+                        if self.rewrite=='no':
+                            lhse,lhsi=torch.min(cbfdots_alls, dim=0)#lhse means left hand side elements
+                            #print('lhse.shape',lhse.shape)#(1000,5)
+                            rhse,rhsi=torch.max(acbfs, dim=0)#rhsi means right hand side indices
+                            #print('rhse.shape', rhse.shape)#(1000,cbfhorizon)
+                        elif self.rewrite=='yes':
+                            lhse,lhsi=torch.min(cbf_allscbfhorizon, dim=0)#lhse means left hand side elements
+                            #print('lhse.shape',lhse.shape)#(1000,5)
+                            rhse,rhsi=torch.max(onemacbfs, dim=0)#rhsi means right hand side indices
                         cbfdots_violss = torch.sum(( lhse< rhse+realdhz),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
                         #log.info('self.dhz: %f'%(self.dhz))#currently it is not passed inside!
                         #print('cbfdots_violss',cbfdots_violss)#dimension 1000
                     elif self.conservative=='onestd':
-                        cbfstd,cbfmean=torch.std_mean(cbfdots_alls, dim=0)#this std is not the std of the latent state prediction error!
-                        cbfmeanmstd=cbfmean-cbfstd#cbfmean minus 1 std
-                        acbfstd,acbfmean=torch.std_mean(acbfs,dim=0)#dim (1000,5)
-                        acbfmeanpstd=acbfmean+acbfstd#acbfmean plus 1 std
+                        if self.rewrite=='no':
+                            cbfstd,cbfmean=torch.std_mean(cbfdots_alls, dim=0)#this std is not the std of the latent state prediction error!
+                            cbfmeanmstd=cbfmean-cbfstd#cbfmean minus 1 std
+                            acbfstd,acbfmean=torch.std_mean(acbfs,dim=0)#dim (1000,5)
+                            acbfmeanpstd=acbfmean+acbfstd#acbfmean plus 1 std
+                        elif self.rewrite=='yes':
+                            cbfstd,cbfmean=torch.std_mean(cbf_allscbfhorizon, dim=0)#this std is not the std of the latent state prediction error!
+                            cbfmeanmstd=cbfmean-cbfstd#cbfmean minus 1 std
+                            acbfstd,acbfmean=torch.std_mean(onemacbfs,dim=0)#dim (1000,5)
+                            acbfmeanpstd=acbfmean+acbfstd#acbfmean plus 1 std
                         cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd+realdhz,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#now dimension only 1000!
                     elif self.conservative=='average':
-                        cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0)+realdhz+dhd,# the acbfs is subject to change
+                        if self.rewrite=='no':
+                            cbfdots_violss = torch.sum(torch.mean(cbfdots_alls, dim=0) < torch.mean(acbfs,dim=0)+realdhz+dhd,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#
+                        elif self.rewrite=='yes':
+                            #print(cbf_allscbfhorizon.shape)#
+                            #print(onemacbfs.shape)#(20,500,3)
+                            cbfdots_violss = torch.sum(torch.mean(cbf_allscbfhorizon, dim=0) < torch.clip(torch.mean(onemacbfs,dim=0)+realdhz+dhd,max=self.dhdmax),# the acbfs is subject to change
+                                                dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction
                     cbfdots_violss = torch.zeros((num_candidates, 1),

@@ -436,10 +436,10 @@ class CBFdotlatentplanaTrainer(Trainer):
         #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer,replay_buffer_unsafe)#if not spb, then don't plot
         for i in range(self.params['cbfd_init_iters']):#10000
             #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
-            if self.params['mean']=='meancbf':
+            if self.params['mean']=='meancbf':#all offline success trajectory
                 out_dict = replay_buffer_success.samplemeancbf(self.batchsize)#sanity check passed!#(self.params['cbfd_batch_size'])#256
                 #log.info('training the mean version of the CBF!')
-            else:
+            else:#all offline success trajectory
                 out_dict = replay_buffer_success.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']
             cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
@@ -458,9 +458,9 @@ class CBFdotlatentplanaTrainer(Trainer):
                 out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 if self.params['boundary']=='yes':
                     out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
-            else:
+            else:#all are offline trajectories, but not necessarily violation
                 out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
-                if self.params['boundary']=='yes':
+                if self.params['boundary']=='yes':#all trajectories are offline violation
                     out_dictusb = replay_buffer_unsafe.sample_boundary_m2(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
 
             obsus,next_obsus,construs=out_dictus['obs'],out_dictus['next_obs'],out_dictus['constraint']
@@ -507,7 +507,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             #log.info('cbfd_lr: %f'%(self.params['cbfd_lr']))
             for _ in trange(self.params['cbfd_update_iters']):#512
                 #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#random shuffling is done in this step!
-                if self.params['mean']=='meancbf':
+                if self.params['mean']=='meancbf':#online success trajectory! which may contain no random good and random good!
                     out_dict = replay_buffer_success.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 else:
                     out_dict = replay_buffer_success.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -519,13 +519,13 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
                 if self.params['mean']=='meancbf':
                     #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
-                    #if self.params['boundary']=='no':
+                    #if self.params['boundary']=='no':#all unsafe trajectories, offline and online! some violate constraints!
                     out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
                     if self.params['boundary']=='yes':
                         out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
                 else:
                     out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
-                    if self.params['boundary']=='yes':
+                    if self.params['boundary']=='yes':#all unsafe trajectories, all of them are constraint violating!
                         out_dictusb = replay_buffer_unsafe.sample_boundary_m2(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
                 #obsus=out_dictus['obs']#us means unsafe
                 #print('obsus.shape',obsus.shape)(128,32)
