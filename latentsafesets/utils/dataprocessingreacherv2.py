@@ -15,7 +15,8 @@ import latentsafesets.utils.plot_utils as pu
 @click.option('--time', default='08-38-11', help='time of the simulation', type=str)
 @click.option('--fh', default=500, help='five hundred or 250 or 1000', type=int)#1000, 250#
 @click.option('--env',default='reacher',help='the environment',type=str)#reacher or push#
-def main(date, time,fh,env):
+@click.option('--lenseed',default=3,help='length of the seed',type=int)#reacher or push#
+def main(date, time,fh,env,lenseed):
     outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
     #mar24='03-24'#mar23='03-23'#mar22='03-22'#mar25='03-25'#mar26='03-26'#mar27='03-27'#mar28='03-28'
     #date=mar28#mar22#mar24#mar26#mar27#mar25#mar23#
@@ -37,8 +38,16 @@ def main(date, time,fh,env):
     tsrarray=np.zeros((fh,))#reacher#np.zeros((1000,))#push#
     #tsrlist=[]#constraint violation rate list
     lastnum=50
-    seedlist=[1,2,3]#[1]#[1,2]#[1,2,3,4,5,6,7,8,9,10]#[4,5,6]#[7,8,9,10]#[4,5,6]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
-
+    if lenseed==1:
+        seedlist=[1]#
+    elif lenseed==2:
+        seedlist=[1,2]#[1,2,3]#[1]#[1,2,3,4,5,6,7,8,9,10]#[4,5,6]#[7,8,9,10]#[4,5,6]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
+    elif lenseed==3:
+        seedlist=[1,2,3]#
+    elif lenseed==5:
+        seedlist=[1,2,3,4,5]#
+    elif lenseed==10:
+        seedlist=[1,2,3,4,5,6,7,8,9,10]#
     for seed in seedlist:
         logdir=os.path.join(logdirbeforeseed, str(seed))
         #update_dir = os.path.join(logdir, "update_%d" % i)#
@@ -93,7 +102,7 @@ def main(date, time,fh,env):
         #tsrlist.append(tasksuccirate)
         ralist.append(rewardaveragei)
         ralastlist.append(rewardaveragelasti)
-    lenseed=len(seedlist)
+    #lenseed=len(seedlist)
     #calculate the statistics: mean and std
     rfarray=rfarray[1:]
     cvarray=cvarray[1:]
