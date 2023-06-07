@@ -38,7 +38,7 @@ class ConstraintEstimator(nn.Module, EncodedModule):#supervised learning very si
         """
         if not already_embedded:
             #embedding = self.encoder.encode(obs).detach()
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 embedding = self.encoder.encode(obs).detach()
             elif self.mean=='mean':
                 embedding = self.encoder.encodemean(obs).detach()

@@ -7,8 +7,9 @@ sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 from latentsafesets.rl_trainers import CBFdotlatentplanaTrainer#CBFdotTrainer, 
 import latentsafesets.utils as utils
 #from latentsafesets.utils.arg_parser import parse_args
-#from latentsafesets.utils.arg_parser_reacher import parse_args
-from latentsafesets.utils.arg_parser_push import parse_args
+#from latentsafesets.utils.arg_parser_spb import parse_args
+from latentsafesets.utils.arg_parser_reacher import parse_args
+#from latentsafesets.utils.arg_parser_push import parse_args
 #from latentsafesets.modules import CBFdotEstimator
 
 import os
@@ -34,7 +35,8 @@ if __name__ == '__main__':
     encoder = modules['enc']#not used if only using states, will be used if using latent states
     cbfdot = modules['cbfd']#CBFdotEstimator(encoder,params)#
 
-    replay_buffer = utils.load_replay_buffer(params, encoder)
+    #replay_buffer = utils.load_replay_buffer(params, encoder)
+    replay_buffer_success = utils.load_replay_buffer_success(params, encoder)#
     if params['unsafebuffer']=='yes' or params['unsafebuffer']=='yes2':#new version
         replay_buffer_unsafe = utils.load_replay_buffer_unsafe(params, encoder)#around line 123 in utils.py
         log.info('unsafe buffer!')
@@ -46,4 +48,5 @@ if __name__ == '__main__':
     #trainer = CBFdotTrainer(env, params, cbfdot, loss_plotter)
     trainer = CBFdotlatentplanaTrainer(env, params, cbfdot, loss_plotter)
     #trainer.initial_train(replay_buffer, logdir)
-    trainer.initial_train(replay_buffer, logdir,replay_buffer_unsafe)
+    #trainer.initial_train(replay_buffer, logdir,replay_buffer_unsafe)
+    trainer.initial_train_m2(replay_buffer_success, logdir,replay_buffer_unsafe)

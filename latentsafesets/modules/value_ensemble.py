@@ -41,7 +41,7 @@ class ValueEnsemble(nn.Module, EncodedModule):
             emb = obs
         else:
             #emb = self.encoder.encode(obs).detach()
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs).detach()
             elif self.mean=='mean':
                 emb = self.encoder.encodemean(obs).detach()
@@ -82,7 +82,7 @@ class ValueEnsemble(nn.Module, EncodedModule):
             emb = obs
             next_emb = next_obs
         else:
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs).detach()
                 next_emb = self.encoder.encode(next_obs).detach()
             elif self.mean=='mean':
@@ -108,7 +108,7 @@ class ValueEnsemble(nn.Module, EncodedModule):
             emb = obs
         else:
             #emb = self.encoder.encode(obs).detach()
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs).detach()
             elif self.mean=='mean':
                 emb = self.encoder.encodemean(obs).detach()
@@ -130,7 +130,7 @@ class ValueEnsemble(nn.Module, EncodedModule):
         else:
             #emb = self.encoder.encode(obs).detach()
             #next_emb = self.encoder.encode(next_obs).detach()
-            if self.mean=='sample':
+            if self.mean=='sample' or self.mean=='meancbf':
                 emb = self.encoder.encode(obs).detach()
                 next_emb = self.encoder.encode(next_obs).detach()
             elif self.mean=='mean':

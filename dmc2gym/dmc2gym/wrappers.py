@@ -56,7 +56,7 @@ class DMCWrapper(core.Env):
         self._height = height
         self._width = width
         self._camera_id = camera_id
-        self._frame_skip = frame_skip
+        self._frame_skip = frame_skip#it is 1 by default!
         self._channels_first = channels_first
         self._frozen = False
         self._n_steps = 0
