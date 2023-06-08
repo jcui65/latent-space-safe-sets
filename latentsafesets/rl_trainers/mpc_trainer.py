@@ -200,7 +200,7 @@ class MPCTrainer(Trainer):
         #self.trainers.append(PETSDynamicsTrainer2(params, modules['dyn2'], loss_plotter))
         #self.trainers.append(VAETrainer(params, modules['enc2'], loss_plotter))
 
-    def initial_train(self, replay_buffer,replay_buffer_unsafe):#by default the replay buffer is the encoded version
+    def initial_train(self, replay_buffer,replay_buffer_unsafe=None):#by default the replay buffer is the encoded version
         update_dir = os.path.join(self.logdir, 'initial_train')#create that folder!
         os.makedirs(update_dir, exist_ok=True)#mkdir is here!
         for trainer in self.trainers:#type() method returns class type of the argument(object) passed as parameter
