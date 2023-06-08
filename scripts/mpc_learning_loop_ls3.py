@@ -7,6 +7,7 @@ from latentsafesets.policy import CEMSafeSetPolicyls3#this is the class!
 import latentsafesets.utils as utils
 import latentsafesets.utils.plot_utils as pu
 #from latentsafesets.utils.arg_parser import parse_args
+from latentsafesets.utils.arg_parser_spb import parse_args
 from latentsafesets.utils.arg_parser_push_ls3 import parse_args
 #from latentsafesets.utils.arg_parser_reacher_ls3 import parse_args
 from latentsafesets.rl_trainers import MPCTrainer

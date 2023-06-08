@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('--exper_name', type=str, default=None)
     parser.add_argument('--repeat_times',type=int,default=1)#3)#2)#5)#10)#7)#
     parser.add_argument('--light',type=str,default='light')#'normal')#'expensive')#'ls3')#'ls3' means original, no CBF#'nosasfety')#no any safety measures
-    parser.add_argument('--action_type',type=str,default='recovery')#'random')#'zero')#
+    parser.add_argument('--action_type',type=str,default='random')#'recovery')#'zero')#
     parser.add_argument('--datasetnumber',type=int,default=3)#2)#1 for old data, 2 for new data, 3 for data 3!
     parser.add_argument('--vaesnumber',type=str,default='d2v1')#divj means dataset i vae j, noj means no pretrain, while only taking the jth vae of the dataset
     parser.add_argument('--quote',type=str,default=' ')#what I want to quote
