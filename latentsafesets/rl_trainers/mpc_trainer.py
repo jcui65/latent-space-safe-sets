@@ -224,6 +224,7 @@ class MPCTrainer(Trainer):
     def update(self, replay_buffer, update_num,replay_buffer_unsafe=None):#the update folder!
         update_dir = os.path.join(self.logdir, 'update_%d' % update_num)
         os.makedirs(update_dir, exist_ok=True)
+        episodiccbfdhz=0
         for trainer in self.trainers:
             #trainer.update(replay_buffer, update_dir)
             if type(trainer)!=CBFdotlatentplanaTrainer:
