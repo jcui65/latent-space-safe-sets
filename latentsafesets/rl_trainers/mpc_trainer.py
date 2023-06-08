@@ -221,9 +221,10 @@ class MPCTrainer(Trainer):
             else:#then it means that the VAE has been trained!#now both success and unsafe are required!
                 trainer.initial_train_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)
 
-    def update(self, replay_buffer, update_num,replay_buffer_unsafe):#the update folder!
+    def update(self, replay_buffer, update_num,replay_buffer_unsafe=None):#the update folder!
         update_dir = os.path.join(self.logdir, 'update_%d' % update_num)
         os.makedirs(update_dir, exist_ok=True)
+        episodiccbfdhz=0
         for trainer in self.trainers:
             #trainer.update(replay_buffer, update_dir)
             if type(trainer)!=CBFdotlatentplanaTrainer:
