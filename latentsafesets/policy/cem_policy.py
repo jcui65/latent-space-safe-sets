@@ -2009,24 +2009,24 @@ class CEMSafeSetPolicy(Policy):
                             #print(cbf_allscbfhorizon.shape)#
                             #print(onemacbfs.shape)#(20,500,3)
                             meanonemacbfs=torch.mean(onemacbfs,dim=0)
-                            shouldbeall=torch.count_nonzero(meanonemacbfs==0)
+                            #shouldbeall=torch.count_nonzero(meanonemacbfs==0)
                             #log.info('shouldbeall: %d'%(shouldbeall.item()))#1500#should be all zero, hence 500
                             meanonemacbfsr=meanonemacbfs+realdhz+dhd#r for robust
-                            sbpositive=torch.count_nonzero(meanonemacbfsr<0)#should all be positive
+                            #sbpositive=torch.count_nonzero(meanonemacbfsr<0)#should all be positive
                             #log.info('sbpositive: %d'%(sbpositive.item()))#0 as expected!
                             meanonemacbfsrc=torch.clip(meanonemacbfsr,max=self.dhdmax)
-                            sbp2=torch.count_nonzero(meanonemacbfsrc<0)
+                            #sbp2=torch.count_nonzero(meanonemacbfsrc<0)
                             #log.info('shouldbealsopositive: %d'%(sbp2.item()))#0 as expected!#should all be positive 
                             meancbfallscbfhorizon=torch.mean(cbf_allscbfhorizon, dim=0)
                             #print('that shape!',meancbfallscbfhorizon.shape)#500,3
-                            topkvalues,indices=torch.topk(meancbfallscbfhorizon[:,0],20)
+                            topkvalues,indices=torch.topk(meancbfallscbfhorizon[:,0],10)
                             #print('meancbfallscbfhorizon',meancbfallscbfhorizon)
                             log.info('top5values: %f,%f,%f,%f,%f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item()))#I don't want it to be positive!
                             cbfdots_violss = torch.sum( meancbfallscbfhorizon< meanonemacbfsrc,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
                             #print('cbfdots_violss',cbfdots_violss)
-                            falseneg=torch.count_nonzero(cbfdots_violss==0)
-                            log.info('falseneg:%d'%(falseneg.item()))#I want this to be zero!
+                            howmanypassed=torch.count_nonzero(cbfdots_violss==0)
+                            log.info('howmanypassed:%d'%(howmanypassed.item()))#I want this to be zero!
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction
                     cbfdots_violss = torch.zeros((num_candidates, 1),

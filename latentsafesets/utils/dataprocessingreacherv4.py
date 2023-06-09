@@ -58,7 +58,7 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh):
 
     lenseed=10#len(seedlist)
     lenseed2=3#10#
-    rfmean1,cvcmean1,tsrmean1,rfcmean1,tsrcmean1,rfstd1,cvcstd1,tsrstd1,rfcstd1,tsrcstd1=data_loading(logdirbeforeseed1,lenseed)
+    rfmean1,cvcmean1,tsrmean1,rfcmean1,tsrcmean1,rfstd1,cvcstd1,tsrstd1,rfcstd1,tsrcstd1=data_loading(logdirbeforeseed1,lenseed2)
     rfmean2,cvcmean2,tsrmean2,rfcmean2,tsrcmean2,rfstd2,cvcstd2,tsrstd2,rfcstd2,tsrcstd2=data_loading(logdirbeforeseed2,lenseed)
     rfmean3,cvcmean3,tsrmean3,rfcmean3,tsrcmean3,rfstd3,cvcstd3,tsrstd3,rfcstd3,tsrcstd3=data_loading(logdirbeforeseed3,lenseed2)
     #rfmean4,cvcmean4,tsrmean4,rfcmean4,tsrcmean4,rfstd4,cvcstd4,tsrstd4,rfcstd4,tsrcstd4=data_loading(logdirbeforeseed4,lenseed)
