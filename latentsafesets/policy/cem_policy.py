@@ -1403,7 +1403,7 @@ class CEMSafeSetPolicy(Policy):
                     action_samples = torch.cat((action_samples_dist, action_samples_random), dim=0)
             else:
                 # Chop off the numer of elites so we don't use constraint violating trajectories
-                num_constraint_satisfying = sum(values > -1e5)#no any constraints violation#print(num_constraint_satisfying)
+                num_constraint_satisfying = sum(values > -8e4)#let's see now! to avoid this bug!#sum(values > -1e5)#no any constraints violation#print(num_constraint_satisfying)
                 iter_num_elites = min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
                 #what if I change this into num_constraint_satisfying+2?
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
@@ -1708,7 +1708,7 @@ class CEMSafeSetPolicy(Policy):
                     action_samples = torch.cat((action_samples_dist, action_samples_random), dim=0)
             else:
                 # Chop off the numer of elites so we don't use constraint violating trajectories
-                num_constraint_satisfying = sum(values > -1e5)#no any constraints violation#print(num_constraint_satisfying)
+                num_constraint_satisfying = sum(values > -8e4)#-8e4 is set by myself!#let's see now! to avoid this bug!#sum(values > -1e5)#no any constraints violation#print(num_constraint_satisfying)
                 iter_num_elites = min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
                 #what if I change this into num_constraint_satisfying+2?
                 if num_constraint_satisfying == 0:#it is definitely a bug not to include the case where ncs=1!
@@ -2008,8 +2008,25 @@ class CEMSafeSetPolicy(Policy):
                         elif self.rewrite=='yes':
                             #print(cbf_allscbfhorizon.shape)#
                             #print(onemacbfs.shape)#(20,500,3)
-                            cbfdots_violss = torch.sum(torch.mean(cbf_allscbfhorizon, dim=0) < torch.clip(torch.mean(onemacbfs,dim=0)+realdhz+dhd,max=self.dhdmax),# the acbfs is subject to change
+                            meanonemacbfs=torch.mean(onemacbfs,dim=0)
+                            #shouldbeall=torch.count_nonzero(meanonemacbfs==0)
+                            #log.info('shouldbeall: %d'%(shouldbeall.item()))#1500#should be all zero, hence 500
+                            meanonemacbfsr=meanonemacbfs+realdhz+dhd#r for robust
+                            #sbpositive=torch.count_nonzero(meanonemacbfsr<0)#should all be positive
+                            #log.info('sbpositive: %d'%(sbpositive.item()))#0 as expected!
+                            meanonemacbfsrc=torch.clip(meanonemacbfsr,max=self.dhdmax)
+                            #sbp2=torch.count_nonzero(meanonemacbfsrc<0)
+                            #log.info('shouldbealsopositive: %d'%(sbp2.item()))#0 as expected!#should all be positive 
+                            meancbfallscbfhorizon=torch.mean(cbf_allscbfhorizon, dim=0)
+                            #print('that shape!',meancbfallscbfhorizon.shape)#500,3
+                            topkvalues,indices=torch.topk(meancbfallscbfhorizon[:,0],10)
+                            #print('meancbfallscbfhorizon',meancbfallscbfhorizon)
+                            log.info('top5values: %f,%f,%f,%f,%f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item()))#I don't want it to be positive!
+                            cbfdots_violss = torch.sum( meancbfallscbfhorizon< meanonemacbfsrc,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
+                            #print('cbfdots_violss',cbfdots_violss)
+                            howmanypassed=torch.count_nonzero(cbfdots_violss==0)
+                            log.info('howmanypassed:%d'%(howmanypassed.item()))#I want this to be zero!
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction
                     cbfdots_violss = torch.zeros((num_candidates, 1),
@@ -2024,7 +2041,9 @@ class CEMSafeSetPolicy(Policy):
                                                 dim=0) < act_ss_thresh#(1000,1)
                 else:#ignore safe set constraints
                     safe_set_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
-                
+                #maxvalue=torch.max(values).item()#to finally prove your assumption!!!
+                #log.info("maxvalues:%f"%(maxvalue))#to see if it is positive!!! Yes! It is as expected!
+                values=torch.clip(values,max=200)#really bug free fix!#in such reward setting, values should not be bigger than 200!
                 values = values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 
                 if self.reward_type=='sparse':
                     goal_preds = self.goal_indicator(predictions, already_embedded=True)#the prob of being goal at those states#Do I add the CBF term here?(20,1000,5)
