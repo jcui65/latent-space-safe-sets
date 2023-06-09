@@ -52,7 +52,8 @@ class CEMSafeSetPolicy(Policy):
         self.ac_ub, self.ac_lb = env.action_space.high, env.action_space.low
         self.plan_hor = params['plan_hor']#H=5
         self.random_percent = params['random_percent']#1 in spb/reacher/pushing
-        self.popsize = params['num_candidates']#1000
+        self.popsizeinit = params['num_candidates']#1000
+        self.popsize=self.popsizeinit#try to change this!
         self.num_elites = params['num_elites']#100
         self.max_iters = params['max_iters']#5
         self.safe_set_thresh = params['safe_set_thresh']#0.8
@@ -1654,6 +1655,7 @@ class CEMSafeSetPolicy(Policy):
         """
         # encode observation:
         obs = ptu.torchify(obs).reshape(1, *self.d_obs)#just some data processing
+        self.popsize=self.popsizeinit
         if self.current_robust=='no':
             #emb = self.encoder.encode(obs)#in latent space now!it is 32 dimensional!
             if self.sample=='sample':#self.mean has been occupied for other uses!
@@ -1698,6 +1700,8 @@ class CEMSafeSetPolicy(Policy):
         while itr < self.max_iters:#5
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
+                #if self.popsize>=1000:
+                    #log.info('current pop size before action sample:%d'%(self.popsize))
                 if self.mean is None:#right after reset
                     action_samples = self._sample_actions_random()#1000*5 2d array
                 else:
@@ -1706,7 +1710,7 @@ class CEMSafeSetPolicy(Policy):
                     action_samples_dist = self._sample_actions_normal(self.mean, self.std, n=num_dist)
                     action_samples_random = self._sample_actions_random(num_random)#uniformly random from last iter ation
                     action_samples = torch.cat((action_samples_dist, action_samples_random), dim=0)
-            else:
+            else:#itr>=1
                 # Chop off the numer of elites so we don't use constraint violating trajectories
                 num_constraint_satisfying = sum(values > -8e4)#-8e4 is set by myself!#let's see now! to avoid this bug!#sum(values > -1e5)#no any constraints violation#print(num_constraint_satisfying)
                 iter_num_elites = min(num_constraint_satisfying, self.num_elites)#max(2,min(num_constraint_satisfying, self.num_elites))#what about doing max(2) to it?
@@ -1724,8 +1728,12 @@ class CEMSafeSetPolicy(Policy):
                         log.info('alpha increased to %f'%(act_cbfd_thresh))
                     elif self.reduce_horizon=='horizon':
                         cbfhorizon-=1
+                        #if cbfhorizon<=1:
+                        self.popsize*=4#2#80 is also too much!#200 is too much!#for a test!#2#
+                        self.popsize=min(self.popsize,4000)#otherwise you cannot run on the neowise card!
+                        #log.info('current pop size:%d'%(self.popsize))
                         cbfhorizon=max(1,cbfhorizon)
-                        log.info('horizon reduced to %d'%(cbfhorizon))
+                        log.info('horizon reduced to %d, current pop size:%d'%(cbfhorizon,self.popsize))#lose its meaning
                     if reset_count > self.cbf_thresh_mult_iters:#self.safe_set_thresh_mult_iters:#
                         self.mean = None
                         log.info('no trajectory candidates satisfy constraints! The BF is doing its job? Picking random actions!')
@@ -1782,7 +1790,7 @@ class CEMSafeSetPolicy(Policy):
                                     #values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
                                     cbfs,indices=torch.min(all_cbfs.reshape((num_models, num_candidates, 1)), dim=0)#reduce to (1000,1), take the mean of 20
                                     #line 7 in algorithm 1 in the PETS paper!#this min may have some robustness effect!
-                                    #values = values.squeeze()
+                                    #values = values.squeeze()#change the above to average?
                                     cbfs=cbfs.squeeze()
                                 itrrecovery += 1#CEM Evolution method
                                 #print('itrrecovery',itrrecovery)
@@ -1794,7 +1802,7 @@ class CEMSafeSetPolicy(Policy):
                     continue
                 # Sort
                 sortid = values.argsort()#if it goes to this step, the num_constraint_satisfying should >=1
-                actions_sorted = action_samples[sortid]
+                actions_sorted = action_samples[sortid]#values.argsort() means the index is here!
                 elites = actions_sorted[-iter_num_elites:]
                 # Refitting to Best Trajs
                 self.mean, self.std = elites.mean(0), elites.std(0)# print('self.mean',self.mean,'self.std',self.std)#it's self.std that got nan!#print(self.std[0,0])
@@ -1805,7 +1813,7 @@ class CEMSafeSetPolicy(Policy):
                     eshape=elites.shape
                     log.info('eshape[0]:%d,eshape[1]:%d,eshape[2]:%d' % (eshape[0],eshape[1],eshape[2]))
                     #self.std=0.5*torch.rand_like(self.mean)+0.1#1e-2#is it just a work around?
-                    self.std = 0.0 * torch.ones_like(self.mean)#0.8 * torch.ones_like(self.mean)##1.0 * torch.ones_like(self.mean)# 1e-2#is it just a work around?
+                    self.std = 1e-4 * torch.ones_like(self.mean)#to find things that work!#0.0 * torch.ones_like(self.mean)#0.8 * torch.ones_like(self.mean)##1.0 * torch.ones_like(self.mean)# 1e-2#is it just a work around?
                     #0.8 is the hyperparameter I choose which I think may have good performance
                 action_samples = self._sample_actions_normal(self.mean, self.std)#(1000,5,2)#print('action_samples', action_samples)#it becomes nan!
             if itr < self.max_iters - 1:#why the ensemble param in dynamics is 5! For MPC!
@@ -1851,7 +1859,11 @@ class CEMSafeSetPolicy(Policy):
                     #4.
                     #cbfdots_alls = self.cbfdot_function(rdas,
                                                         #already_embedded=True)  # all the candidates#torch.sigmoid()#each in the model#(20,1000,5)
-                    cbf_init = self.cbfdot_function(embrepeat20, already_embedded=True)#should have dim (20,1000,1,32) to (20,1000,1,1)
+                    
+                    #cbf_init = self.cbfdot_function(embrepeat20, already_embedded=True)#should have dim (20,1000,1,32) to (20,1000,1,1)
+                    cbf_init = self.cbfdot_function(emb, already_embedded=True)#should have dim (20,1000,1,32) to (20,1000,1,1)
+                    #cbf_init should be 1 dimensional?#Choose to repeat here?
+                    cbf_init = cbf_init.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
                     #print('cbf_init.shape',cbf_init.shape)#torch.Size([20, 1000, 1, 1])#initial CBF value at time 0!
                     #cbf_init.backward(torch.ones_like(cbf_init))
                     #dz = embrepeat20.grad#
@@ -1985,7 +1997,9 @@ class CEMSafeSetPolicy(Policy):
                             lhse,lhsi=torch.min(cbf_allscbfhorizon, dim=0)#lhse means left hand side elements
                             #print('lhse.shape',lhse.shape)#(1000,5)
                             rhse,rhsi=torch.max(onemacbfs, dim=0)#rhsi means right hand side indices
-                        cbfdots_violss = torch.sum(( lhse< rhse+realdhz),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
+                        hopetobepositive=lhse-rhsq-realdhz
+                        #cbfdots_violss = torch.sum(( lhse< rhse+realdhz),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
+                        cbfdots_violss = torch.sum(( hopetobepositive<0),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
                         #log.info('self.dhz: %f'%(self.dhz))#currently it is not passed inside!
                         #print('cbfdots_violss',cbfdots_violss)#dimension 1000
                     elif self.conservative=='onestd':
@@ -1999,7 +2013,10 @@ class CEMSafeSetPolicy(Policy):
                             cbfmeanmstd=cbfmean-cbfstd#cbfmean minus 1 std
                             acbfstd,acbfmean=torch.std_mean(onemacbfs,dim=0)#dim (1000,5)
                             acbfmeanpstd=acbfmean+acbfstd#acbfmean plus 1 std
-                        cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd+realdhz,# the acbfs is subject to change
+                        hopetobepositive=cbfmeanmstd - (acbfmeanpstd+realdhz)
+                        #cbfdots_violss = torch.sum(cbfmeanmstd < acbfmeanpstd+realdhz,# the acbfs is subject to change
+                                                #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#now dimension only 1000!
+                        cbfdots_violss = torch.sum(hopetobepositive<0,# the acbfs is subject to change
                                                 dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#now dimension only 1000!
                     elif self.conservative=='average':
                         if self.rewrite=='no':
@@ -2022,11 +2039,27 @@ class CEMSafeSetPolicy(Policy):
                             topkvalues,indices=torch.topk(meancbfallscbfhorizon[:,0],10)
                             #print('meancbfallscbfhorizon',meancbfallscbfhorizon)
                             log.info('top5values: %f,%f,%f,%f,%f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item()))#I don't want it to be positive!
-                            cbfdots_violss = torch.sum( meancbfallscbfhorizon< meanonemacbfsrc,# the acbfs is subject to change
-                                                dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
-                            #print('cbfdots_violss',cbfdots_violss)
-                            howmanypassed=torch.count_nonzero(cbfdots_violss==0)
-                            log.info('howmanypassed:%d'%(howmanypassed.item()))#I want this to be zero!
+                        hopetobepositive=meancbfallscbfhorizon - meanonemacbfsrc
+                        #cbfdots_violss = torch.sum( meancbfallscbfhorizon< meanonemacbfsrc,# the acbfs is subject to change
+                                            #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
+                        cbfdots_violss = torch.sum( hopetobepositive< 0,# the acbfs is subject to change
+                                            dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
+                        #print('cbfdots_violss',cbfdots_violss)
+                        howmanypassed=torch.count_nonzero(cbfdots_violss==0)#at this step cbfdots_violss has shape 1000
+                        log.info('howmanypassed:%d'%(howmanypassed.item()))#I want this to be zero!
+                    if self.action_type=='recovery' and reset_count==self.cbf_thresh_mult_iters:
+                        if howmanypassed==0:
+                            log.info('no trajectory candidates satisfy constraints! The BF is doing its job! Picking safest possible actions!')#enters this! sanity check passed!
+                            randflag=1#randflag=1 means the action is "random", that is, either real random or recovery
+                        
+                        hopetobepositive0=hopetobepositive[:,0]#now it has shape 1000/500
+                        bestk,indices=torch.topk(hopetobepositive0,10)#I just choose the safest one! As in this case there will be few safe ones!
+                        bestoption=torch.argmax(hopetobepositive0)#I hope by doing this, the old and possibly bad recovery will never bee used!
+                        log.info('best5values: %f,%f,%f,%f,%f'%(bestk[0].item(),bestk[1].item(),bestk[2].item(),bestk[3].item(),bestk[4].item()))#I don't want it to be positive!
+                        #log.info('bestone:%f'%(hopetobepositive0[bestoption]))#this should be consistent with the above line! Sanity check passed!
+                        actionchosen=action_samples[bestoption]
+                        action=actionchosen[0]#picking the first one!
+                        return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
                     cbfdots_violss = cbfdots_violss.reshape(cbfdots_violss.shape[0],1)  # the threshold now should be predictions dependent
                 else:#if ignoring the cbf dot constraints#in new setting I need Dislocation Subtraction
                     cbfdots_violss = torch.zeros((num_candidates, 1),
@@ -2040,7 +2073,7 @@ class CEMSafeSetPolicy(Policy):
                                                 .reshape((num_models, num_candidates, 1)),#(20,1000,1)
                                                 dim=0) < act_ss_thresh#(1000,1)
                 else:#ignore safe set constraints
-                    safe_set_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
+                    safe_set_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)#(1000,1) in shape!
                 #maxvalue=torch.max(values).item()#to finally prove your assumption!!!
                 #log.info("maxvalues:%f"%(maxvalue))#to see if it is positive!!! Yes! It is as expected!
                 values=torch.clip(values,max=200)#really bug free fix!#in such reward setting, values should not be bigger than 200!
@@ -2051,10 +2084,10 @@ class CEMSafeSetPolicy(Policy):
                     values = values + goal_states#equation 2 in paper!
                 #values = 10*values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
                 #values = 100*values + (constraint_viols +cbfdots_violss+safe_set_viols) * -1e5 + goal_states#equation 2 in paper!
-                values = values.squeeze()#all those violators, assign them with big cost of -1e5
+                values = values.squeeze()#squeeze make it from (1000,1) to 1000#all those violators, assign them with big cost of -1e5
             itr += 1#CEM Evolution method
         # Return the best action
-        action = actions_sorted[-1][0]#the best one#it is a numpy array
+        action = actions_sorted[-1][0]#-1 means the best one#it is a numpy array#0 means it is an MPC!
         return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
 
     def actcbfdsquarelatentplanareacheraverage(self, obs):#,state):#,tp,fp,fn,tn,tpc,fpc,fnc,tncsome intermediate step that the cbf dot part still requires states rather than latent states
