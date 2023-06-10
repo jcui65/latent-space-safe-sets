@@ -1705,12 +1705,14 @@ class CEMSafeSetPolicy(Policy):
                 #if self.popsize>=1000:
                     #log.info('current pop size before action sample:%d'%(self.popsize))
                 if self.mean is None:#right after reset
-                    action_samples = self._sample_actions_random()#1000*5 2d array
+                    #action_samples = self._sample_actions_random()#1000*5 2d array
+                    action_samples = self._sample_actions_random_limit()#1000*5 2d array
                 else:
                     num_random = int(self.random_percent * self.popsize)#sample 1000 trajectories
                     num_dist = self.popsize - num_random#=0 when random_percent=1
                     action_samples_dist = self._sample_actions_normal(self.mean, self.std, n=num_dist)
-                    action_samples_random = self._sample_actions_random(num_random)#uniformly random from last iter ation
+                    #action_samples_random = self._sample_actions_random(num_random)#uniformly random from last iter ation
+                    action_samples_random = self._sample_actions_random_limit(num_random)#uniformly random from last iter ation
                     action_samples = torch.cat((action_samples_dist, action_samples_random), dim=0)
             else:#itr>=1
                 # Chop off the numer of elites so we don't use constraint violating trajectories
@@ -1731,8 +1733,8 @@ class CEMSafeSetPolicy(Policy):
                     elif self.reduce_horizon=='horizon':
                         cbfhorizon-=1
                         #if cbfhorizon<=1:
-                        self.popsize*=4#2#80 is also too much!#200 is too much!#for a test!#2#
-                        self.popsize=min(self.popsize,4000)#otherwise you cannot run on the neowise card!
+                        self.popsize*=2#4#80 is also too much!#200 is too much!#for a test!#2#
+                        self.popsize=min(self.popsize,2000)#min(self.popsize,4000)#otherwise you cannot run on the neowise card!
                         #log.info('current pop size:%d'%(self.popsize))
                         cbfhorizon=max(1,cbfhorizon)
                         log.info('horizon reduced to %d, current pop size:%d'%(cbfhorizon,self.popsize))#lose its meaning
@@ -1999,7 +2001,7 @@ class CEMSafeSetPolicy(Policy):
                             lhse,lhsi=torch.min(cbf_allscbfhorizon, dim=0)#lhse means left hand side elements
                             #print('lhse.shape',lhse.shape)#(1000,5)
                             rhse,rhsi=torch.max(onemacbfs, dim=0)#rhsi means right hand side indices
-                        hopetobepositive=lhse-rhsq-realdhz
+                        hopetobepositive=lhse-rhse-realdhz
                         #cbfdots_violss = torch.sum(( lhse< rhse+realdhz),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
                         cbfdots_violss = torch.sum(( hopetobepositive<0),dim=1) # the acbfs is subject to change # those that violate the constraints#1000 0,1,2,3,4,5s#
                         #log.info('self.dhz: %f'%(self.dhz))#currently it is not passed inside!
@@ -2047,13 +2049,14 @@ class CEMSafeSetPolicy(Policy):
                         cbfdots_violss = torch.sum( hopetobepositive< 0,# the acbfs is subject to change
                                             dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
                         #print('cbfdots_violss',cbfdots_violss)
-                        howmanypassed=torch.count_nonzero(cbfdots_violss==0)#at this step cbfdots_violss has shape 1000
-                        log.info('howmanypassed:%d'%(howmanypassed.item()))#I want this to be zero!
+                    howmanypassed=torch.count_nonzero(cbfdots_violss==0)#at this step cbfdots_violss has shape 1000
+                    log.info('howmanypassed:%d'%(howmanypassed.item()))#I want this to be zero!
                     if self.action_type=='recovery' and reset_count==self.cbf_thresh_mult_iters:
                         if howmanypassed==0:
                             log.info('no trajectory candidates satisfy constraints! The BF is doing its job! Picking safest possible actions!')#enters this! sanity check passed!
                             randflag=1#randflag=1 means the action is "random", that is, either real random or recovery
-                        
+                        elif howmanypassed>0:
+                            log.info('a few trajectory candidates satisfy constraints! The BF is doing its job! Still picking safest possible actions!')#enters this! sanity check passed!
                         hopetobepositive0=hopetobepositive[:,0]#now it has shape 1000/500
                         bestk,indices=torch.topk(hopetobepositive0,10)#I just choose the safest one! As in this case there will be few safe ones!
                         bestoption=torch.argmax(hopetobepositive0)#I hope by doing this, the old and possibly bad recovery will never bee used!
@@ -4314,6 +4317,28 @@ class CEMSafeSetPolicy(Policy):
         #print('rand min',torch.min(rand[:,0,1]))#just for testing#close to 0 even with 500 candidates
         scaled = rand * (self.ac_ub - self.ac_lb)
         action_samples = scaled + self.ac_lb#something random between ac_lb and ac_ub
+        return action_samples.to(ptu.TORCH_DEVICE)#size of (1000,5,2)
+
+    def _sample_actions_random_limit(self, n=None):#something totally random!
+        if n is None:
+            n = self.popsize#1000
+        kernel2=torch.range(0,1,0.25)
+        kernel1=torch.ones(kernel2.shape[0])#I choose to be devided by 5!
+        da1=torch.kron(kernel2,kernel1)#first line of the deterministic action
+        da2=torch.kron(kernel1,kernel2)#2nd line of the deterministic action
+        da=torch.vstack((da1,da2)).transpose(0,1)#(25,2)#da means deterministic action
+        dar=da.repeat(self.plan_hor,1,1)#(3,25,2)#r for repeat
+        dart=torch.transpose(dar,0,1)#t for transpose!#(25,3,2)#first 25 are not random, they just explore the action limit
+
+        rand = torch.rand((n-dart.shape[0], self.plan_hor, self.d_act))#(1000,5,2)
+        rand=torch.concat((dart,rand))#will think about the case when n<25 later!
+        #print('rand max',torch.max(rand[:,0,0]))#just for testing#close to 1 even with 500 candidates
+        #print('rand min',torch.min(rand[:,0,0]))#just for testing#close to 0 even with 500 candidates
+        #print('rand max',torch.max(rand[:,0,1]))#just for testing#close to 1 even with 500 candidates
+        #print('rand min',torch.min(rand[:,0,1]))#just for testing#close to 0 even with 500 candidates
+        scaled = rand * (self.ac_ub - self.ac_lb)
+        action_samples = scaled + self.ac_lb#something random between ac_lb and ac_ub
+        #print('action_samples[0:50]',action_samples[0:50])#sanity check passed!
         return action_samples.to(ptu.TORCH_DEVICE)#size of (1000,5,2)
 
     def _sample_actions_normal(self, mean, std, n=None):#sample from a normal distribution with mean=mean and std=std
