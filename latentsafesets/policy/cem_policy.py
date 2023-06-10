@@ -49,7 +49,9 @@ class CEMSafeSetPolicy(Policy):
         self.d_act = params['d_act']#2
         self.d_obs = params['d_obs']#dimension of observation (3,64,64) for spb, (3,3,64,64) for reacher#
         self.d_latent = params['d_latent']#32
-        self.ac_ub, self.ac_lb = env.action_space.high, env.action_space.low
+        self.ac_ub, self.ac_lb = env.action_space.high, env.action_space.low#self.ac_ub will be a 2d array, right?
+        #print('action upper bound: ',self.ac_ub)#just for testing![1,1]
+        #print('action lower bound: ',self.ac_lb)#just for testing![-1,-1]
         self.plan_hor = params['plan_hor']#H=5
         self.random_percent = params['random_percent']#1 in spb/reacher/pushing
         self.popsizeinit = params['num_candidates']#1000
@@ -4306,6 +4308,10 @@ class CEMSafeSetPolicy(Policy):
         if n is None:
             n = self.popsize#1000
         rand = torch.rand((n, self.plan_hor, self.d_act))#(1000,5,2)
+        #print('rand max',torch.max(rand[:,0,0]))#just for testing#close to 1 even with 500 candidates
+        #print('rand min',torch.min(rand[:,0,0]))#just for testing#close to 0 even with 500 candidates
+        #print('rand max',torch.max(rand[:,0,1]))#just for testing#close to 1 even with 500 candidates
+        #print('rand min',torch.min(rand[:,0,1]))#just for testing#close to 0 even with 500 candidates
         scaled = rand * (self.ac_ub - self.ac_lb)
         action_samples = scaled + self.ac_lb#something random between ac_lb and ac_ub
         return action_samples.to(ptu.TORCH_DEVICE)#size of (1000,5,2)
