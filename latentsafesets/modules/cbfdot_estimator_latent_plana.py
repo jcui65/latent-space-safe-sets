@@ -61,7 +61,9 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         self.w5=params['w5']#10#50#
         self.w6=params['w6']
         self.w7=params['w7']
+        self.w8=params['w8']
         self.stepstohell=params['stepstohell']
+        self.m10=1e-10
     def forward(self, obs, already_embedded=False):
         """
         Returns inputs to sigmoid for probabilities
@@ -249,14 +251,14 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         cbfnew = self(next_obs, already_embedded).squeeze()#size 128#.forward!#prediction
         #print('logits',logits)#the value of the CBF
         targets = cbfv#constr#some function of constr#label
-        loss1 =torch.nn.functional.relu(targets-cbfold)
+        loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
         loss1=torch.mean(loss1)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
         #print('loss1.shape',loss1.shape)#used to be 128
-        loss2 =torch.nn.functional.relu(targets-cbfnew)
+        loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
         loss2=torch.mean(loss2)##
         #print('loss2.shape',loss2.shape)#used to be 128
         normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
-        loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)
+        loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#the difference should be less than that!!!
         loss4=torch.mean(loss4)#
         #print('loss4.shape',loss4.shape)#used to be 128
         #print('next_obs.shape',next_obs.shape)#(128,32)
@@ -275,7 +277,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             loss5=0*loss4##torch.mean(loss5)#I set it to be 1/900
             bztut=cbfnew+(self.alpha-1)*cbfold-torch.matmul(jno,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
             qztut=bztut-(2-self.alpha)*self.dhz#cbfnew has its first dimension to be 128
-            loss3=torch.nn.functional.relu(self.gammadyn-qztut)
+            loss3=torch.nn.functional.relu(self.gammadyn-qztut)#this means that qztut should be smaller than gammadyn
             loss3=torch.mean(loss3)#0#make it a CBF#finally!
             #print('loss3.shape',loss3.shape)#used to be 128
         else:
@@ -288,12 +290,13 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         loss=self.w1*loss1+self.w2*loss2+self.w3*loss3+self.w4*loss4+self.w5*loss5##
         data = {
             'cbf_total': loss.item(),
-            'old_safe': max(self.w1*loss1.item(),1e-15),#old safe
-            'new_safe': max(self.w2*loss2.item(),1e-15),#for the granularity of plotting
-            'old_unsafe':1e-15,#want to show the log plots!#0,#
-            'new_unsafe':1e-15,#0,#
-            'make_it_a_cbf':self.w3*loss3.item(),
-            'closeness':self.w4*loss4.item(),
+            'old_safe': max(self.w1*loss1.item(),self.m10),#old safe
+            'new_safe': max(self.w2*loss2.item(),self.m10),#for the granularity of plotting
+            'old_unsafe':self.m10,#want to show the log plots!#0,#
+            'new_unsafe':self.m10,#0,#
+            'make_it_a_cbf':max(self.w3*loss3.item(),self.m10),
+            'closeness_safe':max(self.w4*loss4.item(),self.m10),
+            'closeness_unsafe':self.m10,
             'regularization':self.w5*loss5.item()}
         return loss,data
 
@@ -301,10 +304,10 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         cbfold=self(obs, already_embedded).squeeze()#.forward!#prediction
         cbfnew = self(next_obs, already_embedded).squeeze()#.forward!#prediction
         #print('logits',logits)#the value of the CBF
-        targets = cbfv#constr#some function of constr#label
-        loss1=torch.where(targets<0,torch.nn.functional.relu(cbfold-targets),0*torch.nn.functional.relu(targets-cbfold))#128 dim
-        #print('loss1',loss1)
-        loss2=torch.where(targets<0,torch.nn.functional.relu(cbfnew-targets),0*torch.nn.functional.relu(targets-cbfnew))#128 dim
+        targets = cbfv#constr#some function of constr#label#if target<0 (violation), then cbfold should be less than it. Otherwise,
+        loss1=torch.where(targets<0,torch.nn.functional.relu(cbfold-targets),0*torch.nn.functional.relu(cbfold-targets))#128 dim
+        #print('loss1',loss1)#cbf should be less than the target!
+        loss2=torch.where(targets<0,torch.nn.functional.relu(cbfnew-targets),0*torch.nn.functional.relu(cbfnew-targets))#128 dim
         count=torch.count_nonzero(targets<0)#I don't do a zero handling, as I think it is very unlikely to have such case
         #log.info('count:%d'%(count))#it should be something between 1 and 128
         if count==0:
@@ -323,8 +326,8 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         loss41=torch.nn.functional.relu(cbfnew-cbfold,0)#I want cbfnew<cbfold in this case
         loss42=torch.nn.functional.relu(cbfold-cbfnew-normdiffthres,0)#I want cbfnew<cbfold not too much!
         loss43=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#I want the difference of the 2 not too much!
-        loss4=torch.where(targets<0,loss41+loss42,loss43)
-        loss4=torch.mean(loss4)#
+        loss4=torch.where(targets<0,loss41+loss42,loss43)#if targets<0, then this means that you have a violation and then you should use loss41+42
+        loss4=torch.mean(loss4)#if targets>0, then you not yet encounter a violation, then you just need to use loss43
         #print('next_obs.shape',next_obs.shape)
         if self.reg_lipschitz=='yes':
             #selfforwardtrue=lambda nextobs: self(nextobs, True)
@@ -354,15 +357,16 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             loss5=0*loss4#torch.mean(loss5)#
         else:
             loss5=0*loss4
-        loss=self.w6*loss1+self.w7*loss2+self.w4*loss4+self.w5*loss5##
+        loss=self.w6*loss1+self.w7*loss2+self.w8*loss4+self.w5*loss5##
         data = {
             'cbf_total': loss.item(),
-            'old_safe':1e-15,#want to show the log plots!#0,#
-            'new_safe':1e-15,#0,#
-            'old_unsafe': max(self.w6*loss1.item(),1e-15),#old safe
-            'new_unsafe': max(self.w7*loss2.item(),1e-15),
-            'make_it_a_cbf':1e-15,#want to show the log plots!#0,#0,#-0.001,#just for consistency in plotting!
-            'closeness':self.w4*loss4.item(),
+            'old_safe':self.m10,#want to show the log plots!#0,#
+            'new_safe':self.m10,#0,#
+            'old_unsafe': max(self.w6*loss1.item(),self.m10),#old safe
+            'new_unsafe': max(self.w7*loss2.item(),self.m10),
+            'make_it_a_cbf':self.m10,#want to show the log plots!#0,#0,#-0.001,#just for consistency in plotting!
+            'closeness_safe':self.m10,
+            'closeness_unsafe':max(self.w8*loss4.item(),self.m10),#for plotting!#
             'regularization':self.w5*loss5.item()}
         return loss,data
 

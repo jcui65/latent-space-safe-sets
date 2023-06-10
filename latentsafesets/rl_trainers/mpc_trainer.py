@@ -200,7 +200,7 @@ class MPCTrainer(Trainer):
         #self.trainers.append(PETSDynamicsTrainer2(params, modules['dyn2'], loss_plotter))
         #self.trainers.append(VAETrainer(params, modules['enc2'], loss_plotter))
 
-    def initial_train(self, replay_buffer,replay_buffer_unsafe):#by default the replay buffer is the encoded version
+    def initial_train(self, replay_buffer,replay_buffer_unsafe=None):#by default the replay buffer is the encoded version
         update_dir = os.path.join(self.logdir, 'initial_train')#create that folder!
         os.makedirs(update_dir, exist_ok=True)#mkdir is here!
         for trainer in self.trainers:#type() method returns class type of the argument(object) passed as parameter
@@ -221,9 +221,10 @@ class MPCTrainer(Trainer):
             else:#then it means that the VAE has been trained!#now both success and unsafe are required!
                 trainer.initial_train_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)
 
-    def update(self, replay_buffer, update_num,replay_buffer_unsafe):#the update folder!
+    def update(self, replay_buffer, update_num,replay_buffer_unsafe=None):#the update folder!
         update_dir = os.path.join(self.logdir, 'update_%d' % update_num)
         os.makedirs(update_dir, exist_ok=True)
+        episodiccbfdhz=0
         for trainer in self.trainers:
             #trainer.update(replay_buffer, update_dir)
             if type(trainer)!=CBFdotlatentplanaTrainer:

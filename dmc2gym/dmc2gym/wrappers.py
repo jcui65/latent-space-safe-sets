@@ -56,7 +56,7 @@ class DMCWrapper(core.Env):
         self._height = height
         self._width = width
         self._camera_id = camera_id
-        self._frame_skip = frame_skip
+        self._frame_skip = frame_skip#it is 1 by default!
         self._channels_first = channels_first
         self._frozen = False
         self._n_steps = 0
@@ -73,6 +73,8 @@ class DMCWrapper(core.Env):
 
         # true and normalized action spaces
         self._true_action_space = _spec_to_box([self._env.action_spec()])#see control.Environment
+        #print('self._true_action_space.high',self._true_action_space.high)#[1,1]
+        #print('self._true_action_space.low',self._true_action_space.low)#[-1,-1]
         self._norm_action_space = spaces.Box(
             low=-1.0,
             high=1.0,
@@ -124,13 +126,16 @@ class DMCWrapper(core.Env):
             ).copy()
 
     def _convert_action(self, action):
+        #print('action0',action)#just a test
         action = action.astype(np.float64)
         action = action / 2
+        #print('action1',action)#just a test
         true_delta = self._true_action_space.high - self._true_action_space.low
         norm_delta = self._norm_action_space.high - self._norm_action_space.low
         action = (action - self._norm_action_space.low) / norm_delta
         action = action * true_delta + self._true_action_space.low
         action = action.astype(np.float32)
+        #print('action2',action)#just a test
         return action
 
     @property
@@ -232,7 +237,7 @@ class DMCWrapper(core.Env):
         else:
             constraint_cost = 0
 
-        oldposition=old_observation[0:2]
+        oldposition=old_observation[0:2]#states, not positions!
         oldtotarget=old_observation[2:4]    
         oldtoobstacle=old_observation[4:6]
         oldvelocity=old_observation[6:8]

@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=1, help='Random seed')#2, help='Random seed')#4, help='Random seed')#-1, help='Random seed')#
     parser.add_argument('--log_freq', type=int, default=100,
                         help='How frequently to log updates')
-    parser.add_argument('--plot_freq', type=int, default=500,#2000,#1000,#
+    parser.add_argument('--plot_freq', type=int, default=2000,#1000,#500,#
                         help='How frequently to produce plots')
     parser.add_argument('--checkpoint_freq', type=int, default=2000,
                         help='How frequently to save model checkpoints')
@@ -225,7 +225,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--noofsigma',type=float,default=3.0)#2.0)#
     parser.add_argument('--noofsigmadhz',type=float,default=2.0)#3.0)#
     parser.add_argument('--unsafebuffer',type=str,default='yes2')#'no')#'yes')#
-    parser.add_argument('--cbf_thresh_mult_iters', type=int, default=3)#5)#8)#16)#16 is crazy, but fails#
+    parser.add_argument('--cbf_thresh_mult_iters', type=int, default=2)#3)#5)#8)#16)#16 is crazy, but fails#
     parser.add_argument('--reducerocbfhd',type=str,default='yes')
     parser.add_argument('--dynamic_dhz',type=str,default='no')#'yes')#
     parser.add_argument('--reg_lipschitz',type=str,default='no')#
@@ -237,13 +237,18 @@ def add_cbfd_args(parser):
     parser.add_argument('--w1',type=float,default=2000)#10000)#
     parser.add_argument('--w2',type=float,default=2000)#10000)#
     parser.add_argument('--w3',type=float,default=10000)#1)#old#
-    parser.add_argument('--w4',type=float,default=10000)#10)##
-    parser.add_argument('--w5',type=float,default=10000)#10)
+    parser.add_argument('--w4',type=float,default=15000)#10)##
+    parser.add_argument('--w5',type=float,default=10000)#10)#not used anymore!
     parser.add_argument('--w6',type=float,default=20000)#10000)#w1 for unsafe data points!
     parser.add_argument('--w7',type=float,default=20000)#10000)#w2 for unsafe data points!
+    parser.add_argument('--w8',type=float,default=20000)#10)##
     parser.add_argument('--stepstohell',type=float,default=10)
-    parser.add_argument('--cbfd_checkpoint', type=str, default='outputs/2023-06-03/02-38-05/cbfd.pth')#new weights 1#'outputs/2023-06-03/02-46-55/cbfd.pth')#new weights 2#'outputs/2023-05-30/23-23-14/cbfd.pth')#'outputs/2023-05-31/09-40-13/cbfd.pth')#regularized!#'outputs/2023-05-27/17-08-10/cbfd.pth')#unregularized!#'outputs/2023-05-27/16-55-18/cbfd.pth')#regularized!#'outputs/2023-05-29/11-53-00/cbfd.pth')#unregularizedgammaunsafe=0.004#'outputs/2023-05-12/08-56-02/1/initial_train/cbfd_50000.pth')#'outputs/2023-05-07/23-06-07/1/initial_train/cbfd_10000.pth')#true#'outputs/2023-04-30/02-35-05/1/initial_train/cbfd_10000.pth')#half mean!#'outputs/2023-05-02/14-49-18/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
-    #None)#'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
+    parser.add_argument('--rewrite',type=str,default='no')#'yes')#
+    parser.add_argument('--unsafethres',type=float,default=0.07)#
+    parser.add_argument('--safethres1',type=float,default=0.08)#
+    parser.add_argument('--safethres2',type=float,default=0.10)#
+    parser.add_argument('--cbfd_checkpoint', type=str, default=None)#'outputs/2023-06-03/02-46-55/cbfd.pth')#new weights 2#'outputs/2023-06-03/02-38-05/cbfd.pth')#new weights 1#'outputs/2023-05-30/23-23-14/cbfd.pth')#'outputs/2023-05-31/09-40-13/cbfd.pth')#regularized!#'outputs/2023-05-27/17-08-10/cbfd.pth')#unregularized!#'outputs/2023-05-27/16-55-18/cbfd.pth')#regularized!#'outputs/2023-05-29/11-53-00/cbfd.pth')#unregularizedgammaunsafe=0.004#'outputs/2023-05-12/08-56-02/1/initial_train/cbfd_50000.pth')#'outputs/2023-05-07/23-06-07/1/initial_train/cbfd_10000.pth')#true#'outputs/2023-04-30/02-35-05/1/initial_train/cbfd_10000.pth')#half mean!#'outputs/2023-05-02/14-49-18/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#
+    #'outputs/2023-02-17/19-02-06/initial_train/cbfd.pth')#'outputs/2022-12-26/11-14-08/initial_train/cbfd.pth')#'outputs/2022-12-26/22-29-25/initial_train/cbfd.pth')#planaego#'outputs/2023-01-30/10-24-14/initial_train/cbfd.pth')#'outputs/2022-11-14/11-34-20/initial_train/cbfd.pth')#'outputs/2022-11-21/11-01-14/initial_train/cbfd.pth')#'outputs/2022-11-15/01-05-18/initial_train/cbfd.pth')#'outputs/2022-10-31/10-28-49/initial_train/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-09-17/21-54-24/update_99/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_10000.pth')#'outputs/2022-08-22/22-30-58/cbfd.pth')#'outputs/2022-08-22/22-30-58/cbfd_160000.pth')#'outputs/2022-08-22/22-30-58/cbfd_30000.pth')#'outputs/2022-08-22/22-30-58/cbfd_20000.pth')#'outputs/2022-08-22/21-37-34/cbfd_500000.pth')#'outputs/2022-08-06/12-29-56/cbfd_158000.pth')#
     # 'outputs/2022-08-06/12-29-56/cbfd_10000.pth')#'outputs/2022-08-06/12-29-56/cbfd_30000.
     # pth')#'outputs/2022-08-06/12-29-56/cbfd_20000.pth')#
     # 'outputs/2022-08-06/15-02-09/cbfd_10000.pth')#'outputs/2022-08-06/15-02-09/cbfd_20000.pth')#
@@ -271,7 +276,7 @@ def add_env_options(params):
         ]
         params['frame_stack'] = 1
     elif params['env'] == 'reacher':
-        params['buffer_size'] = 25000#75000#
+        params['buffer_size'] = 25000#50000#75000#
         #params['data_dirs'] = [
             #'Reacher',
             #'ReacherConstraints',
