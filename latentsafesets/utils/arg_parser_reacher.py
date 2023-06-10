@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=1, help='Random seed')#2, help='Random seed')#4, help='Random seed')#-1, help='Random seed')#
     parser.add_argument('--log_freq', type=int, default=100,
                         help='How frequently to log updates')
-    parser.add_argument('--plot_freq', type=int, default=1000,#500,#2000,#
+    parser.add_argument('--plot_freq', type=int, default=2000,#1000,#500,#
                         help='How frequently to produce plots')
     parser.add_argument('--checkpoint_freq', type=int, default=2000,
                         help='How frequently to save model checkpoints')
