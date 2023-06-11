@@ -176,6 +176,56 @@ def load_trajectories(num_traj, file):#data/simplepointbot
 
     return trajectories#that is a sequence/buffer/pool of trajs including images
 
+def modify_trajectories(num_traj, file,horizon):#data/simplepointbot
+    log.info('Loading trajectories from %s' % file)#data/SimplePointBot
+
+    if not os.path.exists(file):
+        raise RuntimeError("Could not find directory %s." % file)
+    trajectories = []#irrelevant
+    iterator = range(num_traj) if num_traj <= 200 else trange(num_traj)#maybe a bug source?
+    sth=10#params['stepstohell']#
+    for i in iterator:#50
+        if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json
+            log.info('Could not find %d' % i)
+            continue
+        im_fields = ('obs', 'next_obs')
+        with open(os.path.join(file, '%d.json' % i), 'r') as f:#read the json file!
+            trajectory = json.load(f)#1 piece traj info without 2 images 100 time steps
+            transitions = [trajectory[-1]]#[trajectory[params['horizon']]]#AN EMPTY LIST
+            #if params['ways']==2:#ways 2 means 0.1,...,0.9
+            #new way
+            frame=trajectory[-1]#initially trajectory[n]#start from the last frame!#transitions[n]#
+            for n in reversed(range(horizon-1)):#(range(149)):#for pushing#(range(99)):#(range(19)):only for reacher interactions#(range(100)):#(range(params['horizon'])):#n is from 99 to 0 inclusive
+                #now the new things start!
+                #if n>=2:#1:#frame[0]'s constraint is always 0! initial condition is always safe!
+                #if n>=1:
+                frameprevious=trajectory[n]#[n-1]
+                if (frame['constraint']-frameprevious['constraint'])>1e-5 and frame['constraint']>1e-6:#to avoid numerical issues!
+                    frameprevious['constraint']=max(frame['constraint']-1/sth,0)#it is still self supervised!#
+                frame=frameprevious
+                if n==0:#just for safety 
+                    frameprevious['constraint']==0
+                transitions.insert(0,frameprevious)
+            #transitions.insert(0,trajectory[0])#no use anymore!
+            with open(os.path.join(file, '%d_ctsconstraints.json' % i), "w") as f:
+                json.dump(transitions, f)#separate trajectory info from images
+
+
+        im_dat = {}#image_data
+
+        for field in im_fields:
+            f = os.path.join(file, "%d_%s.npy" % (i, field))#obs and next_obs
+            if os.path.exists(file):
+                dat = np.load(f)
+                im_dat[field] = dat.astype(np.uint8)#100 images of obs and next_obs
+
+        for j, frame in list(enumerate(trajectory)):#each frame in one trajectory
+            for key in im_dat:#from obs and next_obs
+                frame[key] = im_dat[key][j]#the frame is the jth frame in 1 traj
+        trajectories.append(trajectory)#now you recover the full trajectory info with images
+
+    return trajectories#that is a sequence/buffer/pool of trajs including images
+
 def load_trajectories_latent(num_traj, file):#data/simplepointbot#do I need this?
     log.info('Loading trajectories from %s' % file)#data/SimplePointBot
 

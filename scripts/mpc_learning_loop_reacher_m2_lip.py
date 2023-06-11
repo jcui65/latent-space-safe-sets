@@ -258,7 +258,7 @@ if __name__ == '__main__':
                     #movie_traj_relative.append({'obs_relative': next_obs_relative.reshape((-1, 3, 64, 64))[0]}) #relative or not # add this image
                     traj_rews.append(reward)#reward is either 0 or 1!
 
-                    constr = info['constraint']#its use is seen a few lines later
+                    constr = info['constraint']#its use is seen a few lines later#this tells the constraint condition of next_obs
 
                     rfn=not randflag#rfn means rand flag not
                     action_rand=randflag

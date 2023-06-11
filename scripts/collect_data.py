@@ -39,7 +39,7 @@ def generate_teacher_demo_data(env, data_dir, teacher, n=100, noisy=False, logdi
     teacher = teacher(env, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
     demonstrations = []#an empty list
     for i in range(n):
-        traj = teacher.generate_trajectory()#around line 33 in teacher.py
+        traj = teacher.generate_trajectory()#around line 33 in teacher.py#traj is a trajectory with 100/150 steps!
         reward = sum([frame['reward'] for frame in traj])#traj is a list of dictionaries
         #why not directly use rtg[0]?
         print('Trajectory %d, Reward %d' % (i, reward))
