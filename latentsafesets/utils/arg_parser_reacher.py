@@ -232,7 +232,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--boundary',type=str,default='yes')#'no')##
     parser.add_argument('--rectify',type=float,default=0.0)#
     parser.add_argument('--gammasafe',type=float,default=0.003)
-    parser.add_argument('--gammaunsafe',type=float,default=0.002)#0.004)#
+    parser.add_argument('--gammaunsafe',type=float,default=0.003)#0.004)#
     parser.add_argument('--gammadyn',type=float,default=0.0015)
     parser.add_argument('--w1',type=float,default=2000)#10000)#
     parser.add_argument('--w2',type=float,default=2000)#10000)#
