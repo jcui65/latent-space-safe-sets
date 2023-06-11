@@ -98,8 +98,8 @@ def simple_plot4(data, data2, data3,data4=None,std=None,std2=None,std3=None,std4
             plt.semilogy(data4)
     else:
         plt.plot(data, label='LS3-best')#label='LS3-recovery')#label='ROLSCBF')#
-        plt.plot(data2, label='ROLSCBF-M1')#'ROLSCBF-no dynamic robust')#
-        plt.plot(data3, label='ROLSCBF-M2-current')#label='ROLSCBF-no measurement robust')#label='LS3-recovery')#
+        plt.plot(data2, label='ROLSCBF-M1')#'ROLSCBF-M2-sparse')#'ROLSCBF-no dynamic robust')#
+        plt.plot(data3, label='ROLSCBF-M2-current')#'ROLSCBF-M2-dense')#label='ROLSCBF-no measurement robust')#label='LS3-recovery')#
         if data4 is not None:
             plt.plot(data4, label='LSCBF-no robust')
         plt.legend()

@@ -2043,6 +2043,7 @@ class CEMSafeSetPolicy(Policy):
                             topkvalues,indices=torch.topk(meancbfallscbfhorizon[:,0],10)
                             #print('meancbfallscbfhorizon',meancbfallscbfhorizon)
                             log.info('top5values: %f,%f,%f,%f,%f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item()))#I don't want it to be positive!
+                            log.info('theindices: %d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item()))
                         hopetobepositive=meancbfallscbfhorizon - meanonemacbfsrc
                         #cbfdots_violss = torch.sum( meancbfallscbfhorizon< meanonemacbfsrc,# the acbfs is subject to change
                                             #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
@@ -2061,6 +2062,7 @@ class CEMSafeSetPolicy(Policy):
                         bestk,indices=torch.topk(hopetobepositive0,10)#I just choose the safest one! As in this case there will be few safe ones!
                         bestoption=torch.argmax(hopetobepositive0)#I hope by doing this, the old and possibly bad recovery will never bee used!
                         log.info('best5values: %f,%f,%f,%f,%f'%(bestk[0].item(),bestk[1].item(),bestk[2].item(),bestk[3].item(),bestk[4].item()))#I don't want it to be positive!
+                        log.info('the indices: %d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item()))
                         #log.info('bestone:%f'%(hopetobepositive0[bestoption]))#this should be consistent with the above line! Sanity check passed!
                         actionchosen=action_samples[bestoption]
                         action=actionchosen[0]#picking the first one!

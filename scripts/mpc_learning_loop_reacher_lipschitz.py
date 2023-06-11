@@ -590,7 +590,7 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'slopezhu.npy'), slopezhu)
             np.save(os.path.join(logdir, 'slopeyhu.npy'), slopeyhu)
             np.save(os.path.join(logdir, 'slopexhu.npy'), slopexhu)
-            
+            '''
             pu.simple_plot(slopexhs[0:modifiedlength], title='Slope xh safe',
                                     file=os.path.join(logdir, 'slopexhs'+'.pdf'),
                                     ylabel='slope xh safe', xlabel='# of points examined')
@@ -618,6 +618,55 @@ if __name__ == '__main__':
             pu.simple_plot(slopezh[0:modifiedlength], title='Slope zh all',
                                     file=os.path.join(logdir, 'slopezh'+'.pdf'),
                                     ylabel='slope zh all', xlabel='# of points examined')#there is a bug! Be patient!
+            '''
+            pu.simple_plot(slopexy[0:modifiedlength], title='Slope xy',file=os.path.join(logdir, 'slopexy.pdf'),
+                                    ylabel='slope xy', xlabel='# of points examined')
+            pu.simple_plot(slopexys[0:modifiedlength], title='Slope xys',file=os.path.join(logdir, 'slopexys.pdf'),
+                                    ylabel='slope xys', xlabel='# of points examined')
+            pu.simple_plot(slopexyu[0:modifiedlength], title='Slope xyu',file=os.path.join(logdir, 'slopexyu.pdf'),
+                                    ylabel='slope xyu', xlabel='# of points examined')
+            pu.simple_plot(slopeyz[0:modifiedlength], title='Slope yz',file=os.path.join(logdir, 'slopeyz.pdf'),
+                                    ylabel='slope yz', xlabel='# of points examined')
+            pu.simple_plot(slopeyzs[0:modifiedlength], title='Slope yzs',file=os.path.join(logdir, 'slopeyzs.pdf'),
+                                    ylabel='slope yzs', xlabel='# of points examined')
+            pu.simple_plot(slopeyzu[0:modifiedlength], title='Slope yzu',file=os.path.join(logdir, 'slopeyzu.pdf'),
+                                    ylabel='slope yzu', xlabel='# of points examined')
+            pu.simple_plot(slopezh[0:modifiedlength], title='Slope zh all',file=os.path.join(logdir, 'slopezh.pdf'),
+                                    ylabel='slope zh all', xlabel='# of points examined')#there is a bug! Be patient!
+            pu.simple_plot(slopezhs[0:modifiedlength], title='Slope zh safe',file=os.path.join(logdir, 'slopezhs.pdf'),
+                                    ylabel='slope zh safe', xlabel='# of points examined')
+            pu.simple_plot(slopezhu[0:modifiedlength], title='Slope zh unsafe',file=os.path.join(logdir, 'slopezhu.pdf'),
+                                    ylabel='slope zh unsafe', xlabel='# of points examined')
+            pu.simple_plot(slopeyh[0:modifiedlength], title='Slope yh',file=os.path.join(logdir, 'slopeyh.pdf'),
+                                    ylabel='slope yh', xlabel='# of points examined')
+            pu.simple_plot(slopeyhs[0:modifiedlength], title='Slope yhs',file=os.path.join(logdir, 'slopeyhs.pdf'),
+                                    ylabel='slope yhs', xlabel='# of points examined')
+            pu.simple_plot(slopeyhu[0:modifiedlength], title='Slope yhu',file=os.path.join(logdir, 'slopeyhu.pdf'),
+                                    ylabel='slope yhu', xlabel='# of points examined')
+            pu.simple_plot(slopexh[0:modifiedlength], title='Slope xh all',file=os.path.join(logdir, 'slopexh.pdf'),
+                                    ylabel='slope xh all', xlabel='# of points examined')
+            pu.simple_plot(slopexhs[0:modifiedlength], title='Slope xh safe',file=os.path.join(logdir, 'slopexhs.pdf'),
+                                    ylabel='slope xh safe', xlabel='# of points examined')
+            pu.simple_plot(slopexhu[0:modifiedlength], title='Slope xh unsafe',file=os.path.join(logdir, 'slopexhu.pdf'),
+                                    ylabel='slope xh unsafe', xlabel='# of points examined')
+            pu.simple_plot(slopexq[0:modifiedlength], title='Slope xq all',file=os.path.join(logdir, 'slopexq.pdf'),
+                                    ylabel='slope xq all', xlabel='# of points examined')
+            pu.simple_plot(slopexqs[0:modifiedlength], title='Slope xq safe',file=os.path.join(logdir, 'slopexqs.pdf'),
+                                    ylabel='slope xq safe', xlabel='# of points')
+            pu.simple_plot(slopeyq[0:modifiedlength], title='Slope yq all',file=os.path.join(logdir, 'slopeyq.pdf'),
+                                    ylabel='slope yq all', xlabel='# of points examined')
+            pu.simple_plot(slopeyqs[0:modifiedlength], title='Slope yq safe',file=os.path.join(logdir, 'slopeyqs.pdf'),
+                                    ylabel='slope yq safe', xlabel='# of points')
+            pu.simple_plot(slopezq[0:modifiedlength], title='Slope zq all',file=os.path.join(logdir, 'slopezq.pdf'),
+                                    ylabel='slope zq all', xlabel='# of points examined')
+            pu.simple_plot(slopezqs[0:modifiedlength], title='Slope zq safe',file=os.path.join(logdir, 'slopezqs.pdf'),
+                                    ylabel='slope zq safe', xlabel='# of points')
+            pu.simple_plot(qzuno[0:modifiedlength], title='qzuno',file=os.path.join(logdir, 'qzuno.pdf'),
+                                    ylabel='qzuno', xlabel='# of points')
+            pu.simple_plot(qzunos[0:modifiedlength], title='qzuno safe',file=os.path.join(logdir, 'qzunos.pdf'),
+                                    ylabel='qzuno safe', xlabel='# of points')
+            pu.simple_plot(pdnarray[0:modifiedlength], title='pose diff norm all',file=os.path.join(logdir, 'pdnarray.pdf'),
+                                    ylabel='pose diff norm all', xlabel='# of points examined')
 
         params['seed']=params['seed']+1#m+1#
         #utils.init_logging(logdir)#record started!
