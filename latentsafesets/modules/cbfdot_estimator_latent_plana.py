@@ -370,6 +370,76 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             'regularization':self.w5*loss5.item()}
         return loss,data
 
+    def lossm2u0109(self,obs, next_obs, cbfv, already_embedded=False):
+        cbfold=self(obs, already_embedded).squeeze()#.forward!#prediction
+        cbfnew = self(next_obs, already_embedded).squeeze()#.forward!#prediction
+        #print('logits',logits)#the value of the CBF
+        targets = cbfv#constr#some function of constr#label#if target<0 (violation), then cbfold should be less than it. Otherwise,
+        loss1=torch.where(targets<0,torch.nn.functional.relu(cbfold-targets),0*torch.nn.functional.relu(cbfold-targets))#128 dim
+        #print('loss1',loss1)#cbf should be less than the target!
+        loss2=torch.where(targets<0,torch.nn.functional.relu(cbfnew-targets),0*torch.nn.functional.relu(cbfnew-targets))#128 dim
+        count=torch.count_nonzero(targets<0)#I don't do a zero handling, as I think it is very unlikely to have such case
+        #log.info('count:%d'%(count))#it should be something between 1 and 128
+        if count==0:
+            count+=1#just in case!
+        loss1=torch.sum(loss1)/count#torch.mean(loss1)#this mean operation is a diluting factor!!!
+        #log.info('loss1scalar:%f'%(loss1.item()))#sanity check passed!
+        loss2=torch.sum(loss2)/count#torch.mean(loss2)#I should mean over all the negative label samples!
+        #if targets<0:#you meet the unsafe point!
+            #loss1 =torch.nn.functional.relu(cbfold-targets)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
+            #loss2 =torch.nn.functional.relu(cbfnew-targets)#
+        #elif targets>=0:
+            #loss1=0*torch.nn.functional.relu(targets-cbfold)#don't update this!
+            #loss2=0*torch.nn.functional.relu(targets-cbfnew)#just for consistency!
+        normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
+        #loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#
+        loss41=torch.nn.functional.relu(cbfnew-cbfold,0)#I want cbfnew<cbfold in this case
+        loss42=torch.nn.functional.relu(cbfold-cbfnew-normdiffthres,0)#I want cbfnew<cbfold not too much!
+        loss43=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#I want the difference of the 2 not too much!
+        loss4=torch.where(targets<0,loss41+loss42,loss43)#if targets<0, then this means that you have a violation and then you should use loss41+42
+        loss4=torch.mean(loss4)#if targets>0, then you not yet encounter a violation, then you just need to use loss43
+        #print('next_obs.shape',next_obs.shape)
+        if self.reg_lipschitz=='yes':
+            #selfforwardtrue=lambda nextobs: self(nextobs, True)
+            #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+            '''
+            jno=jacobian(selfforwardtrue,next_obs,create_graph=True)#jno means jacobian next_obs
+            jnon=torch.norm(jno)#jnon means  norm of jacobian next_obs
+            if self.env=='reacher':
+                lipthres=1/900
+            elif self.env=='push':
+                lipthres=1/500
+            elif self.env=='spb':
+                lipthres=1/5
+            loss5=torch.nn.functional.relu(jnon-lipthres)#I set it to be 1/900
+            '''
+            '''
+            jno=torch.zeros_like(next_obs)
+            for i in range(next_obs.shape[0]):
+                jnoi=jacobian(selfforwardtrue,next_obs[i],create_graph=True)#jnoi means jacobian next_obs ith
+                jno[i]=jnoi#jnoi should be 32 dimensional
+            #jnon=torch.norm(jno)#jnon means  norm of jacobian next_obs
+            jnon=torch.norm(jno,dim=-1)#128 now!
+            #print('jno.shape',jno.shape)#jno.shape torch.Size([128, 1, 128, 32])
+            #print('jnon.shape',jnon.shape)#it use to be a scalar, 0.6009, with shape 0
+            loss5=torch.nn.functional.relu(jnon-self.lipthres)
+            '''
+            loss5=0*loss4#torch.mean(loss5)#
+        else:
+            loss5=0*loss4
+        loss=self.w6*loss1+self.w7*loss2+self.w8*loss4+self.w5*loss5##
+        data = {
+            'cbf_total': loss.item(),
+            'old_safe':self.m10,#want to show the log plots!#0,#
+            'new_safe':self.m10,#0,#
+            'old_unsafe': max(self.w6*loss1.item(),self.m10),#old safe
+            'new_unsafe': max(self.w7*loss2.item(),self.m10),
+            'make_it_a_cbf':self.m10,#want to show the log plots!#0,#0,#-0.001,#just for consistency in plotting!
+            'closeness_safe':self.m10,
+            'closeness_unsafe':max(self.w8*loss4.item(),self.m10),#for plotting!#
+            'regularization':self.w5*loss5.item()}
+        return loss,data
+
     def step(self):
         """
         This assumes you've already done backprop. Steps optimizers
