@@ -350,9 +350,9 @@ if __name__ == '__main__':
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
                     #log.info('hobs: %f, hnextobs: %f'%(hobs,hnextobs))
-                    dtzobs=gradjh2z(zobs)*dhd#I set the dhd
+                    dtzobs=gradjh2z(zobs)*dhd#I set the dhd#Now I realize I can discard this term!
                     bzuop=hobs-dtzobs
-                    dtznextobs=gradjh2z(znextobs)*dhd
+                    dtznextobs=gradjh2z(znextobs)*dhd#Now I realize I can discard this term!
                     bzunop=hnextobs-dtznextobs
                     log.info('hobs: %f, hnextobs: %f, dtzobs: %f, dtznextobs: %f'%(hobs,hnextobs,dtzobs,dtznextobs))
                     qzuop=bzuop-dhz

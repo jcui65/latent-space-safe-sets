@@ -271,6 +271,19 @@ class CBFdotlatentplanaTrainer(Trainer):
         else:
             self.batchsize=self.params['cbfd_batch_size']#int(self.params['cbfd_batch_size']/2)#
             #log.info('self.batchsize hope 256:%d'% (self.batchsize))
+        self.batchsize0s=64
+        self.batchsize0to9=32
+        #self.batchsize0=32
+        #self.batchsize1=32
+        #self.batchsize2=32
+        #self.batchsize3=32
+        #self.batchsize4=32
+        #self.batchsize5=32
+        #self.batchsize6=32
+        #self.batchsize7=32
+        #self.batchsize8=32
+        #self.batchsize9=32
+        self.batchsize10=128
         self.env_name = params['env']
         self.gammasafe=params['gammasafe']
         self.gammaunsafe=params['gammaunsafe']
@@ -446,6 +459,8 @@ class CBFdotlatentplanaTrainer(Trainer):
             #print('cbfv',cbfv)#check passed!#
             #print('obs.shape',obs.shape)#(128,32)
             loss, info = self.cbfd.update_m2s(obs,next_obs, cbfv, already_embedded=True)  #
+            #print(loss)
+            #print(info)
             self.loss_plotter.add_data(info)#self.constr.update, not self.update!
             #if replay_buffer_unsafe!=None:#Now replay_buffe_unsafe is not optional, it is now required!
             #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
@@ -483,6 +498,91 @@ class CBFdotlatentplanaTrainer(Trainer):
                 log.info('Creating cbfdot function heatmap')
                 self.loss_plotter.plot()
                 self.plot(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer_success,replay_buffer_unsafe)
+                #self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer,replay_buffer_unsafe)#nothing is plotted if not spb
+                #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,replay_buffer_unsafe,
+                                        #coeff=1)  # a few lines later
+                #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,replay_buffer_unsafe,coeff=1/3)  # a few lines later
+                #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-14.pdf" % i), replay_buffer,replay_buffer_unsafe,
+                                        #coeff=1 / 4)  # a few lines later
+            if i % self.params['checkpoint_freq'] == 0 and i > 0:
+                self.cbfd.save(os.path.join(update_dir, 'cbfd_%d.pth' % i))
+
+        self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
+
+    def initial_train_m2_0109(self, replay_buffer_success, update_dir,replay_buffer_unsafe):
+        if self.cbfd.trained:
+            self.plot0109(os.path.join(update_dir, "cbfd_start.pdf"), replay_buffer_success,replay_buffer_unsafe)
+            self.plotlatent(os.path.join(update_dir, "cbfdlatent_start.pdf"), replay_buffer_success,replay_buffer_unsafe)
+            return
+
+        log.info('Beginning cbfdot initial optimization')
+        #this ground truth only work for milestone1
+        #self.plotlatentgroundtruth(os.path.join(update_dir, "cbfdgroundtruth.pdf"), replay_buffer,replay_buffer_unsafe)#if not spb, then don't plot
+        for i in range(self.params['cbfd_init_iters']):#10000
+            #print('i',i)
+            #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+            if self.params['mean']=='meancbf':#all offline success trajectory
+                out_dict = replay_buffer_success.samplemeancbf(self.batchsize0s)#sanity check passed!#(self.params['cbfd_batch_size'])#256
+                #log.info('training the mean version of the CBF!')
+            else:#all offline success trajectory
+                out_dict = replay_buffer_success.sample(self.batchsize0s)#(self.params['cbfd_batch_size'])#256
+            obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']#focus on expanding the safe zone?
+            #cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+            #print('cbfv',cbfv)#check passed!#
+            #print('obs.shape',obs.shape)#(128,32)
+            loss, info = self.cbfd.update_m2s_0109(obs,next_obs, constr, already_embedded=True)#use the constraint information by yourself!  #
+            #print('losssafe',loss)
+            #print(loss)
+            #print(info)
+            self.loss_plotter.add_data(info)#self.constr.update, not self.update!
+            #if replay_buffer_unsafe!=None:#Now replay_buffe_unsafe is not optional, it is now required!
+            #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+            #if self.params['mean']=='meancbf':
+                #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                #log.info('training the mean version of the CBF!')#sanity check passed!
+            #else:
+                #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            #add a for loop to sample from 0,0.1 to 1.0!
+            if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
+                out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(self.batchsize10,'constraint',1)#(self.params['cbfd_batch_size'])#256
+            else:#all are offline trajectories, but not necessarily violation
+                out_dictusb = replay_buffer_unsafe.sample_boundary_m2_0109(self.batchsize10,'constraint',1)#(self.params['cbfd_batch_size'])#256
+            
+            obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']#it should be 1#
+            #print(obsusb.shape,construsb.shape)#(128,32),(128,)
+            #altogether there will be 448 samples!
+            ten=int(self.params['stepstohell'])
+            #print('reach this stage0!')#
+            for j in range(ten):
+                if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
+                    out_dictusbi = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(self.batchsize0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+                else:#all are offline trajectories, but not necessarily violation
+                    out_dictusbi = replay_buffer_unsafe.sample_boundary_m2_0109(self.batchsize0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+                obsusbi,next_obsusbi,construsbi=out_dictusbi['obs'],out_dictusbi['next_obs'],out_dictusbi['constraint']
+                #print(obsusbi.shape,construsbi.shape)
+                obsusb=np.vstack((obsusb,obsusbi))
+                next_obsusb=np.vstack((next_obsusb,next_obsusbi))
+                construsb=np.concatenate((construsb,construsbi))
+            shuffleind=np.random.permutation(obsusb.shape[0])
+            obsusb=obsusb[shuffleind]
+            #print('obsusb.shape',obsusb.shape)
+            next_obsusb=next_obsusb[shuffleind]
+            construsb=construsb[shuffleind]
+            #print('obsusb.shape',obsusb.shape)#(128,32)#sanity check passed!
+            #cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+            #print('cbfvusb',cbfvusb)#check passed!#
+            #print('reach this stage1!')#
+            loss, info = self.cbfd.update_m2u_0109(obsusb,next_obsusb, construsb, already_embedded=True)  #info is a dictionary
+            #print('lossunsafe',loss)
+            #print('reach this stage2!')#
+            self.loss_plotter.add_data(info)#push back from possibly too optimistic safe zone?
+
+            if i % self.params['log_freq'] == 0:
+                self.loss_plotter.print(i)
+            if i % self.params['plot_freq'] == 0:
+                log.info('Creating cbfdot function heatmap')
+                self.loss_plotter.plot()
+                self.plot0109(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer_success,replay_buffer_unsafe)
                 #self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer,replay_buffer_unsafe)#nothing is plotted if not spb
                 #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,replay_buffer_unsafe,
                                         #coeff=1)  # a few lines later
@@ -579,6 +679,102 @@ class CBFdotlatentplanaTrainer(Trainer):
             self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             return deal
 
+    def update_m2_0109(self, replay_buffer_success, update_dir,replay_buffer_unsafe):
+        if self.params['train_cbf']=='no':
+            log.info('No episodic cbf dot update optimization!')
+        else:
+            if self.params['train_cbf']=='no2':
+                self.params['cbfd_lr']=0
+                log.info('No episodic cbf dot update optimization but show loss on new data!')
+            else:
+                log.info('Beginning cbf dot update optimization!')
+            dhzepochave=0
+            #log.info('cbfd_lr: %f'%(self.params['cbfd_lr']))
+            for _ in trange(self.params['cbfd_update_iters']):#512
+                if self.params['mean']=='meancbf':#all offline success trajectory
+                    out_dict = replay_buffer_success.samplemeancbf(self.batchsize0s)#sanity check passed!#(self.params['cbfd_batch_size'])#256
+                    #log.info('training the mean version of the CBF!')
+                else:#all offline success trajectory
+                    out_dict = replay_buffer_success.sample(self.batchsize0s)#(self.params['cbfd_batch_size'])#256
+                obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']#focus on expanding the safe zone?
+                #cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                #print('cbfv',cbfv)#check passed!#
+                #print('obs.shape',obs.shape)#(128,32)
+                loss, info = self.cbfd.update_m2s_0109(obs,next_obs, constr, already_embedded=True)#use the constraint information by yourself!  #
+                #print('losssafe',loss)
+                #print(loss)
+                #print(info)
+                self.loss_plotter.add_data(info)#self.constr.update, not self.update!
+                #if replay_buffer_unsafe!=None:#Now replay_buffe_unsafe is not optional, it is now required!
+                #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+                #if self.params['mean']=='meancbf':
+                    #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                    #log.info('training the mean version of the CBF!')#sanity check passed!
+                #else:
+                    #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                #add a for loop to sample from 0,0.1 to 1.0!
+                if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
+                    out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(self.batchsize10,'constraint',1)#(self.params['cbfd_batch_size'])#256
+                else:#all are offline trajectories, but not necessarily violation
+                    out_dictusb = replay_buffer_unsafe.sample_boundary_m2_0109(self.batchsize10,'constraint',1)#(self.params['cbfd_batch_size'])#256
+                
+                obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']#it should be 1#
+                #print(obsusb.shape,construsb.shape)#(128,32),(128,)
+                #altogether there will be 448 samples!
+                ten=int(self.params['stepstohell'])
+                #print('reach this stage0!')#
+                for j in range(ten):
+                    if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
+                        out_dictusbi = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(self.batchsize0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+                    else:#all are offline trajectories, but not necessarily violation
+                        out_dictusbi = replay_buffer_unsafe.sample_boundary_m2_0109(self.batchsize0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+                    obsusbi,next_obsusbi,construsbi=out_dictusbi['obs'],out_dictusbi['next_obs'],out_dictusbi['constraint']
+                    #print(obsusbi.shape,construsbi.shape)
+                    obsusb=np.vstack((obsusb,obsusbi))#pay attention to the dimension!
+                    next_obsusb=np.vstack((next_obsusb,next_obsusbi))
+                    construsb=np.concatenate((construsb,construsbi))
+                shuffleind=np.random.permutation(obsusb.shape[0])
+                obsusb=obsusb[shuffleind]
+                #print('obsusb.shape',obsusb.shape)
+                next_obsusb=next_obsusb[shuffleind]
+                construsb=construsb[shuffleind]
+                #print('obsusb.shape',obsusb.shape)#(128,32)#sanity check passed!
+                #cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                #print('cbfvusb',cbfvusb)#check passed!#
+                #print('reach this stage1!')#
+                loss, info = self.cbfd.update_m2u_0109(obsusb,next_obsusb, construsb, already_embedded=True)  #info is a dictionary
+                #print('lossunsafe',loss)
+                #print('reach this stage2!')#
+                self.loss_plotter.add_data(info)#push back from possibly too optimistic safe zone?
+
+
+
+                #cbfloss=info['cbf_total']#this is the real cbf loss
+                loss1=info['old_safe']#notice that it is multiplied by w1!
+                loss2=info['new_safe']#notice that it is multiplied by w2(=w1)!
+                loss6=info['old_unsafe']#notice that it is multiplied by w1!
+                loss7=info['new_unsafe']#notice that it is multiplied by w2(=w1)!
+                cbfloss=(loss6/self.params['w6']+loss7/self.params['w7'])/2#happens to be the right choice!
+                '''
+                if self.env_name=='reacher':
+                    dhzepochave+=np.sqrt(cbfloss)#faithfully record it!#np.sqrt(min(loss,10))#over 10 is too crazy!
+                elif self.env_name=='push':
+                    dhzepochave+=np.sqrt(cbfloss)#
+                elif self.env_name=='spb':
+                '''
+                dhzepochave+=cbfloss#np.sqrt(cbfloss)##print('just hold it now!')
+            dhzepochave=dhzepochave/self.params['cbfd_update_iters']
+            if dhzepochave<1e-15:#to avoid any numerical issues!
+                dhzepochave=0#dhzepochave#already done with the processing!#/100#this 100 is because of 10000^0.5=100
+            log.info('the average dhz of this epochs: %f'%(dhzepochave))
+
+            deal=dhzepochave#no need to make the above if statement!
+            log.info('Creating cbf dot function heatmap')
+            self.loss_plotter.plot()
+            self.plot0109(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,replay_buffer_unsafe)#this is using plan a
+            self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
+            return deal
+
     def plot(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
         if self.params['mean']=='meancbf':
@@ -606,6 +802,57 @@ class CBFdotlatentplanaTrainer(Trainer):
             next_obsusb = out_dictusb['next_obs']#rdo = out_dict['rdo']
             next_obs=np.vstack((next_obs,next_obsusb))
         #next_obs = out_dict['next_obs_relative']  # rdo = out_dict['rdo']
+        pu.visualize_cbfdot(next_obs, self.cbfd,
+                             file,
+                             env=self.env)
+
+    def plot0109(self, file, replay_buffer,replay_buffer_unsafe):#unsafe buffer is a must now!
+        #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(self.batchsize0s)#(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(self.batchsize0s)#(self.params['cbfd_batch_size'])#256
+        next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
+        '''
+        #if replay_buffer_unsafe!=None:
+        #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        if self.params['mean']=='meancbf':
+            out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2(self.batchsize,'constraint')#
+            
+            if self.params['boundary']=='no':
+                out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            elif self.params['boundary']=='yes':
+                #out_dictus = replay_buffer_unsafe.sample_boundary_meancbf(self.batchsize,'hvn')#(self.params['cbfd_batch_size'])#256
+                out_dictus = replay_buffer_unsafe.sample_boundary_meancbf_m2(self.batchsize,'constraint')#
+                
+        else:
+            out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            out_dictusb = replay_buffer_unsafe.sample_boundary_m2(self.batchsize,'constraint')#
+        next_obsus = out_dictus['next_obs']#rdo = out_dict['rdo']
+        next_obs=np.vstack((next_obs,next_obsus))
+        next_obsusb = out_dictusb['next_obs']#rdo = out_dict['rdo']
+        next_obs=np.vstack((next_obs,next_obsusb))
+        '''
+
+        if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
+            out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(self.batchsize10,'constraint',1)#(self.params['cbfd_batch_size'])#256
+        else:#all are offline trajectories, but not necessarily violation
+            out_dictusb = replay_buffer_unsafe.sample_boundary_m2_0109(self.batchsize10,'constraint',1)#(self.params['cbfd_batch_size'])#256
+        obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']#it should be 1#
+        next_obs=np.vstack((next_obs,next_obsusb))
+        #print(obsusb.shape,construsb.shape)#(128,32),(128,)
+        #altogether there will be 448 samples!
+        ten=int(self.params['stepstohell'])
+        #print('reach this stage0!')#
+        for j in range(ten):
+            if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
+                out_dictusbi = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(self.batchsize0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+            else:#all are offline trajectories, but not necessarily violation
+                out_dictusbi = replay_buffer_unsafe.sample_boundary_m2_0109(self.batchsize0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+            obsusbi,next_obsusbi,construsbi=out_dictusbi['obs'],out_dictusbi['next_obs'],out_dictusbi['constraint']
+            next_obs=np.vstack((next_obs,next_obsusbi))
+        #next_obs = out_dict['next_obs_relative']  # rdo = out_dict['rdo']#there will now be 512 figures!
         pu.visualize_cbfdot(next_obs, self.cbfd,
                              file,
                              env=self.env)

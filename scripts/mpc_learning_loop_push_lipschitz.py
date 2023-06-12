@@ -68,7 +68,7 @@ if __name__ == '__main__':
     lipxyunsafe=lipyzunsafe=lipzhunsafe=lipyhunsafe=lipxhunsafe=0
     gammadyn=gammadyns=10#start from a very big number!
     pdnsafe=pdn=0
-
+    modifiedlength=20000
     for m in range(repeattimes):
         params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23

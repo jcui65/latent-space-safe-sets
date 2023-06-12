@@ -155,12 +155,14 @@ def load_trajectories(num_traj, file):#data/simplepointbot
     trajectories = []
     iterator = range(num_traj) if num_traj <= 200 else trange(num_traj)#maybe a bug source?
     for i in iterator:#50
-        if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json
+        #if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json
+        if not os.path.exists(os.path.join(file, '%d_ctsconstraints.json' % i)):#e.g. 0.json#way 2!
             log.info('Could not find %d' % i)
             continue
         im_fields = ('obs', 'next_obs')
-        with open(os.path.join(file, '%d.json' % i), 'r') as f:#read the json file!
-            trajectory = json.load(f)#1 piece traj info without 2 images 100 time steps
+        #with open(os.path.join(file, '%d.json' % i), 'r') as f:#read the json file!
+        with open(os.path.join(file, '%d_ctsconstraints.json' % i), 'r') as f:#read the json file!
+            trajectory = json.load(f)#1 piece traj info without 2 images 100 time steps#way 2!
         im_dat = {}#image_data
 
         for field in im_fields:
@@ -201,6 +203,7 @@ def modify_trajectories(num_traj, file,horizon):#data/simplepointbot
                 #if n>=1:
                 frameprevious=trajectory[n]#[n-1]
                 if (frame['constraint']-frameprevious['constraint'])>1e-5 and frame['constraint']>1e-6:#to avoid numerical issues!
+                    log.info('transition between safe and unsafe happens!')
                     frameprevious['constraint']=max(frame['constraint']-1/sth,0)#it is still self supervised!#
                 frame=frameprevious
                 if n==0:#just for safety 

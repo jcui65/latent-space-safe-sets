@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=1, help='Random seed')#2, help='Random seed')#4, help='Random seed')#-1, help='Random seed')#
     parser.add_argument('--log_freq', type=int, default=100,
                         help='How frequently to log updates')
-    parser.add_argument('--plot_freq', type=int, default=2000,#1000,#500,#
+    parser.add_argument('--plot_freq', type=int, default=500,#2,#for testing#2000,#1000,#
                         help='How frequently to produce plots')
     parser.add_argument('--checkpoint_freq', type=int, default=2000,
                         help='How frequently to save model checkpoints')
@@ -212,7 +212,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--cbfd_batch_size', type=int, default=256)#128)#
     parser.add_argument('--cbfd_thresh', type=float, default=0.2,
                         help='Threshold for an obs to be considered in violation of cbf dots')
-    parser.add_argument('--cbfd_init_iters', type=int, default=100000,#50000,#10000,#1,#to test RLSA#2000,#4001,#20000,#40000,#80000,#640000,#320000,#200000,#10000,#30000,#160000,#100000,#1000,#
+    parser.add_argument('--cbfd_init_iters', type=int, default=100000,#6002,#50000,#10000,#1,#to test RLSA#2000,#4001,#20000,#40000,#80000,#640000,#320000,#200000,#10000,#30000,#160000,#100000,#1000,#
                         help='Initial training iterations')
     parser.add_argument('--cbfd_ignore', action='store_true')
     parser.add_argument('--cbfd_update_iters', type=int, default=512)#512
@@ -233,7 +233,7 @@ def add_cbfd_args(parser):
     parser.add_argument('--rectify',type=float,default=0.0)#
     parser.add_argument('--gammasafe',type=float,default=0.003)
     parser.add_argument('--gammaunsafe',type=float,default=0.003)#0.004)#
-    parser.add_argument('--gammadyn',type=float,default=0.0015)
+    parser.add_argument('--gammadyn',type=float,default=0.001)#0.0015)#
     parser.add_argument('--w1',type=float,default=2000)#10000)#
     parser.add_argument('--w2',type=float,default=2000)#10000)#
     parser.add_argument('--w3',type=float,default=10000)#1)#old#
@@ -276,7 +276,7 @@ def add_env_options(params):
         ]
         params['frame_stack'] = 1
     elif params['env'] == 'reacher':
-        params['buffer_size'] = 25000#50000#75000#
+        params['buffer_size'] = 50000#25000#75000#
         #params['data_dirs'] = [
             #'Reacher',
             #'ReacherConstraints',

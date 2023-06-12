@@ -225,7 +225,51 @@ class EncodedReplayBuffer:
 
         return {key: self._extractmean(key, nonzeros[indices]) for key in self.data}#106
 
+    def sample_boundary_meancbf_m2_0109(self, batch_size, key,value, ensemble=0):#here my key is hvn or hvo?
+        """
+        Samples only from the entries where the array corresponding to key is nonzero
+        I added this method so I could sample only from data entries in the safe set
+        """
+        assert len(self.data[key].shape) == 1, 'cannot sample positive from array with >1d values'
+        if key=='constraint':
+            #condition=(self.data[key]==value)#the colliding one!# &(self.data[key]!=0)#this condition is for pushing!!!18.4k#condition 1 0.0675=0.0175+0.05
+            condition=(np.abs(self.data[key]-value)<1e-6)#the colliding one!# &(self.data[key]!=0)#this condition is for pushing!!!18.4k#condition 1 0.0675=0.0175+0.05
+            nonzeros = np.nonzero(condition)[0]#self.data[key].nonzero(condition)[0]#self.data[key] is the value#get the safe ones!
+        else:
+            nonzeros=self
+        #print('nonzeros.shape',nonzeros.shape)#(2395,)#2282 to 2201#(17100,) when no process!
+        #print('nonzeros',nonzeros)#self.data[key]#[0 1 2 ... 17097 17098 17099]
+        if ensemble == 0:
+            indices = np.random.randint(len(nonzeros), size=batch_size)
+        elif ensemble > 0:
+            indices = np.random.randint(len(nonzeros), size=(ensemble, batch_size))
+        else:
+            raise ValueError("ensemble size cannot be negative")
+
+        return {key: self._extractmean(key, nonzeros[indices]) for key in self.data}#106
+
     def sample_boundary_m2(self, batch_size, key, ensemble=0):#here my key is hvn or hvo?
+        """
+        Samples only from the entries where the array corresponding to key is nonzero
+        I added this method so I could sample only from data entries in the safe set
+        """
+        assert len(self.data[key].shape) == 1, 'cannot sample positive from array with >1d values'
+        #condition=(self.data[key]==1)#(self.data[key]<=0.0675) &(self.data[key]!=0)#this condition is for pushing!!!18.4k#condition 1 0.0675=0.0175+0.05
+        condition=(np.abs(self.data[key]-value)<1e-6)#
+        #condition=(self.data[key]<=0.0675) &(self.data[key]>0)#this condition is for pushing!!!18.4k#condition 2
+        nonzeros = np.nonzero(condition)[0]#self.data[key].nonzero(condition)[0]#self.data[key] is the value#get the safe ones!
+        #print('nonzeros.shape',nonzeros.shape)#2282 to 2201#(17100,) when no process!
+        #print('nonzeros',nonzeros)#self.data[key]#[0 1 2 ... 17097 17098 17099]
+        if ensemble == 0:
+            indices = np.random.randint(len(nonzeros), size=batch_size)
+        elif ensemble > 0:
+            indices = np.random.randint(len(nonzeros), size=(ensemble, batch_size))
+        else:
+            raise ValueError("ensemble size cannot be negative")
+
+        return {key: self._extract(key, nonzeros[indices]) for key in self.data}#106
+
+    def sample_boundary_m2_0109(self, batch_size, key, value, ensemble=0):#here my key is hvn or hvo?
         """
         Samples only from the entries where the array corresponding to key is nonzero
         I added this method so I could sample only from data entries in the safe set

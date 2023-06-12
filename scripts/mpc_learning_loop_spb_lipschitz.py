@@ -178,6 +178,7 @@ if __name__ == '__main__':
         cbfalpha=0.2#exponential averaging for CBF
         dhd=0.13855#0.135#
         dhz=0.00285#0.000545#
+        modifiedlength=20000
         for i in range(num_updates):#default 25 in spb
             #if i==0:
                 #teacher=ReacherConstraintdense1Teacher(env,noisy=False)
