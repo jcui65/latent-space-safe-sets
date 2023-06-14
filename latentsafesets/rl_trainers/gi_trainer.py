@@ -67,8 +67,11 @@ class GoalIndicatorTrainer(Trainer):
 
         log.info('Beginning goal indicator initial optimization')
 
+        lens=len(replay_buffer_success)
+        lenu=len(replay_buffer_unsafe)
+        ratio=lens/(lens+lenu)
         for i in range(self.params['gi_init_iters']):#10000
-            ratio=0.7#0.75#
+            #ratio=0.7#0.75#
             successbatch=int(ratio*self.params['dyn_batch_size'])
             out_dict = replay_buffer_success.sample(successbatch)#(self.params['gi_batch_size'])#256#get 1 step
             next_obs, rew = out_dict['next_obs'], out_dict['reward']#0/goal or -1/not goal
@@ -121,6 +124,61 @@ class GoalIndicatorTrainer(Trainer):
             rew=rew[shuffleind]
             loss, info = self.gi.update(next_obs, rew, already_embedded=True)
             self.loss_plotter.add_data(info)
+
+        log.info('Creating goal indicator function heatmap')
+        self.loss_plotter.plot()
+        self.plot(os.path.join(update_dir, "gi.pdf"), replay_buffer_success)
+        self.gi.save(os.path.join(update_dir, 'gi.pth'))
+
+    def update_m2_withonline(self, replay_buffer_success, update_dir,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online):
+        log.info('Beginning goal indicator update optimization with online buffer!')
+        lens=len(replay_buffer_success)
+        lenu=len(replay_buffer_unsafe)
+        lenso=len(replay_buffer_success_online)
+        lenuo=len(replay_buffer_unsafe_online)
+        lentotal=lens+lenu+lenso+lenuo
+        ratios=lens/lentotal
+        ratiou=lenu/lentotal
+        ratioso=lenso/lentotal
+        ratiouo=lenuo/lentotal
+        k=0
+        for _ in trange(self.params['gi_update_iters']):
+            #ratio=0.7#0.75#
+            successbatch=int(ratios*self.params['dyn_batch_size'])
+            out_dict = replay_buffer_success.sample(successbatch)#(self.params['gi_batch_size'])#
+            next_obs, rew = out_dict['next_obs'], out_dict['reward']
+            #next_obs, rew = out_dict['next_obs_relative'], out_dict['reward']  # 0/goal or -1/not goal
+            unsafebatch=int(ratiou*self.params['dyn_batch_size'])
+            out_dictus = replay_buffer_unsafe.sample(unsafebatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            #obsus=out_dictus['obs']#us means unsafe
+            next_obsus, rewus = out_dictus['next_obs'], out_dictus['reward']
+            #print('next_obs.shape',next_obs.shape)#179,32
+            #print('next_obsus.shape',next_obsus.shape)#77,32
+            next_obs=np.vstack((next_obs,next_obsus))
+            #print('rew.shape',rew.shape)#179
+            #print('rewus.shape',rewus.shape)#77
+            rew=np.concatenate((rew,rewus))
+            if ratiouo==0:
+                successobatch=self.params['dyn_batch_size']-successbatch-unsafebatch#int(ratioso*self.params['dyn_batch_size'])
+            elif ratiouo>0:
+                unsafeobatch=min(1,int(ratiouo*self.params['dyn_batch_size']))#at least one sample!
+                out_dictuso = replay_buffer_unsafe_online.sample(unsafeobatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                next_obsuso, rewuso = out_dictuso['next_obs'], out_dictuso['reward']
+                next_obs=np.vstack((next_obs,next_obsuso))
+                rew=np.concatenate((rew,rewuso))
+                successobatch=self.params['dyn_batch_size']-successbatch-unsafebatch-unsafeobatch#
+            out_dicto = replay_buffer_success_online.sample(successobatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            next_obso, rewo = out_dicto['next_obs'], out_dicto['reward']
+            next_obs=np.vstack((next_obs,next_obso))
+            rew=np.concatenate((rew,rewo))
+            if k==0:
+                    log.info('online success buffer has been added as expected!')
+            shuffleind=np.random.permutation(next_obs.shape[0])
+            next_obs=next_obs[shuffleind]
+            rew=rew[shuffleind]
+            loss, info = self.gi.update(next_obs, rew, already_embedded=True)
+            self.loss_plotter.add_data(info)
+            k+=1
 
         log.info('Creating goal indicator function heatmap')
         self.loss_plotter.plot()

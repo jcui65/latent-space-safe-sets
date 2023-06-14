@@ -155,13 +155,13 @@ def load_trajectories(num_traj, file):#data/simplepointbot
     trajectories = []
     iterator = range(num_traj) if num_traj <= 200 else trange(num_traj)#maybe a bug source?
     for i in iterator:#50
-        #if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json
-        if not os.path.exists(os.path.join(file, '%d_ctsconstraints.json' % i)):#e.g. 0.json#way 2!
+        if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json
+            #if not os.path.exists(os.path.join(file, '%d_ctsconstraints.json' % i)):#e.g. 0.json#way 2!
             log.info('Could not find %d' % i)
             continue
         im_fields = ('obs', 'next_obs')
-        #with open(os.path.join(file, '%d.json' % i), 'r') as f:#read the json file!
-        with open(os.path.join(file, '%d_ctsconstraints.json' % i), 'r') as f:#read the json file!
+        with open(os.path.join(file, '%d.json' % i), 'r') as f:#read the json file!
+            #with open(os.path.join(file, '%d_ctsconstraints.json' % i), 'r') as f:#read the json file!
             trajectory = json.load(f)#1 piece traj info without 2 images 100 time steps#way 2!
         im_dat = {}#image_data
 
@@ -431,6 +431,18 @@ def load_replay_buffer_success(params, encoder=None, first_only=False):#it doesn
     return replay_buffer
     #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
 
+def load_replay_buffer_success_online(params, encoder=None, first_only=False):#it doesn't have traj parameter!
+    log.info('For loading online data')
+    log.info('Populating replay buffer')#find correspondence in the cmd output
+    if encoder is not None:#replay buffer finally comes in!
+        replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'],params['mean'])#35000 for spb, 25000 for reacher
+        #print('load encoded buffer!')#load encoded buffer!
+    else:
+        replay_buffer = ReplayBuffer(params['buffer_size'])#buffer size is now too much!
+        #print('load plain buffer!')
+    #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
+    return replay_buffer
+
 def load_replay_buffer_interactions(params, encoder=None, first_only=False):#it doesn't have traj parameter!
     log.info('Loading data')
     trajectories = []#SimplePointBot or SimplePointBotConstraints
@@ -537,6 +549,18 @@ def load_replay_buffer_unsafe(params, encoder=None, first_only=False):#it doesn'
     #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
     return replay_buffer
     #each key in self.data, its value is a numpy array containing 10000=100*100 pieces of info/data of each transition
+
+def load_replay_buffer_unsafe_online(params, encoder=None, first_only=False):#it doesn't have traj parameter!
+    log.info('Loading data unsafe demonstration!')
+    log.info('Populating replay buffer unsafe demonstration!')#find correspondence in the cmd output
+    if encoder is not None:#replay buffer finally comes in!
+        replay_buffer = EncodedReplayBuffer(encoder, params['buffer_size'],params['mean'])#35000 for spb, 25000 for reacher!
+        #print('load encoded buffer!')#I know it is loading the encoded buffer now!
+    else:
+        replay_buffer = ReplayBuffer(params['buffer_size'])
+        #print('load plain buffer!')
+    #finally, the self.data, a dict in the replay_buffer is filled with values from 100 trajs, each containing 100 steps
+    return replay_buffer
 
 def load_replay_buffer_preemption_latent(params, encoder=None, offset=0, first_only=False):#it doesn't have traj parameter!
     log.info('Loading preempted data')

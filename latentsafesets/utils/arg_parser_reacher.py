@@ -242,6 +242,12 @@ def add_cbfd_args(parser):
     parser.add_argument('--w6',type=float,default=20000)#10000)#w1 for unsafe data points!
     parser.add_argument('--w7',type=float,default=20000)#10000)#w2 for unsafe data points!
     parser.add_argument('--w8',type=float,default=20000)#10)##
+    parser.add_argument('--w11',type=float,default=800)#10000)#
+    parser.add_argument('--w12',type=float,default=800)#10000)#
+    parser.add_argument('--w13',type=float,default=2400)#1)#old#
+    parser.add_argument('--w14',type=float,default=4000)#10)##
+    parser.add_argument('--w15',type=float,default=0)#10)#not used anymore!
+    parser.add_argument('--online',type=str,default='no')#'yes')#)
     parser.add_argument('--stepstohell',type=float,default=10)
     parser.add_argument('--rewrite',type=str,default='no')#'yes')#
     parser.add_argument('--unsafethres',type=float,default=0.07)#

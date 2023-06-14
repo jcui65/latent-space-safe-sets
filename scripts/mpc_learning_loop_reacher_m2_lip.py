@@ -126,6 +126,9 @@ if __name__ == '__main__':
         goal_indicator = modules['gi']
         cbfdot_function = modules['cbfd']
         replay_buffer_success = utils.load_replay_buffer_success(params, encoder)#around line 123 in utils.py
+        #print('replay_buffer_success.data',replay_buffer_success.data)#it is a dictionary
+        #print('replay_buffer_success._len',replay_buffer_success._len)#it should be right now! 5000 initially!
+        #print('replay_buffer_success.len',len(replay_buffer_success))#len() is ._len!!!#both are OK! 5000 initially!
         #if reacher:
         #then also load random interactions
         #replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
@@ -137,6 +140,10 @@ if __name__ == '__main__':
         #trainer.initial_train(replay_buffer_success,replay_buffer_unsafe)#initialize all the parts!
         trainer.initial_train_m2(replay_buffer_success,replay_buffer_unsafe)#initialize all the parts!
 
+        if params['online']=='yes':
+            #you can create new online safe and unsafe buffer here!
+            replay_buffer_success_online = utils.load_replay_buffer_success_online(params, encoder)#
+            replay_buffer_unsafe_online = utils.load_replay_buffer_unsafe_online(params, encoder)#
         log.info("Creating policy")
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
                                 #constraint_function, goal_indicator, params)
@@ -526,10 +533,10 @@ if __name__ == '__main__':
                     for n in reversed(range(params['horizon'])):#n is from 99 to 0 inclusive
                         #frame=transitions[n]
                         if transitions[n]['reward']>=0:#frame['reward'] >= 0:
-                            ss = 1
+                            in_ss = 1
                         #along the way of the trajectroy, the trajectory is safe
                         #frame['safe_set'] = ss#is this dynamic programming?
-                        transitions[n]['safe_set'] = ss#is this dynamic programming?#do modification to itself!
+                        transitions[n]['safe_set'] = in_ss#is this dynamic programming?#do modification to itself!
                         #frame['rtg'] = rtg#the reward to goal at each frame!#I think this is good
                         transitions[n]['rtg'] = rtg#the reward to goal at each frame!#I think this is good
                         #add a key value pair to the trajectory(key='rtg', value=rtg
@@ -544,10 +551,16 @@ if __name__ == '__main__':
                                 transitions[n-1]['constraint']=max(0,transitions[n]['constraint']-1/sth)#it is still self supervised!#
                         #transitions[0]['constraint']=0 not needed, as I think it will be OK!
                 #replay_buffer.store_transitions(transitions)#replay buffer online training
-                if not constr_viol:
-                    replay_buffer_success.store_transitions(transitions)#should I change this also?#I think you should!
-                else:#should I use success buffer only to store those trajectories who reach the goal?
-                    replay_buffer_unsafe.store_transitions(transitions)
+                if params['online']=='no':
+                    if not constr_viol:
+                        replay_buffer_success.store_transitions(transitions)#should I change this also?#I think you should!
+                    else:#should I use success buffer only to store those trajectories who reach the goal?
+                        replay_buffer_unsafe.store_transitions(transitions)#first, just redo it!
+                elif params['online']=='yes':
+                    if not constr_viol:
+                        replay_buffer_success_online.store_transitions(transitions)#should I change this also?#I think you should!
+                    else:#should I use success buffer only to store those trajectories who reach the goal?
+                        replay_buffer_unsafe_online.store_transitions(transitions)
                 update_rewards.append(traj_reward)
 
             mean_rew = float(np.mean(update_rewards))
@@ -576,8 +589,11 @@ if __name__ == '__main__':
             n_episodes += traj_per_update#10 by default
 
             # Update models
-
-            episodiccbfdhz=trainer.update_m2(replay_buffer_success, i,replay_buffer_unsafe)#online training, right?#it now only bears the meaning of dhz!
+            if params['online']=='no':
+                episodiccbfdhz=trainer.update_m2(replay_buffer_success,i,replay_buffer_unsafe)
+            elif params['online']=='yes':
+                episodiccbfdhz=trainer.update_m2_withonline(replay_buffer_success,i,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online)
+            #online training, right?#it now only bears the meaning of dhz!
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode

@@ -63,6 +63,11 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         self.w6=params['w6']
         self.w7=params['w7']
         self.w8=params['w8']
+        self.w11=params['w11']#w1 for online
+        self.w12=params['w12']#w2 for online
+        self.w13=params['w13']#w3 for online
+        self.w14=params['w14']#w4 for online
+        self.w15=params['w15']#w4 for online
         self.stepstohell=params['stepstohell']
         self.m10=1e-8#for better visualization#1e-10#
     def forward(self, obs, already_embedded=False):
@@ -191,6 +196,22 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         #loss = self.loss(next_obs, constr, already_embedded)
         #loss,data = self.lossm2s(obs,next_obs, constr, already_embedded)
         loss,data = self.lossm2s0109(obs,next_obs, cbfv, already_embedded)
+        loss.backward()
+        self.step()
+
+        return loss.item(), data##loss.item(), {'cbfd': loss.item()}#the first term is already the item
+
+    def update_m2s_0109_online(self, obs, next_obs, constr, already_embedded=False):#the training process
+        self.trained = True
+        obs = ptu.torchify(obs)#input
+        next_obs = ptu.torchify(next_obs)#input
+        #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+        constr = ptu.torchify(constr)#output
+        cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+        self.optimizer.zero_grad()
+        #loss = self.loss(next_obs, constr, already_embedded)
+        #loss,data = self.lossm2s(obs,next_obs, constr, already_embedded)
+        loss,data = self.lossm2s0109online(obs,next_obs, cbfv, already_embedded)
         loss.backward()
         self.step()
 
@@ -456,6 +477,47 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             'regularization':self.w5*loss5.item()}
         return loss,data
 
+    def lossm2s0109online(self,obs, next_obs, cbfv, already_embedded=False):
+        cbfold=self(obs, already_embedded).squeeze()#.forward!#prediction
+        cbfnew = self(next_obs, already_embedded).squeeze()#size 128#.forward!#prediction
+        #print('logits',logits)#the value of the CBF
+        targets = cbfv#constr#some function of constr#label
+        loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        loss1=torch.mean(loss1)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
+        #print('loss1.shape',loss1.shape)#used to be 128
+        loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
+        loss2=torch.mean(loss2)##
+        #print('loss2.shape',loss2.shape)#used to be 128
+        normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
+        loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#the difference should be less than that!!!
+        loss4=torch.mean(loss4)#
+        #print('loss4.shape',loss4.shape)#used to be 128
+        #print('next_obs.shape',next_obs.shape)#(128,32)
+        if self.reg_lipschitz=='yes':
+            loss5=0*loss4##torch.mean(loss5)#I set it to be 1/900
+            bztut=cbfnew+(self.alpha-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+            qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+            loss3=torch.nn.functional.relu(self.gammadyn-qztut)#this means that qztut should be smaller than gammadyn
+            loss3=torch.mean(loss3)#0#make it a CBF#finally!
+            #print('loss3.shape',loss3.shape)#used to be 128
+        else:
+            loss5=0*loss4#make it a zero tensor!
+            loss3=0*loss4
+        #print('loss5.shape',loss5.shape)#used to be 128
+        #print('cbfnew.shape',cbfnew.shape)#shape 128
+        #print('self.dz.shape',self.dz.shape)#shape 32
+        loss=self.w11*loss1+self.w12*loss2+self.w13*loss3+self.w14*loss4+self.w15*loss5##
+        data = {
+            'cbf_total': loss.item(),
+            'old_safe': max(self.w11*loss1.item(),self.m10),#old safe
+            'new_safe': max(self.w12*loss2.item(),self.m10),#for the granularity of plotting
+            'old_unsafe':self.m10,#want to show the log plots!#0,#
+            'new_unsafe':self.m10,#0,#
+            'make_it_a_cbf':max(self.w13*loss3.item(),self.m10),
+            'closeness_safe':max(self.w14*loss4.item(),self.m10),
+            'closeness_unsafe':self.m10,
+            'regularization':self.w15*loss5.item()}
+        return loss,data
 
     def lossm2u0109(self,obs, next_obs, cbfv, already_embedded=False):
         cbfold=self(obs, already_embedded).squeeze()#.forward!#prediction

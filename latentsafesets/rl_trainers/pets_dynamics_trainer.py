@@ -85,7 +85,10 @@ class PETSDynamicsTrainer(Trainer):
             #nosuccessdata=
             #nounsafedata=
             #ratio=nosuccessdata/(nosuccessdata+nounsafedata)
-            ratio=0.7#0.75#
+            #ratio=0.7#0.75#
+            lens=len(replay_buffer_success)
+            lenu=len(replay_buffer_unsafe)
+            ratio=lens/(lens+lenu)
             successbatch=int(ratio*self.params['dyn_batch_size'])
             out_dict = replay_buffer_success.sample(successbatch,#self.params['dyn_batch_size'],#256#get sub-dict of corresponding indices
                                             ensemble=self.ensemble)#59 in replay_buffer_encoded
@@ -155,6 +158,71 @@ class PETSDynamicsTrainer(Trainer):
 
             loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
             self.loss_plotter.add_data(info)#the update is just the dynamics update
+
+        log.info('Creating dynamics heatmap')
+        self.loss_plotter.plot()
+        self.visualize(os.path.join(update_dir, "dyn.gif"), replay_buffer_success)#replay_buffer)#
+        self.dynamics.save(os.path.join(update_dir, 'dyn.pth'))#not very high priority!
+
+    def update_m2_withonline(self, replay_buffer_success, update_dir,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online):#this's for update0/1... after init train
+        log.info('Beginning dynamics optimization including online buffer!')
+        lens=len(replay_buffer_success)
+        lenu=len(replay_buffer_unsafe)
+        lenso=len(replay_buffer_success_online)
+        lenuo=len(replay_buffer_unsafe_online)
+        lentotal=lens+lenu+lenso+lenuo
+        ratios=lens/lentotal
+        ratiou=lenu/lentotal
+        ratioso=lenso/lentotal
+        ratiouo=lenuo/lentotal
+        k=0
+        for _ in trange(self.params['dyn_update_iters']):#512
+            #ratio=0.7#0.75#
+            successbatch=int(ratios*self.params['dyn_batch_size'])
+            out_dict = replay_buffer_success.sample(successbatch,#self.params['dyn_batch_size'],
+                                            ensemble=self.ensemble)#this is dyn trainer specific?
+            obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']
+            #print('act.shape',act.shape)
+            #obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['action']
+            #if replay_buffer_unsafe!=None:
+            #out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)#256
+            unsafebatch=int(ratiou*self.params['dyn_batch_size'])
+            out_dictus = replay_buffer_unsafe.sample(unsafebatch,ensemble=self.ensemble)#(self.params['dyn_batch_size']-successbatch,ensemble=self.ensemble)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            #obsus=out_dictus['obs']#us means unsafe
+
+            obsus, next_obsus, actus = out_dictus['obs'], out_dictus['next_obs'], out_dictus['action']
+            #print('actus.shape',actus.shape)
+            obs=np.concatenate((obs,obsus),axis=1)
+            next_obs=np.concatenate((next_obs,next_obsus),axis=1)
+            #print('hvnold.shape',hvn.shape)
+            act=np.concatenate((act,actus),axis=1)#pay attention to the dimension!
+            #print('hvnnew.shape',hvn.shape)
+            
+            if ratiouo==0:
+                successobatch=self.params['dyn_batch_size']-successbatch-unsafebatch#int(ratioso*self.params['dyn_batch_size'])
+            elif ratiouo>0:
+                unsafeobatch=min(1,int(ratiouo*self.params['dyn_batch_size']))#at least one sample!
+                out_dictuso = replay_buffer_unsafe_online.sample(unsafeobatch, ensemble=self.ensemble)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                obsuso,next_obsuso, actuso = out_dictuso['obs'], out_dictuso['next_obs'], out_dictuso['action']
+                obs=np.concatenate((obs,obsuso),axis=1)
+                next_obs=np.concatenate((next_obs,next_obsuso),axis=1)
+                act=np.concatenate((act,actuso),axis=1)#pay attention to the dimension!
+                successobatch=self.params['dyn_batch_size']-successbatch-unsafebatch-unsafeobatch#
+            out_dicto = replay_buffer_success_online.sample(successobatch, ensemble=self.ensemble)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+            obso, next_obso, acto = out_dicto['obs'], out_dicto['next_obs'], out_dicto['action']
+            obs=np.concatenate((obs,obso),axis=1)
+            next_obs=np.concatenate((next_obs,next_obso),axis=1)
+            act=np.concatenate((act,acto),axis=1)#pay attention to the dimension!
+            if k==0:
+                log.info('online success buffer has been used as expected!')
+            shuffleind=np.random.permutation(obs.shape[0])
+            obs=obs[shuffleind]
+            next_obs=next_obs[shuffleind]
+            act=act[shuffleind]
+
+            loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
+            self.loss_plotter.add_data(info)#the update is just the dynamics update
+            k+=1
 
         log.info('Creating dynamics heatmap')
         self.loss_plotter.plot()

@@ -1867,6 +1867,7 @@ class CEMSafeSetPolicy(Policy):
                     #cbf_init = self.cbfdot_function(embrepeat20, already_embedded=True)#should have dim (20,1000,1,32) to (20,1000,1,1)
                     cbf_init = self.cbfdot_function(emb, already_embedded=True)#should have dim (20,1000,1,32) to (20,1000,1,1)
                     #cbf_init should be 1 dimensional?#Choose to repeat here?
+                    log.info('cbf_init: %f'%(cbf_init.item()))#to see if this estimation is correct!
                     cbf_init = cbf_init.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
                     #print('cbf_init.shape',cbf_init.shape)#torch.Size([20, 1000, 1, 1])#initial CBF value at time 0!
                     #cbf_init.backward(torch.ones_like(cbf_init))
@@ -2032,18 +2033,25 @@ class CEMSafeSetPolicy(Policy):
                             meanonemacbfs=torch.mean(onemacbfs,dim=0)
                             #shouldbeall=torch.count_nonzero(meanonemacbfs==0)
                             #log.info('shouldbeall: %d'%(shouldbeall.item()))#1500#should be all zero, hence 500
-                            meanonemacbfsr=meanonemacbfs+realdhz+dhd#r for robust
+                            meanonemacbfsr=meanonemacbfs+realdhz+dhd#meanonemacbfs+realdhz+torch.clip(dhd,max=self.dhdmax)#r for robust
                             #sbpositive=torch.count_nonzero(meanonemacbfsr<0)#should all be positive
                             #log.info('sbpositive: %d'%(sbpositive.item()))#0 as expected!
-                            meanonemacbfsrc=torch.clip(meanonemacbfsr,max=self.dhdmax)
+                            meanonemacbfsrc=torch.clip(meanonemacbfsr,max=self.dhdmax)#bmeanonemacbfsr#etter way of writing!
                             #sbp2=torch.count_nonzero(meanonemacbfsrc<0)
                             #log.info('shouldbealsopositive: %d'%(sbp2.item()))#0 as expected!#should all be positive 
-                            meancbfallscbfhorizon=torch.mean(cbf_allscbfhorizon, dim=0)
+                            meancbfallscbfhorizon=torch.mean(cbf_allscbfhorizon, dim=0)#mean of 20 particles!
                             #print('that shape!',meancbfallscbfhorizon.shape)#500,3
                             topkvalues,indices=torch.topk(meancbfallscbfhorizon[:,0],10)
                             #print('meancbfallscbfhorizon',meancbfallscbfhorizon)
-                            log.info('top5values: %f,%f,%f,%f,%f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item()))#I don't want it to be positive!
-                            log.info('theindices: %d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item()))
+                            log.info('top10values: %f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item(),topkvalues[5].item(),topkvalues[6].item(),topkvalues[7].item(),topkvalues[8].item(),topkvalues[9].item()))
+                            #I don't want it to be positive!
+                            log.info('theindices: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item(),indices[5].item(),indices[6].item(),indices[7].item(),indices[8].item(),indices[9].item()))
+                            if cbfhorizon>1:
+                                mc1=meancbfallscbfhorizon[:,1]
+                                log.info('top10values1: %f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(mc1[indices[0].item()].item(),mc1[indices[1].item()].item(),mc1[indices[2].item()].item(),mc1[indices[3].item()].item(),mc1[indices[4].item()].item(),mc1[indices[5].item()].item(),mc1[indices[6].item()].item(),mc1[indices[7].item()].item(),mc1[indices[8].item()].item(),mc1[indices[9].item()].item()))
+                                if cbfhorizon>2:
+                                    mc2=meancbfallscbfhorizon[:,2]
+                                    log.info('top10values2: %f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(mc2[indices[0].item()].item(),mc2[indices[1].item()].item(),mc2[indices[2].item()].item(),mc2[indices[3].item()].item(),mc2[indices[4].item()].item(),mc2[indices[5].item()].item(),mc2[indices[6].item()].item(),mc2[indices[7].item()].item(),mc2[indices[8].item()].item(),mc2[indices[9].item()].item()))
                         hopetobepositive=meancbfallscbfhorizon - meanonemacbfsrc
                         #cbfdots_violss = torch.sum( meancbfallscbfhorizon< meanonemacbfsrc,# the acbfs is subject to change
                                             #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
@@ -2061,8 +2069,9 @@ class CEMSafeSetPolicy(Policy):
                         hopetobepositive0=hopetobepositive[:,0]#now it has shape 1000/500
                         bestk,indices=torch.topk(hopetobepositive0,10)#I just choose the safest one! As in this case there will be few safe ones!
                         bestoption=torch.argmax(hopetobepositive0)#I hope by doing this, the old and possibly bad recovery will never bee used!
-                        log.info('best5values: %f,%f,%f,%f,%f'%(bestk[0].item(),bestk[1].item(),bestk[2].item(),bestk[3].item(),bestk[4].item()))#I don't want it to be positive!
-                        log.info('the indices: %d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item()))
+                        log.info('best5values: %f,%f,%f,%f,%f,%f,%f,%f,%f,%f'%(bestk[0].item(),bestk[1].item(),bestk[2].item(),bestk[3].item(),bestk[4].item(),bestk[5].item(),bestk[6].item(),bestk[7].item(),bestk[8].item(),bestk[9].item()))
+                        #I don't want it to be positive!
+                        log.info('the indices: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item(),indices[5].item(),indices[6].item(),indices[7].item(),indices[8].item(),indices[9].item()))
                         #log.info('bestone:%f'%(hopetobepositive0[bestoption]))#this should be consistent with the above line! Sanity check passed!
                         actionchosen=action_samples[bestoption]
                         action=actionchosen[0]#picking the first one!
