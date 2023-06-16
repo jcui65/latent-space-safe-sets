@@ -189,9 +189,9 @@ if __name__ == '__main__':
             log.info('current dhz: %f'%(params['dhz']))
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
             #datasave_dir = os.path.join(update_dir, "ReacherConstraintdense2")#create the corresponding folder!
-            datasave_dir = os.path.join(logdir, "ReacherConstraintdense2")#create the corresponding folder!
+            #datasave_dir = os.path.join(logdir, "ReacherConstraintdense2")#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
-            os.makedirs(datasave_dir)#mkdir!
+            #os.makedirs(datasave_dir)#mkdir!
             update_rewards = []
 
             #teacher = teacher(env)#, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
