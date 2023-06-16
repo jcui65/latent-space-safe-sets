@@ -526,7 +526,7 @@ if __name__ == '__main__':
                 replay_buffer.store_transitions(transitions)#replay buffer online training
                 #I am going to save trajectory!
                 #utils.save_trajectory(traj, file, i)#
-                utils.save_trajectory(transitions, datasave_dir, i*traj_per_update+j)#
+                #utils.save_trajectory(transitions, datasave_dir, i*traj_per_update+j)#
                 #replay_buffer.store_dump_transitions(transitions,logdir,i*traj_per_update+j)#
                 update_rewards.append(traj_reward)
 
