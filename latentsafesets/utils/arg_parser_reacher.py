@@ -282,7 +282,7 @@ def add_env_options(params):
         ]
         params['frame_stack'] = 1
     elif params['env'] == 'reacher':
-        params['buffer_size'] = 50000#25000#75000#
+        params['buffer_size'] = 25000#50000#75000#
         #params['data_dirs'] = [
             #'Reacher',
             #'ReacherConstraints',
