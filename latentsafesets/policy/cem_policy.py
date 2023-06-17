@@ -104,6 +104,8 @@ class CEMSafeSetPolicy(Policy):
         self.reducerocbfhd=params['reducerocbfhd']
         self.sample=params['mean']#self.mean has been occupied for other uses!#
         self.rewrite=params['rewrite']
+        self.az=params['additionalzero']
+        self.gammaunsafe=params['gammaunsafe']
     @torch.no_grad()
     def act(self, obs):#if using cbf, see the function actcbfd later on
         """
@@ -1867,7 +1869,12 @@ class CEMSafeSetPolicy(Policy):
                     #cbf_init = self.cbfdot_function(embrepeat20, already_embedded=True)#should have dim (20,1000,1,32) to (20,1000,1,1)
                     cbf_init = self.cbfdot_function(emb, already_embedded=True)#should have dim (20,1000,1,32) to (20,1000,1,1)
                     #cbf_init should be 1 dimensional?#Choose to repeat here?
-                    log.info('cbf_init: %f'%(cbf_init.item()))#to see if this estimation is correct!
+                    cbfi=cbf_init.item()
+                    log.info('cbf_init: %f'%(cbfi))#to see if this estimation is correct!
+                    if cbfi<-self.gammaunsafe/2 and self.az=='yes' and self.action_type=='recovery':
+                        log.info('the threat level is high enough! I do not quite trust the recovery action here! Execute the zero/stopping action!')
+                        randflag=1#this means not random action, but the picking  the action that is not from CBF satisfied policy!
+                        return 0*self.env.action_space.sample(),randflag#,tp,fp,fn,tn,tpc,fpc,fnc,tnc#really random action!#
                     cbf_init = cbf_init.repeat(self.n_particles, self.popsize, 1, 1)  #with new shape (20,1000,1,32)#
                     #print('cbf_init.shape',cbf_init.shape)#torch.Size([20, 1000, 1, 1])#initial CBF value at time 0!
                     #cbf_init.backward(torch.ones_like(cbf_init))
@@ -2061,6 +2068,7 @@ class CEMSafeSetPolicy(Policy):
                     howmanypassed=torch.count_nonzero(cbfdots_violss==0)#at this step cbfdots_violss has shape 1000
                     log.info('howmanypassed:%d'%(howmanypassed.item()))#I want this to be zero!
                     if self.action_type=='recovery' and reset_count==self.cbf_thresh_mult_iters:
+                        
                         if howmanypassed==0:
                             log.info('no trajectory candidates satisfy constraints! The BF is doing its job! Picking safest possible actions!')#enters this! sanity check passed!
                             randflag=1#randflag=1 means the action is "random", that is, either real random or recovery
@@ -2073,6 +2081,7 @@ class CEMSafeSetPolicy(Policy):
                         #I don't want it to be positive!
                         log.info('the indices: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item(),indices[5].item(),indices[6].item(),indices[7].item(),indices[8].item(),indices[9].item()))
                         #log.info('bestone:%f'%(hopetobepositive0[bestoption]))#this should be consistent with the above line! Sanity check passed!
+                        log.info('not very critical, still trust the recovery action!')
                         actionchosen=action_samples[bestoption]
                         action=actionchosen[0]#picking the first one!
                         return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc

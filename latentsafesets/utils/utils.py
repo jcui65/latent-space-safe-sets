@@ -155,14 +155,14 @@ def load_trajectories(num_traj, file):#data/simplepointbot
     trajectories = []
     iterator = range(num_traj) if num_traj <= 200 else trange(num_traj)#maybe a bug source?
     for i in iterator:#50
-        if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json
-            #if not os.path.exists(os.path.join(file, '%d_ctsconstraints.json' % i)):#e.g. 0.json#way 2!
+        #if not os.path.exists(os.path.join(file, '%d.json' % i)):#e.g. 0.json#way 1
+        if not os.path.exists(os.path.join(file, '%d_ctsconstraints.json' % i)):#e.g. 0.json#way 2!
             log.info('Could not find %d' % i)
             continue
         im_fields = ('obs', 'next_obs')
-        with open(os.path.join(file, '%d.json' % i), 'r') as f:#read the json file!
-            #with open(os.path.join(file, '%d_ctsconstraints.json' % i), 'r') as f:#read the json file!
-            trajectory = json.load(f)#1 piece traj info without 2 images 100 time steps#way 2!
+        #with open(os.path.join(file, '%d.json' % i), 'r') as f:#read the json file!#way 1!
+        with open(os.path.join(file, '%d_ctsconstraints.json' % i), 'r') as f:#read the json file!#way 2!
+            trajectory = json.load(f)#1 piece traj info without 2 images 100 time steps
         im_dat = {}#image_data
 
         for field in im_fields:
