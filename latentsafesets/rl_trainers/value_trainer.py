@@ -206,7 +206,7 @@ class ValueTrainer(Trainer):
             if ratiouo==0:
                 successobatch=self.params['dyn_batch_size']-successbatch#int(ratioso*self.params['dyn_batch_size'])
             elif ratiouo>0:#
-                unsafeobatch=min(1,int(ratiouo*self.params['dyn_batch_size']))#at least one sample! even more should be added!
+                unsafeobatch=max(2,int(ratiouo*self.params['dyn_batch_size']))#at least one sample! even more should be added!
                 out_dictuso = replay_buffer_unsafe_online.sample_positive(successbatch, 'on_policy', self.n_models)#.sample(unsafeobatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 obsuso,next_obsuso, rewuso,doneuso =out_dictuso['obs'], out_dictuso['next_obs'], out_dictuso['reward'],out_dictuso['done']
                 obs=np.concatenate((obs,obsuso),axis=1)

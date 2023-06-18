@@ -161,7 +161,7 @@ class GoalIndicatorTrainer(Trainer):
             if ratiouo==0:
                 successobatch=self.params['dyn_batch_size']-successbatch-unsafebatch#int(ratioso*self.params['dyn_batch_size'])
             elif ratiouo>0:
-                unsafeobatch=min(1,int(ratiouo*self.params['dyn_batch_size']))#at least one sample!
+                unsafeobatch=max(2,int(ratiouo*self.params['dyn_batch_size']))#at least one sample!
                 out_dictuso = replay_buffer_unsafe_online.sample(unsafeobatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 next_obsuso, rewuso = out_dictuso['next_obs'], out_dictuso['reward']
                 next_obs=np.vstack((next_obs,next_obsuso))

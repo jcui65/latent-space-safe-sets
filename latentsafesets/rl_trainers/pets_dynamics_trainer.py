@@ -182,6 +182,7 @@ class PETSDynamicsTrainer(Trainer):
             out_dict = replay_buffer_success.sample(successbatch,#self.params['dyn_batch_size'],
                                             ensemble=self.ensemble)#this is dyn trainer specific?
             obs, next_obs, act = out_dict['obs'], out_dict['next_obs'], out_dict['action']
+            #print('obs.shape',obs.shape)#(5,75/80/etc,32)#
             #print('act.shape',act.shape)
             #obs, next_obs, act = out_dict['obs_relative'], out_dict['next_obs_relative'], out_dict['action']
             #if replay_buffer_unsafe!=None:
@@ -201,9 +202,10 @@ class PETSDynamicsTrainer(Trainer):
             if ratiouo==0:
                 successobatch=self.params['dyn_batch_size']-successbatch-unsafebatch#int(ratioso*self.params['dyn_batch_size'])
             elif ratiouo>0:
-                unsafeobatch=min(1,int(ratiouo*self.params['dyn_batch_size']))#at least one sample!
+                unsafeobatch=max(2,int(ratiouo*self.params['dyn_batch_size']))#at least one sample!
                 out_dictuso = replay_buffer_unsafe_online.sample(unsafeobatch, ensemble=self.ensemble)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 obsuso,next_obsuso, actuso = out_dictuso['obs'], out_dictuso['next_obs'], out_dictuso['action']
+                print('obsuso.shape',obsuso.shape)#(5,32) tells everything! should be at least 2!
                 obs=np.concatenate((obs,obsuso),axis=1)
                 next_obs=np.concatenate((next_obs,next_obsuso),axis=1)
                 act=np.concatenate((act,actuso),axis=1)#pay attention to the dimension!

@@ -285,7 +285,7 @@ class CBFdotlatentplanaTrainer(Trainer):
         #self.batchsize9=32
         self.batchsize10=128
         self.batchsize0so=64#0 success online
-        self.batchsize10o=64#10 (1.0) online
+        self.batchsize10o=128#64#10 (1.0) online
         self.env_name = params['env']
         self.gammasafe=params['gammasafe']
         self.gammaunsafe=params['gammaunsafe']
