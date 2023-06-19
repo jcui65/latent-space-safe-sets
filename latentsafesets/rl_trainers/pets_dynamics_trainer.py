@@ -175,7 +175,7 @@ class PETSDynamicsTrainer(Trainer):
         ratiou=lenu/lentotal
         ratioso=lenso/lentotal
         ratiouo=lenuo/lentotal
-        k=0
+        #k=0
         for _ in trange(self.params['dyn_update_iters']):#512
             #ratio=0.7#0.75#
             successbatch=int(ratios*self.params['dyn_batch_size'])
@@ -215,8 +215,8 @@ class PETSDynamicsTrainer(Trainer):
             obs=np.concatenate((obs,obso),axis=1)
             next_obs=np.concatenate((next_obs,next_obso),axis=1)
             act=np.concatenate((act,acto),axis=1)#pay attention to the dimension!
-            if k==0:
-                log.info('online success buffer has been used as expected!')
+            #if k==0:
+                #log.info('online success buffer has been used as expected!')
             shuffleind=np.random.permutation(obs.shape[0])
             obs=obs[shuffleind]
             next_obs=next_obs[shuffleind]
@@ -224,7 +224,7 @@ class PETSDynamicsTrainer(Trainer):
 
             loss, info = self.dynamics.update(obs, next_obs, act, already_embedded=True)
             self.loss_plotter.add_data(info)#the update is just the dynamics update
-            k+=1
+            #k+=1
 
         log.info('Creating dynamics heatmap')
         self.loss_plotter.plot()

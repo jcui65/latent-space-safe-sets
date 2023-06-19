@@ -141,7 +141,7 @@ class GoalIndicatorTrainer(Trainer):
         ratiou=lenu/lentotal
         ratioso=lenso/lentotal
         ratiouo=lenuo/lentotal
-        k=0
+        #k=0
         for _ in trange(self.params['gi_update_iters']):
             #ratio=0.7#0.75#
             successbatch=int(ratios*self.params['dyn_batch_size'])
@@ -171,14 +171,14 @@ class GoalIndicatorTrainer(Trainer):
             next_obso, rewo = out_dicto['next_obs'], out_dicto['reward']
             next_obs=np.vstack((next_obs,next_obso))
             rew=np.concatenate((rew,rewo))
-            if k==0:
-                    log.info('online success buffer has been added as expected!')
+            #if k==0:
+                #log.info('online success buffer has been added as expected!')
             shuffleind=np.random.permutation(next_obs.shape[0])
             next_obs=next_obs[shuffleind]
             rew=rew[shuffleind]
             loss, info = self.gi.update(next_obs, rew, already_embedded=True)
             self.loss_plotter.add_data(info)
-            k+=1
+            #k+=1
 
         log.info('Creating goal indicator function heatmap')
         self.loss_plotter.plot()

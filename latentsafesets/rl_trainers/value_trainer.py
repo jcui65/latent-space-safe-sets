@@ -163,7 +163,7 @@ class ValueTrainer(Trainer):
         ratiou=lenu/lentotal#this is useless in value training
         ratioso=lenso/lentotal
         ratiouo=lenuo/lentotal
-        k=0
+        #k=0
         for i in trange(self.params['val_update_iters']):#2000
             successbatch=int(ratios*self.params['dyn_batch_size'])
             #out_dict = replay_buffer_success.sample_positive(self.params['constr_batch_size'], 'on_policy', self.n_models)
@@ -224,8 +224,8 @@ class ValueTrainer(Trainer):
             next_obs=np.concatenate((next_obs,next_obso),axis=1)
             rew=np.concatenate((rew,rewo),axis=1)
             done=np.concatenate((done,doneo),axis=1)#I think concatenate should be used, as it is a one dimensional thing!
-            if k==0:
-                log.info('online success buffer has been used as expected!')
+            #if k==0:
+                #log.info('online success buffer has been used as expected!')
             shuffleind=np.random.permutation(next_obs.shape[0])
             obs=obs[shuffleind]
             next_obs=next_obs[shuffleind]
@@ -233,7 +233,7 @@ class ValueTrainer(Trainer):
             done=done[shuffleind]
             loss, info = self.value.update(obs, rew, next_obs, done, already_embedded=True)
             self.loss_plotter.add_data(info)
-            k+=1
+            #k+=1
 
         log.info('Creating value function heatmap')
         self.loss_plotter.plot()

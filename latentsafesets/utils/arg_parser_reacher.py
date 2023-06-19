@@ -235,17 +235,17 @@ def add_cbfd_args(parser):
     parser.add_argument('--gammasafe',type=float,default=0.003)
     parser.add_argument('--gammaunsafe',type=float,default=0.003)#0.004)#
     parser.add_argument('--gammadyn',type=float,default=0.001)#0.0015)#
-    parser.add_argument('--w1',type=float,default=2000)#10000)#
-    parser.add_argument('--w2',type=float,default=2000)#10000)#
-    parser.add_argument('--w3',type=float,default=10000)#1)#old#
-    parser.add_argument('--w4',type=float,default=15000)#10)##
-    parser.add_argument('--w5',type=float,default=10000)#10)#not used anymore!
-    parser.add_argument('--w6',type=float,default=20000)#10000)#w1 for unsafe data points!
-    parser.add_argument('--w7',type=float,default=20000)#10000)#w2 for unsafe data points!
-    parser.add_argument('--w8',type=float,default=20000)#10)##
-    parser.add_argument('--w11',type=float,default=1000)#10000)#
-    parser.add_argument('--w12',type=float,default=1000)#10000)#
-    parser.add_argument('--w13',type=float,default=3000)#1)#old#
+    parser.add_argument('--w1',type=float,default=1000)#2000)#10000)#
+    parser.add_argument('--w2',type=float,default=1000)#2000)#10000)#
+    parser.add_argument('--w3',type=float,default=3000)#10000)#1)#old#
+    parser.add_argument('--w4',type=float,default=5000)#15000)#10)##
+    parser.add_argument('--w5',type=float,default=0)#10000)#10)#not used anymore!
+    parser.add_argument('--w6',type=float,default=100000)#20000)#10000)#w1 for unsafe data points!
+    parser.add_argument('--w7',type=float,default=50000)#20000)#10000)#w2 for unsafe data points!
+    parser.add_argument('--w8',type=float,default=300000)#20000)#10)##
+    parser.add_argument('--w11',type=float,default=500)#1000)#10000)#
+    parser.add_argument('--w12',type=float,default=500)#1000)#10000)#
+    parser.add_argument('--w13',type=float,default=1500)#3000)#1)#old#
     parser.add_argument('--w14',type=float,default=5000)#10)##
     parser.add_argument('--w15',type=float,default=0)#10)#not used anymore!
     parser.add_argument('--online',type=str,default='no')#'yes')#)

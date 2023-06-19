@@ -800,6 +800,17 @@ class CBFdotlatentplanaTrainer(Trainer):
                 log.info('Beginning cbf dot update optimization including an online buffer!')
             dhzepochave=0
             #log.info('cbfd_lr: %f'%(self.params['cbfd_lr']))
+            lens=len(replay_buffer_success)
+            lenu=len(replay_buffer_unsafe)
+            lenso=len(replay_buffer_success_online)
+            lenuo=len(replay_buffer_unsafe_online)
+            #lentotal=lens+lenu+lenso+lenuo
+            lentotals=lens+lenso
+            lentotalu=lenu+lenuo
+            ratios=lens/lentotals
+            ratioso=lenso/lentotals
+            ratiou=lenu/lentotalu
+            ratiouo=lenuo/lentotalu
             k=0
             for _ in trange(self.params['cbfd_update_iters']):#512
                 if self.params['mean']=='meancbf':#all offline success trajectory
@@ -807,56 +818,84 @@ class CBFdotlatentplanaTrainer(Trainer):
                     #log.info('training the mean version of the CBF!')
                 else:#all offline success trajectory
                     out_dict = replay_buffer_success.sample(self.batchsize0s)#(self.params['cbfd_batch_size'])#256
-                obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']#focus on expanding the safe zone?
-                if self.params['ways']==1:#not to change the directory/data!
-                    constr=np.where(constr<0.99,0,constr)
-                cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
-                loss, info = self.cbfd.update_m2s(obs,next_obs, cbfv, already_embedded=True)#use the constraint information by yourself!  #
-                self.loss_plotter.add_data(info)#self.constr.update, not self.update!
                 if self.params['mean']=='meancbf':#all offline success trajectory
                     out_dicto = replay_buffer_success_online.samplemeancbf(self.batchsize0so)#sanity check passed!#(self.params['cbfd_batch_size'])#256
                     #log.info('training the mean version of the CBF!')
                 else:#all offline success trajectory
                     out_dicto = replay_buffer_success_online.sample(self.batchsize0so)#(self.params['cbfd_batch_size'])#256
+                obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']#focus on expanding the safe zone?
                 obso,next_obso,constro=out_dicto['obs'],out_dicto['next_obs'],out_dicto['constraint']#focus on expanding the safe zone?
+                
                 if self.params['ways']==1:#not to change the directory/data!
+                    constr=np.where(constr<0.99,0,constr)
                     constro=np.where(constro<0.99,0,constro)
+                cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
                 cbfvo=constro*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                loss, info = self.cbfd.update_m2s(obs,next_obs, cbfv, already_embedded=True)#use the constraint information by yourself!  #
+                self.loss_plotter.add_data(info)#self.constr.update, not self.update!
                 loss, info = self.cbfd.update_m2s_online(obso,next_obso, cbfvo, already_embedded=True)#use the constraint information by yourself!  #
                 self.loss_plotter.add_data(info)#self.constr.update, not self.update!
-                if k==0:
-                    log.info('online success buffer has been used as expected!')
+                #if k==0:
+                    #log.info('online success buffer has been used as expected!')
+                
+                if ratiouo>0:#this means online unsafe incident happens!
+                    unsafeobatch=max(2,int(ratiouo*self.batchsize))
+                    unsafebatch=self.batchsize-unsafeobatch
+                else:
+                    unsafebatch=self.batchsize#128
+                    unsafeobatch=0
+                    if k==0:
+                        log.info('no online safety violations!')
                 
                 if self.params['mean']=='meancbf':
                     #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
                     #if self.params['boundary']=='no':#all unsafe trajectories, offline and online! some violate constraints!
-                    out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                    out_dictus = replay_buffer_unsafe.samplemeancbf(unsafebatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
                     if self.params['boundary']=='yes':
-                        out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
+                        out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2(unsafebatch,'constraint')#(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
                 else:
-                    out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                    out_dictus = replay_buffer_unsafe.sample(unsafebatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
                     if self.params['boundary']=='yes':#all unsafe trajectories, all of them are constraint violating!
-                        out_dictusb = replay_buffer_unsafe.sample_boundary_m2(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
+                        out_dictusb = replay_buffer_unsafe.sample_boundary_m2(unsafebatch,'constraint')#(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
                 #obsus=out_dictus['obs']#us means unsafe
                 #print('obsus.shape',obsus.shape)(128,32)
                 obsus,next_obsus,construs=out_dictus['obs'],out_dictus['next_obs'],out_dictus['constraint']
-                if self.params['ways']==1:#not to change the directory/data!
-                    construs=np.where(construs<0.99,0,construs)
-                cbfvus=construs*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
-                loss, info = self.cbfd.update_m2u(obsus,next_obsus, cbfvus, already_embedded=True)  #info is a dictionary
-                self.loss_plotter.add_data(info)
-                '''
-                if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
-                    out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2(self.batchsize10o,'constraint',1)#(self.params['cbfd_batch_size'])#256
-                else:#all are offline trajectories, but not necessarily violation
-                    out_dictusb = replay_buffer_unsafe.sample_boundary(self.batchsize10o,'constraint',1)#(self.params['cbfd_batch_size'])#256
-                '''
                 obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']#it should be 1#
                 if self.params['ways']==1:#not to change the directory/data!
+                    construs=np.where(construs<0.99,0,construs)
                     construsb=np.where(construsb<0.99,0,construsb)
+                cbfvus=construs*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
                 cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                
+                loss, info = self.cbfd.update_m2u(obsus,next_obsus, cbfvus, already_embedded=True)  #info is a dictionary
+                self.loss_plotter.add_data(info)
                 loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)#push back from possibly too optimistic safe zone?
+
+                if unsafeobatch>=1:#ratiouo>0:#
+                    if self.params['mean']=='meancbf':
+                        out_dictuso = replay_buffer_unsafe_online.samplemeancbf(unsafeobatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                        if self.params['boundary']=='yes':
+                            out_dictusbo = replay_buffer_unsafe_online.sample_boundary_meancbf_m2(unsafeobatch,'constraint')#(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
+                    else:
+                        out_dictuso = replay_buffer_unsafe_online.sample(unsafeobatch)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                        if self.params['boundary']=='yes':#all unsafe trajectories, all of them are constraint violating!
+                            out_dictusbo = replay_buffer_unsafe_online.sample_boundary_m2(unsafeobatch,'constraint')#(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
+                    #obsus=out_dictus['obs']#us means unsafe#print('obsus.shape',obsus.shape)(128,32)
+                    obsuso,next_obsuso,construso=out_dictuso['obs'],out_dictuso['next_obs'],out_dictuso['constraint']
+                    obsusbo,next_obsusbo,construsbo=out_dictusbo['obs'],out_dictusbo['next_obs'],out_dictusbo['constraint']#it should be 1#
+                    if self.params['ways']==1:#not to change the directory/data!
+                        construso=np.where(construso<0.99,0,construso)
+                        construsbo=np.where(construsbo<0.99,0,construsbo)
+                    cbfvuso=construso*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                    cbfvusbo=construsbo*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                    
+                    loss, info = self.cbfd.update_m2u(obsuso,next_obsuso, cbfvuso, already_embedded=True)  #info is a dictionary
+                    self.loss_plotter.add_data(info)
+                    loss, info = self.cbfd.update_m2u(obsusbo,next_obsusbo, cbfvusbo, already_embedded=True)  #info is a dictionary
+                    self.loss_plotter.add_data(info)#push back from possibly too optimistic safe zone?
+                    log.info('online violation has been taken into account!')
+
                 #needs further change!
                 #cbfloss=info['cbf_total']#this is the real cbf loss
                 loss1=info['old_safe']#notice that it is multiplied by w1!
