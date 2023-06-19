@@ -205,7 +205,7 @@ class PETSDynamicsTrainer(Trainer):
                 unsafeobatch=max(2,int(ratiouo*self.params['dyn_batch_size']))#at least one sample!
                 out_dictuso = replay_buffer_unsafe_online.sample(unsafeobatch, ensemble=self.ensemble)#(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 obsuso,next_obsuso, actuso = out_dictuso['obs'], out_dictuso['next_obs'], out_dictuso['action']
-                print('obsuso.shape',obsuso.shape)#(5,32) tells everything! should be at least 2!
+                #print('obsuso.shape',obsuso.shape)#(5,32) tells everything! should be at least 2!
                 obs=np.concatenate((obs,obsuso),axis=1)
                 next_obs=np.concatenate((next_obs,next_obsuso),axis=1)
                 act=np.concatenate((act,actuso),axis=1)#pay attention to the dimension!
