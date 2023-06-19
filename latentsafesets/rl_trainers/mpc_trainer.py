@@ -182,9 +182,9 @@ class MPCTrainer(Trainer):
         loss_plotter = LossPlotter(os.path.join(self.logdir, 'loss_plots'))
         self.encoder_data_loader = EncoderDataLoader(params)
         light=params['light']
-
+        self.online=params['online']
         self.trainers = []#the following shows the sequence of training
-
+        self.ways=params['ways']
         self.trainers.append(VAETrainer(params, modules['enc'], loss_plotter))
         self.trainers.append(PETSDynamicsTrainer(params, modules['dyn'], loss_plotter))
         self.trainers.append(ValueTrainer(env, params, modules['val'], loss_plotter))
@@ -218,8 +218,13 @@ class MPCTrainer(Trainer):
         for trainer in self.trainers:#type() method returns class type of the argument(object) passed as parameter
             if type(trainer) == VAETrainer:#VAE is trained totally on images from that folder, no use of replay_buffer
                 trainer.initial_train(self.encoder_data_loader, update_dir)
-            else:#then it means that the VAE has been trained!#now both success and unsafe are required!
+            elif type(trainer)!=CBFdotlatentplanaTrainer:#then it means that the VAE has been trained!#now both success and unsafe are required!
                 trainer.initial_train_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)
+            else:
+                if self.ways==1:
+                    trainer.initial_train_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)
+                elif self.ways==2:
+                    trainer.initial_train_m2_0109(replay_buffer_success, update_dir,replay_buffer_unsafe)
 
     def update(self, replay_buffer, update_num,replay_buffer_unsafe=None):#the update folder!
         update_dir = os.path.join(self.logdir, 'update_%d' % update_num)
@@ -233,7 +238,8 @@ class MPCTrainer(Trainer):
                 episodiccbfdhz=trainer.update(replay_buffer, update_dir,replay_buffer_unsafe)
         return episodiccbfdhz
 
-    def update_m2(self, replay_buffer_success, update_num,replay_buffer_unsafe):#the update folder!
+    def update_m2(self, replay_buffer_success, update_num,replay_buffer_unsafe):#,replay_buffer_success_online, replay_buffer_unsafe_online):
+        #the update folder!
         update_dir = os.path.join(self.logdir, 'update_%d' % update_num)
         os.makedirs(update_dir, exist_ok=True)
         for trainer in self.trainers:
@@ -241,5 +247,23 @@ class MPCTrainer(Trainer):
             if type(trainer)!=CBFdotlatentplanaTrainer:
                 trainer.update_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)#pay attention to the details!
             else:
-                episodiccbfdhz=trainer.update_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)
+                if self.ways==1:
+                    episodiccbfdhz=trainer.update_m2(replay_buffer_success, update_dir,replay_buffer_unsafe)
+                elif self.ways==2:
+                    episodiccbfdhz=trainer.update_m2_0109(replay_buffer_success, update_dir,replay_buffer_unsafe)
+        return episodiccbfdhz#returning dhz only
+    
+    def update_m2_withonline(self, replay_buffer_success, update_num,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online):
+        #the update folder!
+        update_dir = os.path.join(self.logdir, 'update_%d' % update_num)
+        os.makedirs(update_dir, exist_ok=True)
+        for trainer in self.trainers:
+            #trainer.update(replay_buffer, update_dir)
+            if type(trainer)!=CBFdotlatentplanaTrainer:
+                trainer.update_m2_withonline(replay_buffer_success, update_dir,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online)#pay attention to the details!
+            else:
+                if self.ways==1:
+                    episodiccbfdhz=trainer.update_m2_withonline(replay_buffer_success, update_dir,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online)
+                elif self.ways==2:
+                    episodiccbfdhz=trainer.update_m2_0109_withonline(replay_buffer_success, update_dir,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online)
         return episodiccbfdhz#returning dhz only

@@ -202,7 +202,7 @@ class AbstractTeacher(ABC):
         # V = self.env.values()
         # for i, t in enumerate(transitions):
         #     t['values'] = V[i]
-        return transitions
+        return transitions#it is a trajectory with 100/150 steps!
 
     def generate_trajectorysafety_dense(self,xa,ya,xa2,ya2,angled, noise_param=None, store_noisy=True):#xa/ya means x/y angle
         """

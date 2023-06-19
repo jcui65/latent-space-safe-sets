@@ -47,7 +47,8 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         self.gammadyn=params['gammadyn']
         self.alpha=params['cbfdot_thresh']
         self.dz=1*params['sigmaz']*torch.ones((self.d_latent),device=ptu.TORCH_DEVICE)#it needs to be a tensor!#just first use 1 sigma_z to make it feasible!
-        self.dhz=params['dhz']
+        self.noofsigmadhz=params['noofsigmadhz']
+        self.dhz=params['dhz']#you set it to be 0.00002, it is OK I think
         if self.env=='reacher':
             self.lipthres=1/200#tune this parameter!
         elif self.env=='push':
@@ -62,8 +63,16 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         self.w6=params['w6']
         self.w7=params['w7']
         self.w8=params['w8']
+        self.w11=params['w11']#w1 for online
+        self.w12=params['w12']#w2 for online
+        self.w13=params['w13']#w3 for online
+        self.w14=params['w14']#w4 for online
+        self.w15=params['w15']#w4 for online
         self.stepstohell=params['stepstohell']
-        self.m10=1e-10
+        self.term3=params['term3']
+        self.m10=1e-8#for better visualization#1e-10#
+        self.vau=0#vau means virtual alpha unsafe
+        self.vas=1#vas means virtual alpha safe
     def forward(self, obs, already_embedded=False):
         """
         Returns inputs to sigmoid for probabilities
@@ -158,7 +167,24 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
 
         self.optimizer.zero_grad()
         #loss = self.loss(next_obs, constr, already_embedded)
-        loss,data = self.lossm2s(obs,next_obs, constr, already_embedded)
+        #loss,data = self.lossm2s(obs,next_obs, constr, already_embedded)
+        loss,data = self.lossm2snewt3(obs,next_obs, constr, already_embedded)
+        loss.backward()
+        self.step()
+
+        return loss.item(), data##loss.item(), {'cbfd': loss.item()}#the first term is already the item
+
+    def update_m2s_online(self, obs, next_obs, constr, already_embedded=False):#the training process
+        self.trained = True
+        obs = ptu.torchify(obs)#input
+        next_obs = ptu.torchify(next_obs)#input
+        #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+        constr = ptu.torchify(constr)#output
+
+        self.optimizer.zero_grad()
+        #loss = self.loss(next_obs, constr, already_embedded)
+        #loss,data = self.lossm2s(obs,next_obs, constr, already_embedded)
+        loss,data = self.lossm2sonline(obs,next_obs, constr, already_embedded)
         loss.backward()
         self.step()
 
@@ -179,6 +205,53 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
 
         return loss.item(), data##loss.item(), {'cbfd': loss.item()}#the first term is already the item
 
+    def update_m2s_0109(self, obs, next_obs, constr, already_embedded=False):#the training process
+        self.trained = True
+        obs = ptu.torchify(obs)#input
+        next_obs = ptu.torchify(next_obs)#input
+        #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+        constr = ptu.torchify(constr)#output
+        cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+        self.optimizer.zero_grad()
+        #loss = self.loss(next_obs, constr, already_embedded)
+        #loss,data = self.lossm2s(obs,next_obs, constr, already_embedded)
+        loss,data = self.lossm2s0109(obs,next_obs, cbfv, already_embedded)
+        loss.backward()
+        self.step()
+
+        return loss.item(), data##loss.item(), {'cbfd': loss.item()}#the first term is already the item
+
+    def update_m2s_0109_online(self, obs, next_obs, constr, already_embedded=False):#the training process
+        self.trained = True
+        obs = ptu.torchify(obs)#input
+        next_obs = ptu.torchify(next_obs)#input
+        #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+        constr = ptu.torchify(constr)#output
+        cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+        self.optimizer.zero_grad()
+        #loss = self.loss(next_obs, constr, already_embedded)
+        #loss,data = self.lossm2s(obs,next_obs, constr, already_embedded)
+        loss,data = self.lossm2s0109online(obs,next_obs, cbfv, already_embedded)
+        loss.backward()
+        self.step()
+
+        return loss.item(), data##loss.item(), {'cbfd': loss.item()}#the first term is already the item
+
+    def update_m2u_0109(self, obs, next_obs, constr, already_embedded=False):#the training process
+        self.trained = True
+        obs = ptu.torchify(obs)#input
+        next_obs = ptu.torchify(next_obs)#input
+        #print('next_obs.shape',next_obs.shape)#448,32#torch.Size([256, 32])
+        constr = ptu.torchify(constr)#output
+        cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+        self.optimizer.zero_grad()
+        #loss = self.loss(next_obs, constr, already_embedded)
+        #loss,data = self.lossm2u(obs,next_obs, constr, already_embedded)
+        loss,data = self.lossm2u0109(obs,next_obs, cbfv, already_embedded)
+        loss.backward()
+        self.step()
+
+        return loss.item(), data##loss.item(), {'cbfd': loss.item()}#the first term is already the item
 
     def loss(self, next_obs, constr, already_embedded=False):
         #if constr==0:
@@ -275,7 +348,52 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             #print('jnon.shape',jnon.shape)#it use to be a scalar, 0.6009, with shape 0
             #loss5=torch.nn.functional.relu(jnon-self.lipthres)
             loss5=0*loss4##torch.mean(loss5)#I set it to be 1/900
-            bztut=cbfnew+(self.alpha-1)*cbfold-torch.matmul(jno,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+            realdhd=torch.matmul(jno,self.dz)#very negative!#because it is a learning process!
+            #print('realdhd',realdhd)#Almost all of them turn to negative very fast due to training!
+            bztut=cbfnew+(self.alpha-1)*cbfold-realdhd#quite positive#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+            qztut=bztut-(2-self.alpha)*self.dhz#cbfnew has its first dimension to be 128
+            loss3=torch.nn.functional.relu(self.gammadyn-qztut)#this means that qztut should be smaller than gammadyn
+            loss3=torch.mean(loss3)#0#make it a CBF#finally!
+            #print('loss3.shape',loss3.shape)#used to be 128
+        else:
+            loss5=0*loss4#make it a zero tensor!
+            loss3=0*loss4
+        #print('loss5.shape',loss5.shape)#used to be 128
+        #print('cbfnew.shape',cbfnew.shape)#shape 128
+        #print('self.dz.shape',self.dz.shape)#shape 32
+        
+        loss=self.w1*loss1+self.w2*loss2+self.w3*loss3+self.w4*loss4+self.w5*loss5##
+        data = {
+            'cbf_total': loss.item(),
+            'old_safe': max(self.w1*loss1.item(),self.m10),#old safe
+            'new_safe': max(self.w2*loss2.item(),self.m10),#for the granularity of plotting
+            'old_unsafe':self.m10,#want to show the log plots!#0,#
+            'new_unsafe':self.m10,#0,#
+            'make_it_a_cbf':max(self.w3*loss3.item(),self.m10),
+            'closeness_safe':max(self.w4*loss4.item(),self.m10),
+            'closeness_unsafe':self.m10,
+            'regularization':self.w5*loss5.item()}
+        return loss,data
+
+    def lossm2snewt3(self,obs, next_obs, cbfv, already_embedded=False):#newt3 means new term 3
+        cbfold=self(obs, already_embedded).squeeze()#.forward!#prediction
+        cbfnew = self(next_obs, already_embedded).squeeze()#size 128#.forward!#prediction
+        #print('logits',logits)#the value of the CBF
+        targets = cbfv#constr#some function of constr#label
+        loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        loss1=torch.mean(loss1)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
+        #print('loss1.shape',loss1.shape)#used to be 128
+        loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
+        loss2=torch.mean(loss2)##
+        #print('loss2.shape',loss2.shape)#used to be 128
+        normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
+        loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#the difference should be less than that!!!
+        loss4=torch.mean(loss4)#
+        #print('loss4.shape',loss4.shape)#used to be 128
+        #print('next_obs.shape',next_obs.shape)#(128,32)
+        if self.reg_lipschitz=='yes':
+            loss5=0*loss4##torch.mean(loss5)#I set it to be 1/900
+            bztut=cbfnew+(self.alpha-1)*cbfold#-torch.matmul(jno,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
             qztut=bztut-(2-self.alpha)*self.dhz#cbfnew has its first dimension to be 128
             loss3=torch.nn.functional.relu(self.gammadyn-qztut)#this means that qztut should be smaller than gammadyn
             loss3=torch.mean(loss3)#0#make it a CBF#finally!
@@ -323,8 +441,8 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             #loss2=0*torch.nn.functional.relu(targets-cbfnew)#just for consistency!
         normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
         #loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#
-        loss41=torch.nn.functional.relu(cbfnew-cbfold,0)#I want cbfnew<cbfold in this case
-        loss42=torch.nn.functional.relu(cbfold-cbfnew-normdiffthres,0)#I want cbfnew<cbfold not too much!
+        loss41=torch.nn.functional.relu(cbfnew-cbfold)#I want cbfnew<cbfold in this case
+        loss42=torch.nn.functional.relu(cbfold-cbfnew-normdiffthres)#I want cbfnew<cbfold not too much!
         loss43=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#I want the difference of the 2 not too much!
         loss4=torch.where(targets<0,loss41+loss42,loss43)#if targets<0, then this means that you have a violation and then you should use loss41+42
         loss4=torch.mean(loss4)#if targets>0, then you not yet encounter a violation, then you just need to use loss43
@@ -357,6 +475,222 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
             loss5=0*loss4#torch.mean(loss5)#
         else:
             loss5=0*loss4
+        loss=self.w6*loss1+self.w7*loss2+self.w8*loss4+self.w5*loss5##
+        data = {
+            'cbf_total': loss.item(),
+            'old_safe':self.m10,#want to show the log plots!#0,#
+            'new_safe':self.m10,#0,#
+            'old_unsafe': max(self.w6*loss1.item(),self.m10),#old safe
+            'new_unsafe': max(self.w7*loss2.item(),self.m10),
+            'make_it_a_cbf':self.m10,#want to show the log plots!#0,#0,#-0.001,#just for consistency in plotting!
+            'closeness_safe':self.m10,
+            'closeness_unsafe':max(self.w8*loss4.item(),self.m10),#for plotting!#
+            'regularization':self.w5*loss5.item()}
+        return loss,data
+
+    def lossm2s0109(self,obs, next_obs, cbfv, already_embedded=False):
+        cbfold=self(obs, already_embedded).squeeze()#.forward!#prediction
+        cbfnew = self(next_obs, already_embedded).squeeze()#size 128#.forward!#prediction
+        #print('logits',logits)#the value of the CBF
+        targets = cbfv#constr#some function of constr#label
+        loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        loss1=torch.mean(loss1)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
+        #print('loss1.shape',loss1.shape)#used to be 128
+        loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
+        loss2=torch.mean(loss2)##
+        #print('loss2.shape',loss2.shape)#used to be 128
+        normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
+        loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#the difference should be less than that!!!
+        loss4=torch.mean(loss4)#
+        #print('loss4.shape',loss4.shape)#used to be 128
+        #print('next_obs.shape',next_obs.shape)#(128,32)
+        if self.reg_lipschitz=='yes':
+            #selfforwardtrue=lambda nextobs: self(nextobs, True)
+            #print('next_obs.shape',next_obs.shape)#torch.Size([256, 32])
+            #jno=torch.zeros_like(next_obs)
+            #for i in range(next_obs.shape[0]):
+                #jnoi=jacobian(selfforwardtrue,next_obs[i],create_graph=True)#jnoi means jacobian next_obs ith
+                #jno[i]=jnoi#jnoi should be 32 dimensional
+            #jnon=torch.norm(jno)#jnon means  norm of jacobian next_obs
+            #jnon=torch.norm(jno,dim=-1)#128 now!
+            #print('jno.shape',jno.shape)#jno.shape torch.Size([128, 1, 128, 32])
+            #print('jnon.shape',jnon.shape)#it use to be a scalar, 0.6009, with shape 0
+            #loss5=torch.nn.functional.relu(jnon-self.lipthres)
+            loss5=0*loss4##torch.mean(loss5)#I set it to be 1/900
+            bztut=cbfnew+(self.alpha-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+            qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+            loss3=torch.nn.functional.relu(self.gammadyn-qztut)#this means that qztut should be smaller than gammadyn
+            loss3=torch.mean(loss3)#0#make it a CBF#finally!
+            #print('loss3.shape',loss3.shape)#used to be 128
+        else:
+            loss5=0*loss4#make it a zero tensor!
+            loss3=0*loss4
+        #print('loss5.shape',loss5.shape)#used to be 128
+        #print('cbfnew.shape',cbfnew.shape)#shape 128
+        #print('self.dz.shape',self.dz.shape)#shape 32
+        
+        loss=self.w1*loss1+self.w2*loss2+self.w3*loss3+self.w4*loss4+self.w5*loss5##
+        data = {
+            'cbf_total': loss.item(),
+            'old_safe': max(self.w1*loss1.item(),self.m10),#old safe
+            'new_safe': max(self.w2*loss2.item(),self.m10),#for the granularity of plotting
+            'old_unsafe':self.m10,#want to show the log plots!#0,#
+            'new_unsafe':self.m10,#0,#
+            'make_it_a_cbf':max(self.w3*loss3.item(),self.m10),
+            'closeness_safe':max(self.w4*loss4.item(),self.m10),
+            'closeness_unsafe':self.m10,
+            'regularization':self.w5*loss5.item()}
+        return loss,data
+
+    def lossm2sonline(self,obs, next_obs, cbfv, already_embedded=False):
+        cbfold=self(obs, already_embedded).squeeze()#.forward!#prediction
+        cbfnew = self(next_obs, already_embedded).squeeze()#size 128#.forward!#prediction
+        #print('logits',logits)#the value of the CBF
+        targets = cbfv#constr#some function of constr#label
+        loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        loss1=torch.mean(loss1)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
+        #print('loss1.shape',loss1.shape)#used to be 128
+        loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
+        loss2=torch.mean(loss2)##
+        #print('loss2.shape',loss2.shape)#used to be 128
+        normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
+        loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#the difference should be less than that!!!
+        loss4=torch.mean(loss4)#
+        #print('loss4.shape',loss4.shape)#used to be 128
+        #print('next_obs.shape',next_obs.shape)#(128,32)
+        if self.reg_lipschitz=='yes':
+            loss5=0*loss4##torch.mean(loss5)#I set it to be 1/900
+            if self.term3==1:
+                bztut=cbfnew+(self.alpha-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+                qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+                loss3=torch.nn.functional.relu(self.gammadyn-qztut)#this means that qztut should be smaller than gammadyn
+                loss3=torch.mean(loss3)#0#make it a CBF#finally!
+                #print('loss3.shape',loss3.shape)#used to be 128
+            elif self.term3==2:
+                mask1=(cbfold>=self.gammadyn)&(cbfnew>=self.gammadyn)
+                bztut=cbfnew+(self.alpha-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+                qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+                loss3=torch.where(mask1,torch.nn.functional.relu(self.gammadyn-qztut),0)#this means that qztut should be smaller than gammadyn
+
+                mask2=(cbfold<0)&(cbfnew>=cbfold)
+                bztut=cbfnew+(self.vau-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+                qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+                loss3=torch.where(mask2,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                
+                mask3=(cbfold>=0)&(cbfold<self.gammadyn)&(cbfnew>=cbfold)
+                bztut=cbfnew+(self.vas-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+                qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+                loss3=torch.where(mask3,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                loss3=torch.mean(loss3)#0#make it a CBF#finally!
+        else:
+            loss5=0*loss4#make it a zero tensor!
+            loss3=0*loss4
+        #print('loss5.shape',loss5.shape)#used to be 128
+        #print('cbfnew.shape',cbfnew.shape)#shape 128
+        #print('self.dz.shape',self.dz.shape)#shape 32
+        loss=self.w11*loss1+self.w12*loss2+self.w13*loss3+self.w14*loss4+self.w15*loss5##
+        data = {
+            'cbf_total': loss.item(),
+            'old_safe': max(self.w11*loss1.item(),self.m10),#old safe
+            'new_safe': max(self.w12*loss2.item(),self.m10),#for the granularity of plotting
+            'old_unsafe':self.m10,#want to show the log plots!#0,#
+            'new_unsafe':self.m10,#0,#
+            'make_it_a_cbf':max(self.w13*loss3.item(),self.m10),
+            'closeness_safe':max(self.w14*loss4.item(),self.m10),
+            'closeness_unsafe':self.m10,
+            'regularization':self.w15*loss5.item()}
+        return loss,data
+
+    def lossm2s0109online(self,obs, next_obs, cbfv, already_embedded=False):
+        cbfold=self(obs, already_embedded).squeeze()#.forward!#prediction
+        cbfnew = self(next_obs, already_embedded).squeeze()#size 128#.forward!#prediction
+        #print('logits',logits)#the value of the CBF
+        targets = cbfv#constr#some function of constr#label
+        loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        loss1=torch.mean(loss1)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
+        #print('loss1.shape',loss1.shape)#used to be 128
+        loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
+        loss2=torch.mean(loss2)##
+        #print('loss2.shape',loss2.shape)#used to be 128
+        normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
+        loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#the difference should be less than that!!!
+        loss4=torch.mean(loss4)#
+        #print('loss4.shape',loss4.shape)#used to be 128
+        #print('next_obs.shape',next_obs.shape)#(128,32)
+        if self.reg_lipschitz=='yes':
+            loss5=0*loss4##torch.mean(loss5)#I set it to be 1/900
+            if self.term3==1:
+                bztut=cbfnew+(self.alpha-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+                qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+                loss3=torch.nn.functional.relu(self.gammadyn-qztut)#this means that qztut should be smaller than gammadyn
+                loss3=torch.mean(loss3)#0#make it a CBF#finally!
+                #print('loss3.shape',loss3.shape)#used to be 128
+            elif self.term3==2:
+                mask1=(cbfold>=self.gammadyn)&(cbfnew>=self.gammadyn)
+                bztut=cbfnew+(self.alpha-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+                qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+                loss3=torch.where(mask1,torch.nn.functional.relu(self.gammadyn-qztut),0)#this means that qztut should be smaller than gammadyn
+
+                mask2=(cbfold<0)&(cbfnew>=cbfold)
+                bztut=cbfnew+(self.vau-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+                qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+                loss3=torch.where(mask2,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                
+                mask3=(cbfold>=0)&(cbfold<self.gammadyn)&(cbfnew>=cbfold)
+                bztut=cbfnew+(self.vas-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
+                qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
+                loss3=torch.where(mask3,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                loss3=torch.mean(loss3)#0#make it a CBF#finally!
+        else:
+            loss5=0*loss4#make it a zero tensor!
+            loss3=0*loss4
+        #print('loss5.shape',loss5.shape)#used to be 128
+        #print('cbfnew.shape',cbfnew.shape)#shape 128
+        #print('self.dz.shape',self.dz.shape)#shape 32
+        loss=self.w11*loss1+self.w12*loss2+self.w13*loss3+self.w14*loss4+self.w15*loss5##
+        data = {
+            'cbf_total': loss.item(),
+            'old_safe': max(self.w11*loss1.item(),self.m10),#old safe
+            'new_safe': max(self.w12*loss2.item(),self.m10),#for the granularity of plotting
+            'old_unsafe':self.m10,#want to show the log plots!#0,#
+            'new_unsafe':self.m10,#0,#
+            'make_it_a_cbf':max(self.w13*loss3.item(),self.m10),
+            'closeness_safe':max(self.w14*loss4.item(),self.m10),
+            'closeness_unsafe':self.m10,
+            'regularization':self.w15*loss5.item()}
+        return loss,data
+
+    def lossm2u0109(self,obs, next_obs, cbfv, already_embedded=False):
+        cbfold=self(obs, already_embedded).squeeze()#.forward!#prediction
+        cbfnew = self(next_obs, already_embedded).squeeze()#.forward!#prediction
+        #print('logits',logits)#the value of the CBF#targets<self.gammasafe is important! You cannot assign a equal sign to it! You even need to add margin!
+        targets = cbfv#constr#some function of constr#label#if target<0 (violation), then cbfold should be less than it. Otherwise,
+        loss1=torch.where(targets<self.gammasafe,torch.nn.functional.relu(cbfold-targets),0*torch.nn.functional.relu(cbfold-targets))#128 dim
+        #print('loss1',loss1)#cbf should be less than the target!
+        loss2=torch.where(targets<self.gammasafe,torch.nn.functional.relu(cbfnew-targets),0*torch.nn.functional.relu(cbfnew-targets))#128 dim
+        count=torch.count_nonzero(targets<self.gammasafe)#0)#I don't do a zero handling, as I think it is very unlikely to have such case
+        #log.info('count:%d'%(count))#it should be something between 1 and 128
+        if count==0:#sample positive will be useful here!!!
+            count+=1#just in case!#Now it is a must!
+        loss1=torch.sum(loss1)/count#torch.mean(loss1)#this mean operation is a diluting factor!!!
+        #log.info('loss1scalar:%f'%(loss1.item()))#sanity check passed!
+        loss2=torch.sum(loss2)/count#torch.mean(loss2)#I should mean over all the negative label samples!
+        #if targets<0:#you meet the unsafe point!
+            #loss1 =torch.nn.functional.relu(cbfold-targets)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
+            #loss2 =torch.nn.functional.relu(cbfnew-targets)#
+        #elif targets>=0:
+            #loss1=0*torch.nn.functional.relu(targets-cbfold)#don't update this!
+            #loss2=0*torch.nn.functional.relu(targets-cbfnew)#just for consistency!
+        normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
+        #loss4=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#
+        loss41=torch.nn.functional.relu(cbfnew-cbfold)#I want cbfnew<cbfold in this case
+        loss42=torch.nn.functional.relu(cbfold-cbfnew-normdiffthres)#I want cbfnew<cbfold not too much!
+        loss43=torch.nn.functional.relu(torch.abs(cbfnew-cbfold)-normdiffthres)#I want the difference of the 2 not too much!
+        #think about loss 4 in this case carefully!
+        loss4=torch.where(targets<self.gammasafe,loss41+loss42,loss43)#if targets<0, then this means that you have a violation and then you should use loss41+42
+        loss4=torch.mean(loss4)#if targets>0, then you not yet encounter a violation, then you just need to use loss43
+        #print('next_obs.shape',next_obs.shape)
+        loss5=0*loss4
         loss=self.w6*loss1+self.w7*loss2+self.w8*loss4+self.w5*loss5##
         data = {
             'cbf_total': loss.item(),
