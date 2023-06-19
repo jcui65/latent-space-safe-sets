@@ -1900,9 +1900,11 @@ class CEMSafeSetPolicy(Policy):
                             log.info('dhd: %f'%(dhd.item()))
                         if self.rewrite=='no':#a major change!
                             dhd=torch.clamp(dhd, max=self.dhdmax)#0.008 is a hyperparameter
-                        dhd=dhd.repeat(predictions.shape[1],cbfhorizon)
+                        dhd=dhd.repeat(predictions.shape[1],cbfhorizon)#should I also add todevice here?
                     else:
-                        dhd=0
+                        dhd=torch.zeros(1)#0
+                        device=ptu.TORCH_DEVICE#can I do this?
+                        dhd=dhd.to(device)
                     #print('dz',dz[0])
                     #embs=emb.squeeze()
                     #print('embs',embs)
@@ -2040,10 +2042,14 @@ class CEMSafeSetPolicy(Policy):
                             meanonemacbfs=torch.mean(onemacbfs,dim=0)
                             #shouldbeall=torch.count_nonzero(meanonemacbfs==0)
                             #log.info('shouldbeall: %d'%(shouldbeall.item()))#1500#should be all zero, hence 500
-                            meanonemacbfsr=meanonemacbfs+realdhz+dhd#meanonemacbfs+realdhz+torch.clip(dhd,max=self.dhdmax)#r for robust
+                            #print('meanonemacbfs0-50',meanonemacbfs[0:50])
+                            clippeddhd=torch.clip(dhd,max=self.dhdmax)
+                            #print('clippeddhd',clippeddhd)
+                            meanonemacbfsr=meanonemacbfs+realdhz+clippeddhd#meanonemacbfs+realdhz+dhd#r for robust
+                            #print('meanonemacbfsr0-50',meanonemacbfsr[0:50])
                             #sbpositive=torch.count_nonzero(meanonemacbfsr<0)#should all be positive
                             #log.info('sbpositive: %d'%(sbpositive.item()))#0 as expected!
-                            meanonemacbfsrc=torch.clip(meanonemacbfsr,max=self.dhdmax)#bmeanonemacbfsr#etter way of writing!
+                            meanonemacbfsrc=meanonemacbfsr#torch.clip(meanonemacbfsr,max=self.dhdmax)#better way of writing!
                             #sbp2=torch.count_nonzero(meanonemacbfsrc<0)
                             #log.info('shouldbealsopositive: %d'%(sbp2.item()))#0 as expected!#should all be positive 
                             meancbfallscbfhorizon=torch.mean(cbf_allscbfhorizon, dim=0)#mean of 20 particles!

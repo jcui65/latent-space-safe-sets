@@ -203,7 +203,7 @@ class EncodedReplayBuffer:
 
         return {key: self._extractmean(key, nonzeros[indices]) for key in self.data}#106
 
-    def sample_boundary_meancbf_m2(self, batch_size, key, ensemble=0):#here my key is hvn or hvo?
+    def sample_boundary_meancbf_m2(self, batch_size, key, ensemble=0):#still the old way, not 0109 things!
         """
         Samples only from the entries where the array corresponding to key is nonzero
         I added this method so I could sample only from data entries in the safe set

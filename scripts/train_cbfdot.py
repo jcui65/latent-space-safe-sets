@@ -49,5 +49,7 @@ if __name__ == '__main__':
     trainer = CBFdotlatentplanaTrainer(env, params, cbfdot, loss_plotter)
     #trainer.initial_train(replay_buffer, logdir)
     #trainer.initial_train(replay_buffer, logdir,replay_buffer_unsafe)
-    #trainer.initial_train_m2(replay_buffer_success, logdir,replay_buffer_unsafe)
-    trainer.initial_train_m2_0109(replay_buffer_success, logdir,replay_buffer_unsafe)
+    if params['ways']==1:
+        trainer.initial_train_m2(replay_buffer_success, logdir,replay_buffer_unsafe)
+    elif params['ways']==2:
+        trainer.initial_train_m2_0109(replay_buffer_success, logdir,replay_buffer_unsafe)

@@ -457,6 +457,8 @@ class CBFdotlatentplanaTrainer(Trainer):
             else:#all offline success trajectory
                 out_dict = replay_buffer_success.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
             obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']
+            if self.params['ways']==1:#not to change the directory/data!
+                constr=np.where(constr<0.99,0,constr)
             cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
             #print('cbfv',cbfv)#check passed!#
             #print('obs.shape',obs.shape)#(128,32)
@@ -482,6 +484,10 @@ class CBFdotlatentplanaTrainer(Trainer):
 
             obsus,next_obsus,construs=out_dictus['obs'],out_dictus['next_obs'],out_dictus['constraint']
             #print('obsus.shape',obsus.shape)#(128,32)#sanity check passed!
+            if self.params['ways']==1:#not to change the directory/data!
+                #print('oldconstrus',construs)#sanity check passed!#
+                construs=np.where(construs<0.99,0,construs)
+                #print('01construs',construs)#sanity check passed!#
             cbfvus=construs*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
             #print('cbfvus',cbfvus)#check passed!#
             loss, info = self.cbfd.update_m2u(obsus,next_obsus, cbfvus, already_embedded=True)  #info is a dictionary
@@ -489,6 +495,8 @@ class CBFdotlatentplanaTrainer(Trainer):
             if self.params['boundary']=='yes':
                 obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']
                 #print('obsusb.shape',obsusb.shape)#(128,32)#sanity check passed!
+                if self.params['ways']==1:#not to change the directory/data!
+                    construsb=np.where(construsb<0.99,0,construsb)
                 cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
                 #print('cbfvusb',cbfvusb)#check passed!#
                 loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
@@ -614,6 +622,8 @@ class CBFdotlatentplanaTrainer(Trainer):
                 else:
                     out_dict = replay_buffer_success.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
                 obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']
+                if self.params['ways']==1:#not to change the directory/data!
+                    constr=np.where(constr<0.99,0,constr)
                 cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
                 loss, info = self.cbfd.update_m2s(obs, next_obs,cbfv, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)
@@ -632,11 +642,15 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #obsus=out_dictus['obs']#us means unsafe
                 #print('obsus.shape',obsus.shape)(128,32)
                 obsus,next_obsus,construs=out_dictus['obs'],out_dictus['next_obs'],out_dictus['constraint']
+                if self.params['ways']==1:#not to change the directory/data!
+                    construs=np.where(construs<0.99,0,construs)
                 cbfvus=construs*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
                 loss, info = self.cbfd.update_m2u(obsus,next_obsus, cbfvus, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)
 
                 obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']
+                if self.params['ways']==1:#not to change the directory/data!
+                    construsb=np.where(construsb<0.99,0,construsb)
                 cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
                 loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)
@@ -794,6 +808,8 @@ class CBFdotlatentplanaTrainer(Trainer):
                 else:#all offline success trajectory
                     out_dict = replay_buffer_success.sample(self.batchsize0s)#(self.params['cbfd_batch_size'])#256
                 obs,next_obs,constr=out_dict['obs'],out_dict['next_obs'],out_dict['constraint']#focus on expanding the safe zone?
+                if self.params['ways']==1:#not to change the directory/data!
+                    constr=np.where(constr<0.99,0,constr)
                 cbfv=constr*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
                 loss, info = self.cbfd.update_m2s(obs,next_obs, cbfv, already_embedded=True)#use the constraint information by yourself!  #
                 self.loss_plotter.add_data(info)#self.constr.update, not self.update!
@@ -803,24 +819,41 @@ class CBFdotlatentplanaTrainer(Trainer):
                 else:#all offline success trajectory
                     out_dicto = replay_buffer_success_online.sample(self.batchsize0so)#(self.params['cbfd_batch_size'])#256
                 obso,next_obso,constro=out_dicto['obs'],out_dicto['next_obs'],out_dicto['constraint']#focus on expanding the safe zone?
+                if self.params['ways']==1:#not to change the directory/data!
+                    constro=np.where(constro<0.99,0,constro)
                 cbfvo=constro*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
-                loss, info = self.cbfd.update_m2s(obso,next_obso, cbfvo, already_embedded=True)#use the constraint information by yourself!  #
+                loss, info = self.cbfd.update_m2s_online(obso,next_obso, cbfvo, already_embedded=True)#use the constraint information by yourself!  #
                 self.loss_plotter.add_data(info)#self.constr.update, not self.update!
                 if k==0:
                     log.info('online success buffer has been used as expected!')
+                
+                if self.params['mean']=='meancbf':
+                    #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                    #if self.params['boundary']=='no':#all unsafe trajectories, offline and online! some violate constraints!
+                    out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                    if self.params['boundary']=='yes':
+                        out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
+                else:
+                    out_dictus = replay_buffer_unsafe.sample(self.batchsize)#(self.params['cbfd_batch_size'])#256
+                    if self.params['boundary']=='yes':#all unsafe trajectories, all of them are constraint violating!
+                        out_dictusb = replay_buffer_unsafe.sample_boundary_m2(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
+                #obsus=out_dictus['obs']#us means unsafe
+                #print('obsus.shape',obsus.shape)(128,32)
+                obsus,next_obsus,construs=out_dictus['obs'],out_dictus['next_obs'],out_dictus['constraint']
+                if self.params['ways']==1:#not to change the directory/data!
+                    construs=np.where(construs<0.99,0,construs)
+                cbfvus=construs*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                loss, info = self.cbfd.update_m2u(obsus,next_obsus, cbfvus, already_embedded=True)  #info is a dictionary
+                self.loss_plotter.add_data(info)
+                '''
                 if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
                     out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2(self.batchsize10o,'constraint',1)#(self.params['cbfd_batch_size'])#256
                 else:#all are offline trajectories, but not necessarily violation
                     out_dictusb = replay_buffer_unsafe.sample_boundary(self.batchsize10o,'constraint',1)#(self.params['cbfd_batch_size'])#256
+                '''
                 obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']#it should be 1#
-                #print(obsusb.shape,construsb.shape)#(128,32),(128,)
-                #altogether there will be 448 samples!
-                #add a for loop to sample from 0,0.1 to 0.9!
-                #shuffleind=np.random.permutation(obsusb.shape[0])
-                #obsusb=obsusb[shuffleind]
-                #print('obsusb.shape',obsusb.shape)
-                #next_obsusb=next_obsusb[shuffleind]
-                #construsb=construsb[shuffleind]
+                if self.params['ways']==1:#not to change the directory/data!
+                    construsb=np.where(construsb<0.99,0,construsb)
                 cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
                 loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
                 self.loss_plotter.add_data(info)#push back from possibly too optimistic safe zone?

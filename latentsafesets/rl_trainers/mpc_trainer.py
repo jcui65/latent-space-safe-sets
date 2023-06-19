@@ -263,7 +263,7 @@ class MPCTrainer(Trainer):
                 trainer.update_m2_withonline(replay_buffer_success, update_dir,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online)#pay attention to the details!
             else:
                 if self.ways==1:
-                    episodiccbfdhz=trainer.update_m2_withonline(replay_buffer_success, update_dir,replay_buffer_unsafe)
+                    episodiccbfdhz=trainer.update_m2_withonline(replay_buffer_success, update_dir,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online)
                 elif self.ways==2:
                     episodiccbfdhz=trainer.update_m2_0109_withonline(replay_buffer_success, update_dir,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online)
         return episodiccbfdhz#returning dhz only
