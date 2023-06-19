@@ -844,8 +844,8 @@ class CBFdotlatentplanaTrainer(Trainer):
                 else:
                     unsafebatch=self.batchsize#128
                     unsafeobatch=0
-                    if k==0:
-                        log.info('no online safety violations!')
+                    #if k==0:
+                        #log.info('no online safety violations!')
                 
                 if self.params['mean']=='meancbf':
                     #out_dictus = replay_buffer_unsafe.samplemeancbf(self.batchsize)#(self.params['cbfd_batch_size'])#256
@@ -894,7 +894,8 @@ class CBFdotlatentplanaTrainer(Trainer):
                     self.loss_plotter.add_data(info)
                     loss, info = self.cbfd.update_m2u(obsusbo,next_obsusbo, cbfvusbo, already_embedded=True)  #info is a dictionary
                     self.loss_plotter.add_data(info)#push back from possibly too optimistic safe zone?
-                    log.info('online violation has been taken into account!')
+                    if k==0:
+                        log.info('online violation has been taken into account!')
 
                 #needs further change!
                 #cbfloss=info['cbf_total']#this is the real cbf loss
