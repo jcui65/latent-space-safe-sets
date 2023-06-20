@@ -221,6 +221,7 @@ if __name__ == '__main__':
                     
                     #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#,conservative,reward_type)#
                     action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
+                    log.info('action1: %f, action2: %f'%(action[0],action[1]))
                     '''
                     if conservative=='conservative' and reward_type=='sparse':
                         #print('conservative and sparse!')#you get this right!
