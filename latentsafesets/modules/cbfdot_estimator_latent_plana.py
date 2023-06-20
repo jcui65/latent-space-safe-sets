@@ -73,6 +73,7 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         self.m10=1e-8#for better visualization#1e-10#
         self.vau=0#vau means virtual alpha unsafe
         self.vas=1#vas means virtual alpha safe
+        self.dhdmax=params['dhdmax']
     def forward(self, obs, already_embedded=False):
         """
         Returns inputs to sigmoid for probabilities
@@ -547,10 +548,26 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         cbfnew = self(next_obs, already_embedded).squeeze()#size 128#.forward!#prediction
         #print('logits',logits)#the value of the CBF
         targets = cbfv#constr#some function of constr#label
-        loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        #loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        if self.term3==1:
+            loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        elif self.term3==2:
+            thevalue=max(min(self.gammadyn,self.dhdmax),self.gammasafe/4)#I set self.gammasafe/4
+            mask11=cbfold>thevalue
+            #nzm11=torch.count_nonzero(mask11).item()
+            #log.info('non zero element in mask11: %d'%(nzm11))
+            loss1=torch.where(mask11,torch.nn.functional.relu(targets-cbfold),0)
         loss1=torch.mean(loss1)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
         #print('loss1.shape',loss1.shape)#used to be 128
-        loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
+        #loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
+        if self.term3==1:
+            loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfold should be greater than target value! verified!
+        elif self.term3==2:
+            thevalue=max(min(self.gammadyn,self.dhdmax),self.gammasafe/4)#I set self.gammasafe/4
+            mask21=cbfnew>thevalue
+            #nzm21=torch.count_nonzero(mask21).item()
+            #log.info('non zero element in mask21: %d'%(nzm21))
+            loss2=torch.where(mask21,torch.nn.functional.relu(targets-cbfnew),0)
         loss2=torch.mean(loss2)##
         #print('loss2.shape',loss2.shape)#used to be 128
         normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
@@ -567,20 +584,29 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
                 loss3=torch.mean(loss3)#0#make it a CBF#finally!
                 #print('loss3.shape',loss3.shape)#used to be 128
             elif self.term3==2:
-                mask1=(cbfold>=self.gammadyn)&(cbfnew>=self.gammadyn)
+                mask31=(cbfold>=self.gammadyn)&(cbfnew>=self.gammadyn)
+                #nzm31=torch.count_nonzero(mask31).item()
+                #log.info('non zero element in mask31: %d'%(nzm31))
                 bztut=cbfnew+(self.alpha-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
                 qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
-                loss3=torch.where(mask1,torch.nn.functional.relu(self.gammadyn-qztut),0)#this means that qztut should be smaller than gammadyn
+                loss3=torch.where(mask31,torch.nn.functional.relu(self.gammadyn-qztut),0)#this means that qztut should be smaller than gammadyn
 
-                mask2=(cbfold<0)&(cbfnew>=cbfold)
+                mask32=(cbfold<0)&(cbfnew>=cbfold)
+                #nzm32=torch.count_nonzero(mask32).item()#sanity check passed!
+                #log.info('non zero element in mask32: %d'%(nzm32))
                 bztut=cbfnew+(self.vau-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
                 qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
-                loss3=torch.where(mask2,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                loss3=torch.where(mask32,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
                 
-                mask3=(cbfold>=0)&(cbfold<self.gammadyn)&(cbfnew>=cbfold)
+                mask33=(cbfold>=0)&(cbfold<self.gammadyn)&(cbfnew>=cbfold)
+                #nzm33=torch.count_nonzero(mask33).item()
+                #log.info('non zero element in mask33: %d'%(nzm33))#as a sanity check!
+                #log.info('total non zero elements: %d'%(nzm31+nzm32+nzm33))
                 bztut=cbfnew+(self.vas-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
                 qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
-                loss3=torch.where(mask3,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                loss3=torch.where(mask33,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                l3nonzero=torch.count_nonzero(loss3).item()
+                #log.info('loss 3 non zero:%d'%(l3nonzero))#it should be no bigger than nzm31+nzm32+nzm33!
                 loss3=torch.mean(loss3)#0#make it a CBF#finally!
         else:
             loss5=0*loss4#make it a zero tensor!
@@ -606,10 +632,25 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         cbfnew = self(next_obs, already_embedded).squeeze()#size 128#.forward!#prediction
         #print('logits',logits)#the value of the CBF
         targets = cbfv#constr#some function of constr#label
-        loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        if self.term3==1:
+            loss1 =torch.nn.functional.relu(targets-cbfold)#cbfold should be greater than target value! verified!
+        elif self.term3==2:
+            thevalue=max(min(self.gammadyn,self.dhdmax),self.gammasafe/4)#I set self.gammasafe/4
+            mask11=cbfold>thevalue
+            nzm11=torch.count_nonzero(mask11).item()
+            log.info('non zero element in mask11: %d'%(nzm11))
+            loss1=torch.where(mask11,torch.nn.functional.relu(targets-cbfold),0)
         loss1=torch.mean(loss1)#1000000*self.loss_func(logits, targets)#+jacobian(self.forward)-#1000000 for reacher
         #print('loss1.shape',loss1.shape)#used to be 128
-        loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
+        if self.term3==1:
+            loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfold should be greater than target value! verified!
+        elif self.term3==2:
+            thevalue=max(min(self.gammadyn,self.dhdmax),self.gammasafe/4)#I set self.gammasafe/4
+            mask21=cbfnew>thevalue
+            nzm21=torch.count_nonzero(mask21).item()
+            log.info('non zero element in mask21: %d'%(nzm21))
+            loss2=torch.where(mask21,torch.nn.functional.relu(targets-cbfnew),0)
+        #loss2 =torch.nn.functional.relu(targets-cbfnew)#cbfnew should be greater than the target value! verified!
         loss2=torch.mean(loss2)##
         #print('loss2.shape',loss2.shape)#used to be 128
         normdiffthres=(self.gammasafe+self.gammaunsafe)/self.stepstohell#15#I PICK IT TO BE 15#0.05#?
@@ -626,20 +667,29 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
                 loss3=torch.mean(loss3)#0#make it a CBF#finally!
                 #print('loss3.shape',loss3.shape)#used to be 128
             elif self.term3==2:
-                mask1=(cbfold>=self.gammadyn)&(cbfnew>=self.gammadyn)
+                mask31=(cbfold>=self.gammadyn)&(cbfnew>=self.gammadyn)
+                nzm31=torch.count_nonzero(mask31).item()
+                log.info('non zero element in mask31: %d'%(nzm31))
                 bztut=cbfnew+(self.alpha-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
                 qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
-                loss3=torch.where(mask1,torch.nn.functional.relu(self.gammadyn-qztut),0)#this means that qztut should be smaller than gammadyn
+                loss3=torch.where(mask31,torch.nn.functional.relu(self.gammadyn-qztut),0)#this means that qztut should be smaller than gammadyn
 
-                mask2=(cbfold<0)&(cbfnew>=cbfold)
+                mask32=(cbfold<0)&(cbfnew>=cbfold)
+                nzm32=torch.count_nonzero(mask32).item()
+                log.info('non zero element in mask32: %d'%(nzm32))
                 bztut=cbfnew+(self.vau-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
                 qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
-                loss3=torch.where(mask2,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                loss3=torch.where(mask32,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
                 
-                mask3=(cbfold>=0)&(cbfold<self.gammadyn)&(cbfnew>=cbfold)
+                mask33=(cbfold>=0)&(cbfold<self.gammadyn)&(cbfnew>=cbfold)
+                nzm33=torch.count_nonzero(mask33).item()
+                log.info('non zero element in mask33: %d'%(nzm33))#as a sanity check!
+                log.info('total non zero elements: %d'%(nzm31+nzm32+nzm33))
                 bztut=cbfnew+(self.vas-1)*cbfold#-torch.matmul(jnon,self.dz)#.dot(jno,self.dz)#torch.dot(jno,self.dz) should be a scalar#jno*self.dz
                 qztut=bztut-(2-self.alpha)*self.dhz*self.noofsigmadhz#it is finally right now!#cbfnew has its first dimension to be 128
-                loss3=torch.where(mask3,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                loss3=torch.where(mask33,torch.nn.functional.relu(self.gammadyn-qztut),loss3)#this means that qztut should be smaller than gammadyn
+                l3nonzero=torch.count_nonzero(loss3).item()
+                log.info('loss 3 non zero:%d'%(l3nonzero))#it should be no bigger than nzm31+nzm32+nzm33!
                 loss3=torch.mean(loss3)#0#make it a CBF#finally!
         else:
             loss5=0*loss4#make it a zero tensor!
