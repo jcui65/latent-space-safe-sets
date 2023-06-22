@@ -70,10 +70,11 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
         self.w15=params['w15']#w4 for online
         self.stepstohell=params['stepstohell']
         self.term3=params['term3']
-        self.m10=1e-8#for better visualization#1e-10#
+        self.m10=1e-6#1e-8#for better visualization#1e-10#
         self.vau=0#vau means virtual alpha unsafe
         self.vas=1#vas means virtual alpha safe
         self.dhdmax=params['dhdmax']
+        self.batchsizeeach=128
     def forward(self, obs, already_embedded=False):
         """
         Returns inputs to sigmoid for probabilities

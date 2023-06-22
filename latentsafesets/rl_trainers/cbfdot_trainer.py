@@ -811,7 +811,7 @@ class CBFdotlatentplanaTrainer(Trainer):
             ratioso=lenso/lentotals
             ratiou=lenu/lentotalu
             ratiouo=lenuo/lentotalu
-            k=0
+            #k=0
             for _ in trange(self.params['cbfd_update_iters']):#512
                 if self.params['mean']=='meancbf':#all offline success trajectory
                     out_dict = replay_buffer_success.samplemeancbf(self.batchsize0s)#sanity check passed!#(self.params['cbfd_batch_size'])#256
@@ -861,16 +861,6 @@ class CBFdotlatentplanaTrainer(Trainer):
                 #print('obsus.shape',obsus.shape)(128,32)
                 obsus,next_obsus,construs=out_dictus['obs'],out_dictus['next_obs'],out_dictus['constraint']
                 obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']#it should be 1#
-                if self.params['ways']==1:#not to change the directory/data!
-                    construs=np.where(construs<0.99,0,construs)
-                    construsb=np.where(construsb<0.99,0,construsb)
-                cbfvus=construs*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
-                cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
-                
-                loss, info = self.cbfd.update_m2u(obsus,next_obsus, cbfvus, already_embedded=True)  #info is a dictionary
-                self.loss_plotter.add_data(info)
-                loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
-                self.loss_plotter.add_data(info)#push back from possibly too optimistic safe zone?
 
                 if unsafeobatch>=1:#ratiouo>0:#
                     if self.params['mean']=='meancbf':
@@ -884,6 +874,13 @@ class CBFdotlatentplanaTrainer(Trainer):
                     #obsus=out_dictus['obs']#us means unsafe#print('obsus.shape',obsus.shape)(128,32)
                     obsuso,next_obsuso,construso=out_dictuso['obs'],out_dictuso['next_obs'],out_dictuso['constraint']
                     obsusbo,next_obsusbo,construsbo=out_dictusbo['obs'],out_dictusbo['next_obs'],out_dictusbo['constraint']#it should be 1#
+                    obsus=np.vstack((obsus,obsuso))#pay attention to the dimension!
+                    next_obsus=np.vstack((next_obsus,next_obsuso))
+                    construs=np.concatenate((construs,construso))
+                    obsusb=np.vstack((obsusb,obsusbo))#pay attention to the dimension!
+                    next_obsusb=np.vstack((next_obsusb,next_obsusbo))
+                    construsb=np.concatenate((construsb,construsbo))
+                    '''
                     if self.params['ways']==1:#not to change the directory/data!
                         construso=np.where(construso<0.99,0,construso)
                         construsbo=np.where(construsbo<0.99,0,construsbo)
@@ -894,8 +891,19 @@ class CBFdotlatentplanaTrainer(Trainer):
                     self.loss_plotter.add_data(info)
                     loss, info = self.cbfd.update_m2u(obsusbo,next_obsusbo, cbfvusbo, already_embedded=True)  #info is a dictionary
                     self.loss_plotter.add_data(info)#push back from possibly too optimistic safe zone?
-                    if k==0:
-                        log.info('online violation has been taken into account!')
+                    #if k==0:
+                        #log.info('online violation has been taken into account!')
+                    '''
+                if self.params['ways']==1:#not to change the directory/data!
+                    construs=np.where(construs<0.99,0,construs)
+                    construsb=np.where(construsb<0.99,0,construsb)
+                cbfvus=construs*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                cbfvusb=construsb*(-self.gammasafe-self.gammaunsafe)+self.gammasafe
+                
+                loss, info = self.cbfd.update_m2u(obsus,next_obsus, cbfvus, already_embedded=True)  #info is a dictionary
+                self.loss_plotter.add_data(info)
+                loss, info = self.cbfd.update_m2u(obsusb,next_obsusb, cbfvusb, already_embedded=True)  #info is a dictionary
+                self.loss_plotter.add_data(info)#push back from possibly too optimistic safe zone?
 
                 #needs further change!
                 #cbfloss=info['cbf_total']#this is the real cbf loss
@@ -905,7 +913,7 @@ class CBFdotlatentplanaTrainer(Trainer):
                 loss7=info['new_unsafe']#notice that it is multiplied by w2(=w1)!
                 cbfloss=(loss6/self.params['w6']+loss7/self.params['w7'])/2#happens to be the right choice!
                 dhzepochave+=cbfloss#np.sqrt(cbfloss)##print('just hold it now!')
-                k+=1
+                #k+=1
             dhzepochave=dhzepochave/self.params['cbfd_update_iters']
             if dhzepochave<1e-15:#to avoid any numerical issues!
                 dhzepochave=0#dhzepochave#already done with the processing!#/100#this 100 is because of 10000^0.5=100

@@ -2087,7 +2087,7 @@ class CEMSafeSetPolicy(Policy):
                         #I don't want it to be positive!
                         log.info('the indices: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item(),indices[5].item(),indices[6].item(),indices[7].item(),indices[8].item(),indices[9].item()))
                         #log.info('bestone:%f'%(hopetobepositive0[bestoption]))#this should be consistent with the above line! Sanity check passed!
-                        log.info('not very critical, still trust the recovery action!')
+                        #log.info('not very critical, still trust the recovery action!')
                         actionchosen=action_samples[bestoption]
                         action=actionchosen[0]#picking the first one!
                         return action.detach().cpu().numpy(),randflag#, tp,fp,fn,tn,tpc,fpc,fnc,tnc
