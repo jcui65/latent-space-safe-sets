@@ -3,7 +3,7 @@ import sys
 import click
 # insert at 1, 0 is the script path (or '' in REPL)
 sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
-
+sys.path.insert(1, '/home/jcui65/latent-space-safe-sets')
 import os
 import numpy as np
 from latentsafesets.utils.arg_parser import parse_args
@@ -11,13 +11,14 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='06-13',help='the date when the simulation started', type=str)
+@click.option('--date', default='06-20',help='the date when the simulation started', type=str)
 @click.option('--time', default='08-38-11', help='time of the simulation', type=str)
-@click.option('--fh', default=500, help='five hundred or 250 or 1000', type=int)#1000, 250#
+@click.option('--fh', default=1000, help='five hundred or 250 or 1000', type=int)#1000, 250#
 @click.option('--env',default='reacher',help='the environment',type=str)#reacher or push#
 @click.option('--lenseed',default=3,help='length of the seed',type=int)#reacher or push#
 def main(date, time,fh,env,lenseed):
-    outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
+    #outputdir='/home/cuijin/Project6remote/latent-space-safe-sets/outputs/2023-'
+    outputdir='/home/jcui65/latent-space-safe-sets/outputs/2023-'
     #mar24='03-24'#mar23='03-23'#mar22='03-22'#mar25='03-25'#mar26='03-26'#mar27='03-27'#mar28='03-28'
     #date=mar28#mar22#mar24#mar26#mar27#mar25#mar23#
     #time='23-17-32'#'23-16-17'#'11-51-10'#'19-45-47'#'19-45-12'#'13-24-32'#'14-02-35'#'01-09-11'#'01-07-55'#'01-06-51'#'01-03-46'#'20-29-18'#'20-28-35'#'20-26-13'#'20-23-19'#'00-08-25'#'00-04-54'#'00-02-15'#
