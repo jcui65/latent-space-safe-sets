@@ -56,7 +56,7 @@ def main(date1, time1,date2, time2,date3,time3,date4,time4,fh):
     print('logdirbeforeseed4',logdirbeforeseed4)
     seedlist=[1,2,3]#[1,2]#[1,2,3,4,5]#24,25#[1,2,3,4,5,6,7,8,9,10]#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
 
-    lenseed=3#10#len(seedlist)
+    lenseed=10#3#len(seedlist)
     lenseed2=3#10#
     rfmean1,cvcmean1,tsrmean1,rfcmean1,tsrcmean1,rfstd1,cvcstd1,tsrstd1,rfcstd1,tsrcstd1=data_loading(logdirbeforeseed1,lenseed2)
     rfmean2,cvcmean2,tsrmean2,rfcmean2,tsrcmean2,rfstd2,cvcstd2,tsrstd2,rfcstd2,tsrcstd2=data_loading(logdirbeforeseed2,lenseed)
