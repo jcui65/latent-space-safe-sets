@@ -213,6 +213,7 @@ if __name__ == '__main__':
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
                     action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
+                    log.info('action1: %f, action2: %f'%(action[0],action[1]))
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
