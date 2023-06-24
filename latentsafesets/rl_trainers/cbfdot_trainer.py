@@ -592,13 +592,12 @@ class CBFdotlatentplanaTrainer(Trainer):
             if i % self.params['plot_freq'] == 0:
                 log.info('Creating cbfdot function heatmap')
                 self.loss_plotter.plot()
-                self.plot0109(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer_success,replay_buffer_unsafe)
-                #self.plotlatent(os.path.join(update_dir, "cbfdlatent%d.pdf" % i), replay_buffer,replay_buffer_unsafe)#nothing is plotted if not spb
-                #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-11.pdf" % i), replay_buffer,replay_buffer_unsafe,
-                                        #coeff=1)  # a few lines later
-                #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-13.pdf" % i), replay_buffer,replay_buffer_unsafe,coeff=1/3)  # a few lines later
-                #self.plotlatentunbiased(os.path.join(update_dir, "cbfdlatentunbiased%d-14.pdf" % i), replay_buffer,replay_buffer_unsafe,
-                                        #coeff=1 / 4)  # a few lines later
+                #self.plot0109(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer_success,replay_buffer_unsafe)
+                self.plot0109safes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,self.batchsize0s,'soff')#s means safe, off means offline#this is using plan a
+                #self.plot0109safes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success_online,self.batchsize0so,'son')#this is using plan a
+                for k in range(10):
+                    self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,k/10,self.batchsize0to9,'us'+str(k))#this is using plan a
+                self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,1,self.batchsize10,'us10')#us means unsafe
             if i % self.params['checkpoint_freq'] == 0 and i > 0:
                 self.cbfd.save(os.path.join(update_dir, 'cbfd_%d.pth' % i))
 
@@ -923,7 +922,13 @@ class CBFdotlatentplanaTrainer(Trainer):
             log.info('Creating cbf dot function heatmap')
             self.loss_plotter.plot()
             #self.plot(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,replay_buffer_unsafe)#this is using plan a
-            self.plot0109(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,replay_buffer_unsafe,replay_buffer_success_online)#this is using plan a
+            #self.plot0109(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,replay_buffer_unsafe,replay_buffer_success_online)#this is using plan a
+            self.plot0109safes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,self.batchsize0s,'soff')#s means safe, off means offline#this is using plan a
+            self.plot0109safes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success_online,self.batchsize0so,'son')#this is using plan a
+            for k in range(10):
+                self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,k/10,self.batchsize0to9,'us'+str(k))#this is using plan a
+            self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,1,self.batchsize10,'us10')#us means unsafe
+            
             self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             return deal
 
@@ -1096,6 +1101,28 @@ class CBFdotlatentplanaTrainer(Trainer):
         pu.visualize_cbfdot(next_obs, self.cbfd,
                              file,
                              env=self.env)
+
+    def plot0109safes(self, file, replay_buffer,bs,token):#s means separate!#this is for success and success_online
+        #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        if self.params['mean']=='meancbf':
+            out_dict = replay_buffer.samplemeancbf(bs)#(self.params['cbfd_batch_size'])#256
+        else:
+            out_dict = replay_buffer.sample(bs)#(self.params['cbfd_batch_size'])#256
+        next_obs = out_dict['next_obs']#rdo = out_dict['rdo']
+        
+        pu.visualize_cbfdot(next_obs, self.cbfd,file,env=self.env,token=token)
+
+    def plot0109unsafes(self, file, replay_buffer_unsafe,value,bs,token):#unsafe buffer is a must now!#s means separate
+        #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)
+        if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
+            out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(bs,'constraint',value)#(self.params['cbfd_batch_size'])#256
+        else:#all are offline trajectories, but not necessarily violation
+            out_dictusb = replay_buffer_unsafe.sample_boundary_m2_0109(bs,'constraint',value)#(self.params['cbfd_batch_size'])#256
+        obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']#it should be 1#
+        #print(obsusb.shape,construsb.shape)#(128,32),(128,)
+        #altogether there will be 448 samples!
+
+        pu.visualize_cbfdot(next_obsusb, self.cbfd,file,env=self.env,token=token)
 
     def plotconly(self, file, replay_buffer,replay_buffer_unsafe=None):
         #out_dict = replay_buffer.sample(self.batchsize)#(self.params['cbfd_batch_size']/2)

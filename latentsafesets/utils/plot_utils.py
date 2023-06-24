@@ -356,7 +356,7 @@ def visualize_onezero(obs, onezero, file, env=None):
     plt.close()
 
 
-def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, the network trained
+def visualize_cbfdot(obs, cbfd, file, env=None,token=''):#onezero/cbfd is the function, the network trained
     if issubclass(type(env), SimplePointBot):
         #print('entering this one!')
         #spbu.evaluate_cbfdot_func(cbfd, env, file=file, skip=1,action=(0,0))#61 in spb_utils
@@ -413,7 +413,7 @@ def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, t
         if c==3:
             filem4=file[:-4]
             d=(b+1)*eachline
-            filem4d=filem4+'-'+str(d)+'.pdf'
+            filem4d=filem4+token+'-'+str(d)+'.pdf'
             plt.savefig(filem4d)
             plt.close()
             fig, axs = plt.subplots(c4, eachline)
