@@ -592,12 +592,12 @@ class CBFdotlatentplanaTrainer(Trainer):
             if i % self.params['plot_freq'] == 0:
                 log.info('Creating cbfdot function heatmap')
                 self.loss_plotter.plot()
-                #self.plot0109(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer_success,replay_buffer_unsafe)
-                self.plot0109safes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,self.batchsize0s,'soff')#s means safe, off means offline#this is using plan a
+                self.plot0109(os.path.join(update_dir, "cbfd%d.pdf" % i), replay_buffer_success,replay_buffer_unsafe)
+                #self.plot0109safes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,self.batchsize0s,'soff')#s means safe, off means offline#this is using plan a
                 #self.plot0109safes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success_online,self.batchsize0so,'son')#this is using plan a
-                for k in range(10):
-                    self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,k/10,self.batchsize0to9,'us'+str(k))#this is using plan a
-                self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,1,self.batchsize10,'us10')#us means unsafe
+                #for k in range(10):
+                    #self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,k/10,self.batchsize0to9,'us'+str(k))#this is using plan a
+                #self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,1,self.batchsize10,'us10')#us means unsafe
             if i % self.params['checkpoint_freq'] == 0 and i > 0:
                 self.cbfd.save(os.path.join(update_dir, 'cbfd_%d.pth' % i))
 

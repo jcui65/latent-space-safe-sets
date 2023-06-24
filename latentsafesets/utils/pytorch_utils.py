@@ -1,15 +1,15 @@
 import torch
 import numpy as np
 
-#import sys
+import sys
 # insert at 1, 0 is the script path (or '' in REPL)
-#sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
+sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 
 #from latentsafesets.utils.arg_parser_reacher import parse_args
 #import latentsafesets.utils as utils
-#from latentsafesets.utils.arg_parser_push import parse_args
+from latentsafesets.utils.arg_parser_push import parse_args
 #params = parse_args()#
-gpuno=1#2#3#0#params['gpunumber']#
+gpuno=3#1#2#0#params['gpunumber']#
 if gpuno==0:
     TORCH_DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 elif gpuno==1:

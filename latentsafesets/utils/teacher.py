@@ -629,7 +629,7 @@ class OutburstPushTeacher(AbstractTeacher):
         self.outburst = False
 
     def _expert_control(self, state, i):
-        if np.random.random() > .8:#only 10% random actions?
+        if np.random.random() > .75:#.8:#only 10% random actions?#
             self.outburst = True
 
         if np.random.random() > .9:

@@ -228,6 +228,9 @@ if __name__ == '__main__':
                         #action = self._expert_control_dense(state, i,xa,ya,xa2,ya2,angled).astype(np.float64)
                     #action=teacher._expert_control_dense_lip(state,k,xa=s0t1,ya=s0t2,xa2=s1t1,ya2=s1t2,angled=angled).astype(np.float64)
                     action = teacher._expert_control(state, i).astype(np.float64)
+                    action=np.clip(action,-0.02,0.02)
+                    #log.info('action clipped!')
+                    log.info('action1:%f,action2:%f'%(action[0],action[1]))
                     #I need to change the above to fit the setting in pushing!
                     action=np.float32(action)#has to be like this?#this is important!
                     '''
