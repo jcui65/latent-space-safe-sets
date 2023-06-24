@@ -8,8 +8,8 @@ from latentsafesets.rl_trainers import CBFdotlatentplanaTrainer#CBFdotTrainer,
 import latentsafesets.utils as utils
 #from latentsafesets.utils.arg_parser import parse_args
 #from latentsafesets.utils.arg_parser_spb import parse_args
-from latentsafesets.utils.arg_parser_reacher import parse_args
-#from latentsafesets.utils.arg_parser_push import parse_args
+#from latentsafesets.utils.arg_parser_reacher import parse_args
+from latentsafesets.utils.arg_parser_push import parse_args
 #from latentsafesets.modules import CBFdotEstimator
 
 import os
@@ -49,4 +49,7 @@ if __name__ == '__main__':
     trainer = CBFdotlatentplanaTrainer(env, params, cbfdot, loss_plotter)
     #trainer.initial_train(replay_buffer, logdir)
     #trainer.initial_train(replay_buffer, logdir,replay_buffer_unsafe)
-    trainer.initial_train_m2(replay_buffer_success, logdir,replay_buffer_unsafe)
+    if params['ways']==1:
+        trainer.initial_train_m2(replay_buffer_success, logdir,replay_buffer_unsafe)
+    elif params['ways']==2:
+        trainer.initial_train_m2_0109(replay_buffer_success, logdir,replay_buffer_unsafe)

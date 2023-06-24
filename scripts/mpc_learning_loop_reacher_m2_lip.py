@@ -126,6 +126,9 @@ if __name__ == '__main__':
         goal_indicator = modules['gi']
         cbfdot_function = modules['cbfd']
         replay_buffer_success = utils.load_replay_buffer_success(params, encoder)#around line 123 in utils.py
+        #print('replay_buffer_success.data',replay_buffer_success.data)#it is a dictionary
+        #print('replay_buffer_success._len',replay_buffer_success._len)#it should be right now! 5000 initially!
+        #print('replay_buffer_success.len',len(replay_buffer_success))#len() is ._len!!!#both are OK! 5000 initially!
         #if reacher:
         #then also load random interactions
         #replay_buffer = utils.load_replay_buffer_relative(params, encoder)  # around line 123 in utils.py
@@ -137,6 +140,10 @@ if __name__ == '__main__':
         #trainer.initial_train(replay_buffer_success,replay_buffer_unsafe)#initialize all the parts!
         trainer.initial_train_m2(replay_buffer_success,replay_buffer_unsafe)#initialize all the parts!
 
+        if params['online']=='yes':
+            #you can create new online safe and unsafe buffer here!
+            replay_buffer_success_online = utils.load_replay_buffer_success_online(params, encoder)#
+            replay_buffer_unsafe_online = utils.load_replay_buffer_unsafe_online(params, encoder)#
         log.info("Creating policy")
         #policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
                                 #constraint_function, goal_indicator, params)
@@ -214,6 +221,7 @@ if __name__ == '__main__':
                     
                     #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#,conservative,reward_type)#
                     action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
+                    log.info('action1: %2.4f, action2: %2.4f'%(action[0],action[1]))
                     '''
                     if conservative=='conservative' and reward_type=='sparse':
                         #print('conservative and sparse!')#you get this right!
@@ -258,7 +266,7 @@ if __name__ == '__main__':
                     #movie_traj_relative.append({'obs_relative': next_obs_relative.reshape((-1, 3, 64, 64))[0]}) #relative or not # add this image
                     traj_rews.append(reward)#reward is either 0 or 1!
 
-                    constr = info['constraint']#its use is seen a few lines later
+                    constr = info['constraint']#its use is seen a few lines later#this tells the constraint condition of next_obs
 
                     rfn=not randflag#rfn means rand flag not
                     action_rand=randflag
@@ -350,9 +358,9 @@ if __name__ == '__main__':
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
                     #log.info('hobs: %f, hnextobs: %f'%(hobs,hnextobs))
-                    dtzobs=gradjh2z(zobs)*dhd#I set the dhd
+                    dtzobs=gradjh2z(zobs)*dhd#I set the dhd#Now I realize I can discard this term!
                     bzuop=hobs-dtzobs
-                    dtznextobs=gradjh2z(znextobs)*dhd
+                    dtznextobs=gradjh2z(znextobs)*dhd#Now I realize I can discard this term!
                     bzunop=hnextobs-dtznextobs
                     log.info('hobs: %f, hnextobs: %f, dtzobs: %f, dtznextobs: %f'%(hobs,hnextobs,dtzobs,dtznextobs))
                     qzuop=bzuop-dhz
@@ -361,7 +369,7 @@ if __name__ == '__main__':
                     qdiffnorm=np.linalg.norm(qdiff)#non negiatve
                     hdiff=ptu.to_numpy(hnextobs-hobs)
                     hdiffnorm=np.linalg.norm(hdiff)#non negative
-                    if posdiffnorm<1e-5:# and old_constr_viol==1:# or imagediffnormal<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
+                    if posdiffnorm<params['pdnthres']:#1e-5# and old_constr_viol==1:# or imagediffnormal<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
                         imagediffnormal=0#this new condition will be more reasonable!
                         zdiffnorm=0
                         hdiffnorm=0
@@ -398,7 +406,7 @@ if __name__ == '__main__':
                     lipxq=max(lipxq,slopexqp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
-                    if ntodistance<=0.10 and ntodistance>=0.08:#ntodistance<=0.09 and ntodistance>=0.07:#
+                    if ntodistance<=params['safethres2'] and ntodistance>=params['safethres1']:#:#ntodistance<=0.09 and ntodistance>=0.07:#
                         slopexys[piece]=slopexyp
                         slopeyzs[piece]=slopeyzp
                         slopezhs[piece]=slopezhp
@@ -419,9 +427,9 @@ if __name__ == '__main__':
                         lipxqsafe=max(lipxqsafe,slopexqp)
                         gammadyns=min(gammadyns,qzunop)
                         pdnsafe=max(pdnsafe,posdiffnorm)
-                        log.info('piece:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
-                        log.info('piece:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gammadyns:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
-                    elif ntodistance<=0.065:#0.06:#0.065 will be more reasonable!#
+                        log.info('piece:%d,sxysp:%2.4f,syzsp:%2.4f,szhsp:%2.4f,syhsp:%2.4f,sxhsp:%2.4f,szqsp:%2.4f,syqsp:%2.4f,sxqsp:%2.4f,pdnorm:%2.4f,qzunos:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('piece:%d,lxys:%2.4f,lyzs:%2.4f,lzhs:%2.4f,lyhs:%2.4f,lxhs:%2.4f,lzqs:%2.4f,lyqs:%2.4f,lxqs:%2.4f,pdns:%2.4f,gdyns:%2.4f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
+                    elif ntodistance<=params['unsafethres']:#0.07:#0.065:#0.06:#0.065 will be more reasonable!#
                         slopexyu[piece]=slopexyp
                         slopeyzu[piece]=slopeyzp
                         slopezhu[piece]=slopezhp
@@ -432,11 +440,11 @@ if __name__ == '__main__':
                         lipzhunsafe=max(lipzhunsafe,slopezhp)
                         lipyhunsafe=max(lipyhunsafe,slopeyhp)
                         lipxhunsafe=max(lipxhunsafe,slopexhp)
-                        log.info('piece:%d,sxyusp:%f,syzusp:%f,szhusp:%f,syhusp:%f,sxhusp:%f,pdnorm:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,posdiffnorm,ntodistance))
-                        log.info('piece:%d,lxyus:%f,lyzus:%f,lzhus:%f,lyhus:%f,lxhus:%f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
+                        log.info('piece:%d,sxyusp:%2.4f,syzusp:%2.4f,szhusp:%2.4f,syhusp:%2.4f,sxhusp:%2.4f,pdnorm:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,posdiffnorm,ntodistance))
+                        log.info('piece:%d,lxyus:%2.4f,lyzus:%2.4f,lzhus:%2.4f,lyhus:%2.4f,lxhus:%2.4f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
                     else:
-                        log.info('piece:%d,sxyp:%f,syzp:%f,szhp:%f,syhp:%f,sxhp:%f,szqp:%f,syqp:%f,sxqp:%f,pdnorm:%f,qzuno:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
-                        log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f,lipxh:%f,lipzq:%f,lipyq:%f,lipxq:%f,pdn:%f,gammadyn:%f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh,lipzq,lipyq,lipxq,pdn,gammadyn))
+                        log.info('piece:%d,sxyp:%2.4f,syzp:%2.4f,szhp:%2.4f,syhp:%2.4f,sxhp:%2.4f,szqp:%2.4f,syqp:%2.4f,sxqp:%2.4f,pdnorm:%2.4f,qzuno:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('piece:%d,lxy:%2.4f,lyz:%2.4f,lzh:%2.4f,lyh:%2.4f,lxh:%2.4f,lzq:%2.4f,lyq:%2.4f,lxq:%2.4f,pdn:%2.4f,gdyn:%2.4f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh,lipzq,lipyq,lipxq,pdn,gammadyn))
                     piece+=1
 
 
@@ -507,14 +515,14 @@ if __name__ == '__main__':
                 #pu.make_movie_relative(movie_traj_relative, file=os.path.join(update_dir, 'trajectory%d_relative.gif' % j))
 
                 #log.info('    Cost: %d, constraint violation: %d' % (traj_reward,constr_viol))#see it in the terminal!
-                log.info('    Cost: %d, constraint violation: %d, cv_cbf: %d, cv_cbf2: %d' % (traj_reward,constr_viol,constr_viol_cbf,constr_viol_cbf2))#see it in the terminal!
+                log.info('    Cost: %d, violation: %d, cv_cbf: %d, cv_cbf2: %d' % (traj_reward,constr_viol,constr_viol_cbf,constr_viol_cbf2))#see it in the terminal!
                 #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
                 in_ss = 0
                 rtg = 0
 
                 if params['ways']==1:#data generated by new way can still be used by the old way
                     #old way
-                    for transition in reversed(transitions):
+                    for transition in reversed(transitions):#it is directly applying modification to transitions, hence it is OK!
                         if transition['reward'] > -1:
                             in_ss = 1
                         transition['safe_set'] = in_ss
@@ -524,26 +532,36 @@ if __name__ == '__main__':
                 elif params['ways']==2:
                     #new way
                     for n in reversed(range(params['horizon'])):#n is from 99 to 0 inclusive
-                        frame=transitions[n]
-                        if frame['reward'] >= 0:
-                            ss = 1
+                        #frame=transitions[n]
+                        if transitions[n]['reward']>=0:#frame['reward'] >= 0:
+                            in_ss = 1
                         #along the way of the trajectroy, the trajectory is safe
-                        frame['safe_set'] = ss#is this dynamic programming?
-                        frame['rtg'] = rtg#the reward to goal at each frame!#I think this is good
+                        #frame['safe_set'] = ss#is this dynamic programming?
+                        transitions[n]['safe_set'] = in_ss#is this dynamic programming?#do modification to itself!
+                        #frame['rtg'] = rtg#the reward to goal at each frame!#I think this is good
+                        transitions[n]['rtg'] = rtg#the reward to goal at each frame!#I think this is good
                         #add a key value pair to the trajectory(key='rtg', value=rtg
-                        rtg = rtg + frame['reward']
+                        #rtg = rtg + frame['reward']
+                        rtg = rtg + transitions[n]['reward']
                         #now the new things start!
                         if n>=2:#1:#frame[0]'s constraint is always 0! initial condition is always safe!
-                            frameprevious=transitions[n-1]
-                            if (frame['constraint']-frameprevious['constraint'])>0 and frame['constraint']>1e-6:#to avoid numerical issues!
-                                frameprevious['constraint']=frame['constraint']-1/sth#it is still self supervised!#
-
-
+                            #frameprevious=transitions[n-1]
+                            #if (frame['constraint']-frameprevious['constraint'])>0 and frame['constraint']>1e-6:#to avoid numerical issues!
+                                #frameprevious['constraint']=frame['constraint']-1/sth#it is still self supervised!#
+                            if (transitions[n]['constraint']-transitions[n-1]['constraint'])>1e-5 and transitions[n]['constraint']>1e-6:#to avoid numerical issues!
+                                transitions[n-1]['constraint']=max(0,transitions[n]['constraint']-1/sth)#it is still self supervised!#
+                        #transitions[0]['constraint']=0 not needed, as I think it will be OK!
                 #replay_buffer.store_transitions(transitions)#replay buffer online training
-                if not constr_viol:
-                    replay_buffer_success.store_transitions(transitions)#should I change this also?#I think you should!
-                else:#should I use success buffer only to store those trajectories who reach the goal?
-                    replay_buffer_unsafe.store_transitions(transitions)
+                if params['online']=='no':
+                    if not constr_viol:
+                        replay_buffer_success.store_transitions(transitions)#should I change this also?#I think you should!
+                    else:#should I use success buffer only to store those trajectories who reach the goal?
+                        replay_buffer_unsafe.store_transitions(transitions)#first, just redo it!
+                elif params['online']=='yes':
+                    if not constr_viol:
+                        replay_buffer_success_online.store_transitions(transitions)#should I change this also?#I think you should!
+                    else:#should I use success buffer only to store those trajectories who reach the goal?
+                        replay_buffer_unsafe_online.store_transitions(transitions)
                 update_rewards.append(traj_reward)
 
             mean_rew = float(np.mean(update_rewards))
@@ -572,8 +590,11 @@ if __name__ == '__main__':
             n_episodes += traj_per_update#10 by default
 
             # Update models
-
-            episodiccbfdhz=trainer.update_m2(replay_buffer_success, i,replay_buffer_unsafe)#online training, right?#it now only bears the meaning of dhz!
+            if params['online']=='no':
+                episodiccbfdhz=trainer.update_m2(replay_buffer_success,i,replay_buffer_unsafe)
+            elif params['online']=='yes':
+                episodiccbfdhz=trainer.update_m2_withonline(replay_buffer_success,i,replay_buffer_unsafe,replay_buffer_success_online, replay_buffer_unsafe_online)
+            #online training, right?#it now only bears the meaning of dhz!
             if params['dynamic_dhz']=='yes':
                 dhzoriginal=params['dhz']
                 #log.info('old dhz: %f'%(dhzoriginal))#not needed, as it is already printed at the begining of each episode
@@ -586,33 +607,82 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'constrcbf2.npy'), constr_viols_cbf2)
             np.save(os.path.join(logdir, 'action_rands.npy'), all_action_rands)
             np.save(os.path.join(logdir, 'tasksuccess.npy'), task_succ)
-        #save after one seed!
-        #print('slopexh',slopexh)#something brakes
-        #print('slopexq',slopexq)#something brakes
-        np.save(os.path.join(logdir, 'slopexy.npy'), slopexy)
-        np.save(os.path.join(logdir, 'slopeyz.npy'), slopeyz)
-        np.save(os.path.join(logdir, 'slopezh.npy'), slopezh)
-        np.save(os.path.join(logdir, 'slopeyh.npy'), slopeyh)
-        np.save(os.path.join(logdir, 'slopexh.npy'), slopexh)
-        np.save(os.path.join(logdir, 'slopezq.npy'), slopezq)
-        np.save(os.path.join(logdir, 'slopeyq.npy'), slopeyq)
-        np.save(os.path.join(logdir, 'slopexq.npy'), slopexq)
-        np.save(os.path.join(logdir, 'qzuno.npy'), qzuno)
-        np.save(os.path.join(logdir, 'pdn.npy'), pdnarray)
-        np.save(os.path.join(logdir, 'slopexys.npy'), slopexys)
-        np.save(os.path.join(logdir, 'slopeyzs.npy'), slopeyzs)
-        np.save(os.path.join(logdir, 'slopezhs.npy'), slopezhs)
-        np.save(os.path.join(logdir, 'slopeyhs.npy'), slopeyhs)
-        np.save(os.path.join(logdir, 'slopexhs.npy'), slopexhs)
-        np.save(os.path.join(logdir, 'slopezqs.npy'), slopezqs)
-        np.save(os.path.join(logdir, 'slopeyqs.npy'), slopeyqs)
-        np.save(os.path.join(logdir, 'slopexqs.npy'), slopexqs)
-        np.save(os.path.join(logdir, 'qzunos.npy'), qzunos)
-        np.save(os.path.join(logdir, 'slopexyu.npy'), slopexyu)
-        np.save(os.path.join(logdir, 'slopeyzu.npy'), slopeyzu)
-        np.save(os.path.join(logdir, 'slopezhu.npy'), slopezhu)
-        np.save(os.path.join(logdir, 'slopeyhu.npy'), slopeyhu)
-        np.save(os.path.join(logdir, 'slopexhu.npy'), slopexhu)
+            #save after one seed!#really?#can I save after each episode?
+            #print('slopexh',slopexh)#something brakes
+            #print('slopexq',slopexq)#something brakes
+            np.save(os.path.join(logdir, 'slopexy.npy'), slopexy)
+            np.save(os.path.join(logdir, 'slopeyz.npy'), slopeyz)
+            np.save(os.path.join(logdir, 'slopezh.npy'), slopezh)
+            np.save(os.path.join(logdir, 'slopeyh.npy'), slopeyh)
+            np.save(os.path.join(logdir, 'slopexh.npy'), slopexh)
+            np.save(os.path.join(logdir, 'slopezq.npy'), slopezq)
+            np.save(os.path.join(logdir, 'slopeyq.npy'), slopeyq)
+            np.save(os.path.join(logdir, 'slopexq.npy'), slopexq)
+            np.save(os.path.join(logdir, 'qzuno.npy'), qzuno)
+            np.save(os.path.join(logdir, 'pdn.npy'), pdnarray)
+            np.save(os.path.join(logdir, 'slopexys.npy'), slopexys)
+            np.save(os.path.join(logdir, 'slopeyzs.npy'), slopeyzs)
+            np.save(os.path.join(logdir, 'slopezhs.npy'), slopezhs)
+            np.save(os.path.join(logdir, 'slopeyhs.npy'), slopeyhs)
+            np.save(os.path.join(logdir, 'slopexhs.npy'), slopexhs)
+            np.save(os.path.join(logdir, 'slopezqs.npy'), slopezqs)
+            np.save(os.path.join(logdir, 'slopeyqs.npy'), slopeyqs)
+            np.save(os.path.join(logdir, 'slopexqs.npy'), slopexqs)
+            np.save(os.path.join(logdir, 'qzunos.npy'), qzunos)
+            np.save(os.path.join(logdir, 'slopexyu.npy'), slopexyu)
+            np.save(os.path.join(logdir, 'slopeyzu.npy'), slopeyzu)
+            np.save(os.path.join(logdir, 'slopezhu.npy'), slopezhu)
+            np.save(os.path.join(logdir, 'slopeyhu.npy'), slopeyhu)
+            np.save(os.path.join(logdir, 'slopexhu.npy'), slopexhu)
+
+            pu.simple_plot(slopexy, title='Slope xy',file=os.path.join(logdir, 'slopexy.pdf'),
+                                    ylabel='slope xy', xlabel='# of points examined')
+            pu.simple_plot(slopexys, title='Slope xys',file=os.path.join(logdir, 'slopexys.pdf'),
+                                    ylabel='slope xys', xlabel='# of points examined')
+            pu.simple_plot(slopexyu, title='Slope xyu',file=os.path.join(logdir, 'slopexyu.pdf'),
+                                    ylabel='slope xyu', xlabel='# of points examined')
+            pu.simple_plot(slopeyz, title='Slope yz',file=os.path.join(logdir, 'slopeyz.pdf'),
+                                    ylabel='slope yz', xlabel='# of points examined')
+            pu.simple_plot(slopeyzs, title='Slope yzs',file=os.path.join(logdir, 'slopeyzs.pdf'),
+                                    ylabel='slope yzs', xlabel='# of points examined')
+            pu.simple_plot(slopeyzu, title='Slope yzu',file=os.path.join(logdir, 'slopeyzu.pdf'),
+                                    ylabel='slope yzu', xlabel='# of points examined')
+            pu.simple_plot(slopezh, title='Slope zh all',file=os.path.join(logdir, 'slopezh.pdf'),
+                                    ylabel='slope zh all', xlabel='# of points examined')#there is a bug! Be patient!
+            pu.simple_plot(slopezhs, title='Slope zh safe',file=os.path.join(logdir, 'slopezhs.pdf'),
+                                    ylabel='slope zh safe', xlabel='# of points examined')
+            pu.simple_plot(slopezhu, title='Slope zh unsafe',file=os.path.join(logdir, 'slopezhu.pdf'),
+                                    ylabel='slope zh unsafe', xlabel='# of points examined')
+            pu.simple_plot(slopeyh, title='Slope yh',file=os.path.join(logdir, 'slopeyh.pdf'),
+                                    ylabel='slope yh', xlabel='# of points examined')
+            pu.simple_plot(slopeyhs, title='Slope yhs',file=os.path.join(logdir, 'slopeyhs.pdf'),
+                                    ylabel='slope yhs', xlabel='# of points examined')
+            pu.simple_plot(slopeyhu, title='Slope yhu',file=os.path.join(logdir, 'slopeyhu.pdf'),
+                                    ylabel='slope yhu', xlabel='# of points examined')
+            pu.simple_plot(slopexh, title='Slope xh all',file=os.path.join(logdir, 'slopexh.pdf'),
+                                    ylabel='slope xh all', xlabel='# of points examined')
+            pu.simple_plot(slopexhs, title='Slope xh safe',file=os.path.join(logdir, 'slopexhs.pdf'),
+                                    ylabel='slope xh safe', xlabel='# of points examined')
+            pu.simple_plot(slopexhu, title='Slope xh unsafe',file=os.path.join(logdir, 'slopexhu.pdf'),
+                                    ylabel='slope xh unsafe', xlabel='# of points examined')
+            pu.simple_plot(slopexq, title='Slope xq all',file=os.path.join(logdir, 'slopexq.pdf'),
+                                    ylabel='slope xq all', xlabel='# of points examined')
+            pu.simple_plot(slopexqs, title='Slope xq safe',file=os.path.join(logdir, 'slopexqs.pdf'),
+                                    ylabel='slope xq safe', xlabel='# of points')
+            pu.simple_plot(slopeyq, title='Slope yq all',file=os.path.join(logdir, 'slopeyq.pdf'),
+                                    ylabel='slope yq all', xlabel='# of points examined')
+            pu.simple_plot(slopeyqs, title='Slope yq safe',file=os.path.join(logdir, 'slopeyqs.pdf'),
+                                    ylabel='slope yq safe', xlabel='# of points')
+            pu.simple_plot(slopezq, title='Slope zq all',file=os.path.join(logdir, 'slopezq.pdf'),
+                                    ylabel='slope zq all', xlabel='# of points examined')
+            pu.simple_plot(slopezqs, title='Slope zq safe',file=os.path.join(logdir, 'slopezqs.pdf'),
+                                    ylabel='slope zq safe', xlabel='# of points')
+            pu.simple_plot(qzuno, title='qzuno',file=os.path.join(logdir, 'qzuno.pdf'),
+                                    ylabel='qzuno', xlabel='# of points')
+            pu.simple_plot(qzunos, title='qzuno safe',file=os.path.join(logdir, 'qzunos.pdf'),
+                                    ylabel='qzuno safe', xlabel='# of points')
+            pu.simple_plot(pdnarray, title='pose diff norm all',file=os.path.join(logdir, 'pdnarray.pdf'),
+                                    ylabel='pose diff norm all', xlabel='# of points examined')
         params['seed']=params['seed']+1#m+1#
         #utils.init_logging(logdir)#record started!
         #logging.basicConfig(level=logging.INFO,format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',datefmt='%m-%d %H:%M:%S',filename=os.path.join(logdir, 'logjianning.txt'),filemode='w')

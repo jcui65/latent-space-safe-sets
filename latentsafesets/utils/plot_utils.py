@@ -97,9 +97,9 @@ def simple_plot4(data, data2, data3,data4=None,std=None,std2=None,std3=None,std4
         if data4 is not None:
             plt.semilogy(data4)
     else:
-        plt.plot(data, label='LS3-best')#label='LS3-recovery')#label='ROLSCBF')#
-        plt.plot(data2, label='ROLSCBF-M1')#'ROLSCBF-no dynamic robust')#
-        plt.plot(data3, label='ROLSCBF-M2-current')#label='ROLSCBF-no measurement robust')#label='LS3-recovery')#
+        plt.plot(data, label='LS3-best')#'no safe')#label='LS3-recovery')#label='ROLSCBF')#
+        plt.plot(data2, label='ROLSCBF-M1')#''online-cautious')#ROLSCBF-M2-sparse')#'ROLSCBF-no dynamic robust')#
+        plt.plot(data3, label='ROLSCBF-M2-current')#'online-reduce weight')#'ROLSCBF-M2-dense')#label='ROLSCBF-no measurement robust')#label='LS3-recovery')#
         if data4 is not None:
             plt.plot(data4, label='LSCBF-no robust')
         plt.legend()
@@ -356,7 +356,7 @@ def visualize_onezero(obs, onezero, file, env=None):
     plt.close()
 
 
-def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, the network trained
+def visualize_cbfdot(obs, cbfd, file, env=None,token=''):#onezero/cbfd is the function, the network trained
     if issubclass(type(env), SimplePointBot):
         #print('entering this one!')
         #spbu.evaluate_cbfdot_func(cbfd, env, file=file, skip=1,action=(0,0))#61 in spb_utils
@@ -413,7 +413,7 @@ def visualize_cbfdot(obs, cbfd, file, env=None):#onezero/cbfd is the function, t
         if c==3:
             filem4=file[:-4]
             d=(b+1)*eachline
-            filem4d=filem4+'-'+str(d)+'.pdf'
+            filem4d=filem4+token+'-'+str(d)+'.pdf'
             plt.savefig(filem4d)
             plt.close()
             fig, axs = plt.subplots(c4, eachline)

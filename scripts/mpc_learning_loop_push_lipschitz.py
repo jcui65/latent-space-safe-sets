@@ -61,14 +61,15 @@ if __name__ == '__main__':
     slopezhu=np.zeros((traj_per_update*params['horizon']))
     slopeyzu=np.zeros((traj_per_update*params['horizon']))
     slopexyu=np.zeros((traj_per_update*params['horizon']))
-    #slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))    piece=0#which piece of trajectory? this piece
+    #slopexyu=slopeyzu=slopezhu=slopeyhu=slopexhu=np.zeros((num_updates*traj_per_update*params['horizon']))    
+    piece=0#which piece of trajectory? this piece
     eps=1e-10
     lipxy=lipyz=lipzh=lipyh=lipxh=lipzq=lipyq=lipxq=0
     lipxysafe=lipyzsafe=lipzhsafe=lipyhsafe=lipxhsafe=lipzqsafe=lipyqsafe=lipxqsafe=0
     lipxyunsafe=lipyzunsafe=lipzhunsafe=lipyhunsafe=lipxhunsafe=0
     gammadyn=gammadyns=10#start from a very big number!
     pdnsafe=pdn=0
-
+    modifiedlength=20000
     for m in range(repeattimes):
         params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23
@@ -185,9 +186,9 @@ if __name__ == '__main__':
             log.info('current dhz: %f'%(params['dhz']))
             update_dir = os.path.join(logdir, "update_%d" % i)#create the corresponding folder!
             #datasave_dir = os.path.join(update_dir, "ReacherConstraintdense2")#create the corresponding folder!
-            datasave_dir = os.path.join(logdir, "PushOutbursts2")#create the corresponding folder!
+            #datasave_dir = os.path.join(logdir, "PushOutbursts2")#create the corresponding folder!
             os.makedirs(update_dir)#mkdir!
-            os.makedirs(datasave_dir)#mkdir!
+            #os.makedirs(datasave_dir)#mkdir!
             update_rewards = []
 
             #teacher = teacher(env)#, noisy=noisy)#SimplePointBotTeacher, or ConstraintTeacher,
@@ -366,7 +367,7 @@ if __name__ == '__main__':
                     qdiffnorm=np.linalg.norm(qdiff)
                     hdiff=ptu.to_numpy(hnextobs-hobs)
                     hdiffnorm=np.linalg.norm(hdiff)
-                    if posdiffnorm<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
+                    if posdiffnorm<params['pdnthres']:#1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
                         imagediffnormal=0
                         zdiffnorm=0
                         hdiffnorm=0
@@ -398,7 +399,8 @@ if __name__ == '__main__':
                     lipxq=max(lipxq,slopexqp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
-                    if np.abs(ntodistance)<=0.30 and np.abs(ntodistance)>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
+                    #if np.abs(ntodistance)<=0.30 and np.abs(ntodistance)>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
+                    if np.abs(ntodistance)<=params['safethres2'] and np.abs(ntodistance)>=params['safethres1']:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
                         slopexys[piece]=slopexyp
                         slopeyzs[piece]=slopeyzp
                         slopezhs[piece]=slopezhp
@@ -420,7 +422,8 @@ if __name__ == '__main__':
                         pdnsafe=max(pdnsafe,posdiffnorm)
                         log.info('piece:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
                         log.info('piece:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gammadyns:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
-                    elif np.abs(ntodistance)<=0.15 and np.abs(ntodistance)>=0.10:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
+                    #elif np.abs(ntodistance)<=0.15 and np.abs(ntodistance)>=0.10:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
+                    elif np.abs(ntodistance)<=params['unsafethres'] and np.abs(ntodistance)>=params['unsafethressmall']:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#
                         slopexyu[piece]=slopexyp
                         slopeyzu[piece]=slopeyzp
                         slopezhu[piece]=slopezhp
@@ -484,7 +487,7 @@ if __name__ == '__main__':
                 replay_buffer.store_transitions(transitions)#replay buffer online training
                 #I am going to save trajectory!
                 #utils.save_trajectory(traj, file, i)#
-                utils.save_trajectory(transitions, datasave_dir, i*traj_per_update+j)#
+                #utils.save_trajectory(transitions, datasave_dir, i*traj_per_update+j)#
                 #replay_buffer.store_dump_transitions(transitions,logdir,i*traj_per_update+j)#
                 update_rewards.append(traj_reward)
 
@@ -549,6 +552,54 @@ if __name__ == '__main__':
             np.save(os.path.join(logdir, 'slopeyhu.npy'), slopeyhu)
             np.save(os.path.join(logdir, 'slopexhu.npy'), slopexhu)
             
+            pu.simple_plot(slopexy[0:modifiedlength], title='Slope xy',file=os.path.join(logdir, 'slopexy.pdf'),
+                                    ylabel='slope xy', xlabel='# of points examined')
+            pu.simple_plot(slopexys[0:modifiedlength], title='Slope xys',file=os.path.join(logdir, 'slopexys.pdf'),
+                                    ylabel='slope xys', xlabel='# of points examined')
+            pu.simple_plot(slopexyu[0:modifiedlength], title='Slope xyu',file=os.path.join(logdir, 'slopexyu.pdf'),
+                                    ylabel='slope xyu', xlabel='# of points examined')
+            pu.simple_plot(slopeyz[0:modifiedlength], title='Slope yz',file=os.path.join(logdir, 'slopeyz.pdf'),
+                                    ylabel='slope yz', xlabel='# of points examined')
+            pu.simple_plot(slopeyzs[0:modifiedlength], title='Slope yzs',file=os.path.join(logdir, 'slopeyzs.pdf'),
+                                    ylabel='slope yzs', xlabel='# of points examined')
+            pu.simple_plot(slopeyzu[0:modifiedlength], title='Slope yzu',file=os.path.join(logdir, 'slopeyzu.pdf'),
+                                    ylabel='slope yzu', xlabel='# of points examined')
+            pu.simple_plot(slopezh[0:modifiedlength], title='Slope zh all',file=os.path.join(logdir, 'slopezh.pdf'),
+                                    ylabel='slope zh all', xlabel='# of points examined')#there is a bug! Be patient!
+            pu.simple_plot(slopezhs[0:modifiedlength], title='Slope zh safe',file=os.path.join(logdir, 'slopezhs.pdf'),
+                                    ylabel='slope zh safe', xlabel='# of points examined')
+            pu.simple_plot(slopezhu[0:modifiedlength], title='Slope zh unsafe',file=os.path.join(logdir, 'slopezhu.pdf'),
+                                    ylabel='slope zh unsafe', xlabel='# of points examined')
+            pu.simple_plot(slopeyh[0:modifiedlength], title='Slope yh',file=os.path.join(logdir, 'slopeyh.pdf'),
+                                    ylabel='slope yh', xlabel='# of points examined')
+            pu.simple_plot(slopeyhs[0:modifiedlength], title='Slope yhs',file=os.path.join(logdir, 'slopeyhs.pdf'),
+                                    ylabel='slope yhs', xlabel='# of points examined')
+            pu.simple_plot(slopeyhu[0:modifiedlength], title='Slope yhu',file=os.path.join(logdir, 'slopeyhu.pdf'),
+                                    ylabel='slope yhu', xlabel='# of points examined')
+            pu.simple_plot(slopexh[0:modifiedlength], title='Slope xh all',file=os.path.join(logdir, 'slopexh.pdf'),
+                                    ylabel='slope xh all', xlabel='# of points examined')
+            pu.simple_plot(slopexhs[0:modifiedlength], title='Slope xh safe',file=os.path.join(logdir, 'slopexhs.pdf'),
+                                    ylabel='slope xh safe', xlabel='# of points examined')
+            pu.simple_plot(slopexhu[0:modifiedlength], title='Slope xh unsafe',file=os.path.join(logdir, 'slopexhu.pdf'),
+                                    ylabel='slope xh unsafe', xlabel='# of points examined')
+            pu.simple_plot(slopexq[0:modifiedlength], title='Slope xq all',file=os.path.join(logdir, 'slopexq.pdf'),
+                                    ylabel='slope xq all', xlabel='# of points examined')
+            pu.simple_plot(slopexqs[0:modifiedlength], title='Slope xq safe',file=os.path.join(logdir, 'slopexqs.pdf'),
+                                    ylabel='slope xq safe', xlabel='# of points')
+            pu.simple_plot(slopeyq[0:modifiedlength], title='Slope yq all',file=os.path.join(logdir, 'slopeyq.pdf'),
+                                    ylabel='slope yq all', xlabel='# of points examined')
+            pu.simple_plot(slopeyqs[0:modifiedlength], title='Slope yq safe',file=os.path.join(logdir, 'slopeyqs.pdf'),
+                                    ylabel='slope yq safe', xlabel='# of points')
+            pu.simple_plot(slopezq[0:modifiedlength], title='Slope zq all',file=os.path.join(logdir, 'slopezq.pdf'),
+                                    ylabel='slope zq all', xlabel='# of points examined')
+            pu.simple_plot(slopezqs[0:modifiedlength], title='Slope zq safe',file=os.path.join(logdir, 'slopezqs.pdf'),
+                                    ylabel='slope zq safe', xlabel='# of points')
+            pu.simple_plot(qzuno[0:modifiedlength], title='qzuno',file=os.path.join(logdir, 'qzuno.pdf'),
+                                    ylabel='qzuno', xlabel='# of points')
+            pu.simple_plot(qzunos[0:modifiedlength], title='qzuno safe',file=os.path.join(logdir, 'qzunos.pdf'),
+                                    ylabel='qzuno safe', xlabel='# of points')
+            pu.simple_plot(pdnarray[0:modifiedlength], title='pose diff norm all',file=os.path.join(logdir, 'pdnarray.pdf'),
+                                    ylabel='pose diff norm all', xlabel='# of points examined')
 
         params['seed']=params['seed']+1#m+1#
         #utils.init_logging(logdir)#record started!

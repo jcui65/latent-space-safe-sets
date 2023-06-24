@@ -7,7 +7,8 @@ from latentsafesets.policy import CEMSafeSetPolicyls3#this is the class!
 import latentsafesets.utils as utils
 import latentsafesets.utils.plot_utils as pu
 #from latentsafesets.utils.arg_parser import parse_args
-from latentsafesets.utils.arg_parser_push_ls3 import parse_args
+from latentsafesets.utils.arg_parser_spb import parse_args
+#from latentsafesets.utils.arg_parser_push_ls3 import parse_args
 #from latentsafesets.utils.arg_parser_reacher_ls3 import parse_args
 from latentsafesets.rl_trainers import MPCTrainer
 import latentsafesets.utils.pytorch_utils as ptu
@@ -49,6 +50,7 @@ if __name__ == '__main__':
         f.write('r_{thres}=1.2\t')
         f.write('action_type: %s\t'%(params['action_type']))
         f.write('conservativeness: %s, reward_type: %s, lightness: %s\t'%(params['conservative'],params['reward_type'],params['light']))
+        f.write('What I want to write: %s'%(params['quote']))
         f.close()
         utils.init_logging(logdir)#record started!
         log.info('Training safe set MPC with params...')#at the very very start

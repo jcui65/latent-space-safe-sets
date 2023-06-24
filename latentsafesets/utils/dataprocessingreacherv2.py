@@ -11,7 +11,7 @@ import latentsafesets.utils.plot_utils as pu
 #load data from the corresponding folder
 #params = parse_args()#get the parameters from parse_args, see arg_parser.py
 @click.command()
-@click.option('--date', default='06-05',help='the date when the simulation started', type=str)
+@click.option('--date', default='06-19',help='the date when the simulation started', type=str)
 @click.option('--time', default='08-38-11', help='time of the simulation', type=str)
 @click.option('--fh', default=500, help='five hundred or 250 or 1000', type=int)#1000, 250#
 @click.option('--env',default='reacher',help='the environment',type=str)#reacher or push#
@@ -43,7 +43,7 @@ def main(date, time,fh,env,lenseed):
     elif lenseed==2:
         seedlist=[1,2]#[1,2,3]#[1]#[1,2,3,4,5,6,7,8,9,10]#[4,5,6]#[7,8,9,10]#[4,5,6]#[1,2,3,4,5]#24,25#[1,101,201]#22#[4,5,6,7,8,9,10]#23#[1,26,51]##
     elif lenseed==3:
-        seedlist=[1,2,3]#
+        seedlist=[1,2,3]#[2,3,4]#[8,9,10]#
     elif lenseed==5:
         seedlist=[1,2,3,4,5]#
     elif lenseed==10:
@@ -75,7 +75,7 @@ def main(date, time,fh,env,lenseed):
         constrirate=totalconstri/constri[0:fh].shape[0]
         #print('constrirate',constrirate)
         method='rolscbf'#'ls3'#
-        if env!='spbbbb':
+        if env!='spb':
             if method=='ls3':
                 constrcbfi=np.load(os.path.join(logdir, "constrsafety.npy"))
             else:
@@ -96,7 +96,7 @@ def main(date, time,fh,env,lenseed):
         #print('constrirate',constrirate)
         srlist.append(successratei)
         cvrlist.append(constrirate)
-        if env!='spbbbbb':
+        if env!='spb':
             cvrcbflist.append(constrcbfirate)
             cvrcbf2list.append(constrcbf2irate)
         #tsrlist.append(tasksuccirate)
