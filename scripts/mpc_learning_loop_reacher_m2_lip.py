@@ -369,7 +369,7 @@ if __name__ == '__main__':
                     qdiffnorm=np.linalg.norm(qdiff)#non negiatve
                     hdiff=ptu.to_numpy(hnextobs-hobs)
                     hdiffnorm=np.linalg.norm(hdiff)#non negative
-                    if posdiffnorm<1e-5:# and old_constr_viol==1:# or imagediffnormal<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
+                    if posdiffnorm<params['pdnthres']:#1e-5# and old_constr_viol==1:# or imagediffnormal<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
                         imagediffnormal=0#this new condition will be more reasonable!
                         zdiffnorm=0
                         hdiffnorm=0

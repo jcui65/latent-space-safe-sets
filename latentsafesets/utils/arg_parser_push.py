@@ -255,9 +255,11 @@ def add_cbfd_args(parser):
     parser.add_argument('--w15',type=float,default=0)#10)#not used anymore!
     parser.add_argument('--stepstohell',type=float,default=6)#10)#5)#
     parser.add_argument('--rewrite',type=str,default='no')#'yes')#
-    parser.add_argument('--unsafethres',type=float,default=0.3)#
-    parser.add_argument('--safethres1',type=float,default=0.20)#
-    parser.add_argument('--safethres2',type=float,default=0.15)#
+    parser.add_argument('--unsafethressmall',type=float,default=0.10)#
+    parser.add_argument('--unsafethres',type=float,default=0.15)#2>1
+    parser.add_argument('--safethres1',type=float,default=0.25)#
+    parser.add_argument('--safethres2',type=float,default=0.30)#2>1
+    params.add_argument('--pdnthres',type=float,default=0.0025)#0.002#
     parser.add_argument('--additionalzero',type=str,default='no')#default is no
     parser.add_argument('--term3',type=int,default=1)#2)#1 means the original way to handle it#2 means the 2nd way to handle it
     parser.add_argument('--online',type=str,default='no')#'yes')#)

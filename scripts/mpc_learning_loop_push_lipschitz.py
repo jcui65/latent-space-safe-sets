@@ -367,7 +367,7 @@ if __name__ == '__main__':
                     qdiffnorm=np.linalg.norm(qdiff)
                     hdiff=ptu.to_numpy(hnextobs-hobs)
                     hdiffnorm=np.linalg.norm(hdiff)
-                    if posdiffnorm<1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
+                    if posdiffnorm<params['pdnthres']:#1e-3:#5e-4:#2e-3:#1e-2:#posdiffnorm<=1e-4:#otherwise it is meaningless!
                         imagediffnormal=0
                         zdiffnorm=0
                         hdiffnorm=0
@@ -399,7 +399,8 @@ if __name__ == '__main__':
                     lipxq=max(lipxq,slopexqp)
                     gammadyn=min(gammadyn,qzunop)
                     pdn=max(pdn,posdiffnorm)
-                    if np.abs(ntodistance)<=0.30 and np.abs(ntodistance)>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
+                    #if np.abs(ntodistance)<=0.30 and np.abs(ntodistance)>=0.25:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
+                    if np.abs(ntodistance)<=params['safethres2'] and np.abs(ntodistance)>=params['safethres1']:#the new safe region I pick!#ntodistance>=0.20:#ntodistance<=0.09 and ntodistance>=0.07:#
                         slopexys[piece]=slopexyp
                         slopeyzs[piece]=slopeyzp
                         slopezhs[piece]=slopezhp
@@ -421,7 +422,8 @@ if __name__ == '__main__':
                         pdnsafe=max(pdnsafe,posdiffnorm)
                         log.info('piece:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
                         log.info('piece:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gammadyns:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
-                    elif np.abs(ntodistance)<=0.15 and np.abs(ntodistance)>=0.10:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
+                    #elif np.abs(ntodistance)<=0.15 and np.abs(ntodistance)>=0.10:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
+                    elif np.abs(ntodistance)<=params['unsafethres'] and np.abs(ntodistance)>=params['unsafethressmall']:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#
                         slopexyu[piece]=slopexyp
                         slopeyzu[piece]=slopeyzp
                         slopezhu[piece]=slopezhp

@@ -251,9 +251,11 @@ def add_cbfd_args(parser):
     parser.add_argument('--online',type=str,default='no')#'yes')#)
     parser.add_argument('--stepstohell',type=float,default=10)
     parser.add_argument('--rewrite',type=str,default='no')#'yes')#
+    parser.add_argument('--unsafethressmall',type=float,default=0.04)#
     parser.add_argument('--unsafethres',type=float,default=0.07)#
     parser.add_argument('--safethres1',type=float,default=0.08)#
     parser.add_argument('--safethres2',type=float,default=0.10)#
+    params.add_argument('--pdnthres',type=float,default=1e-5)#0.002#
     parser.add_argument('--additionalzero',type=str,default='no')#default is no
     parser.add_argument('--term3',type=int,default=1)#2)#1 means the original way to handle it#2 means the 2nd way to handle it
     parser.add_argument('--cbfd_checkpoint', type=str, default=None)#'outputs/2023-06-03/02-46-55/cbfd.pth')#new weights 2#'outputs/2023-06-03/02-38-05/cbfd.pth')#new weights 1#'outputs/2023-05-30/23-23-14/cbfd.pth')#'outputs/2023-05-31/09-40-13/cbfd.pth')#regularized!#'outputs/2023-05-27/17-08-10/cbfd.pth')#unregularized!#'outputs/2023-05-27/16-55-18/cbfd.pth')#regularized!#'outputs/2023-05-29/11-53-00/cbfd.pth')#unregularizedgammaunsafe=0.004#'outputs/2023-05-12/08-56-02/1/initial_train/cbfd_50000.pth')#'outputs/2023-05-07/23-06-07/1/initial_train/cbfd_10000.pth')#true#'outputs/2023-04-30/02-35-05/1/initial_train/cbfd_10000.pth')#half mean!#'outputs/2023-05-02/14-49-18/1/initial_train/cbfd_10000.pth')#'outputs/2023-03-14/23-29-08/1/initial_train/cbfd.pth')#reacher1.2#'outputs/2023-03-15/15-24-59/1/initial_train/cbfd.pth')#reacher1.1#'outputs/2023-03-19/00-50-22/1/initial_train/cbfd.pth')#pushing#

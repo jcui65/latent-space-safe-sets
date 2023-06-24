@@ -169,8 +169,8 @@ class CBFdotEstimatorlatentplana(nn.Module, EncodedModule):#supervised learning 
 
         self.optimizer.zero_grad()
         #loss = self.loss(next_obs, constr, already_embedded)
-        #loss,data = self.lossm2s(obs,next_obs, constr, already_embedded)
-        loss,data = self.lossm2snewt3(obs,next_obs, constr, already_embedded)
+        loss,data = self.lossm2s(obs,next_obs, constr, already_embedded)
+        #loss,data = self.lossm2snewt3(obs,next_obs, constr, already_embedded)
         loss.backward()
         self.step()
 
