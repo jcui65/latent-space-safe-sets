@@ -69,7 +69,7 @@ if __name__ == '__main__':
     lipxyunsafe=lipyzunsafe=lipzhunsafe=lipyhunsafe=lipxhunsafe=0
     gammadyn=gammadyns=10#start from a very big number!
     pdnsafe=pdn=0
-    modifiedlength=20000
+    modifiedlength=18000#20000
     for m in range(repeattimes):
         params['dhz']=initdhz#(1-cbfalpha)*dhzoriginal+cbfalpha*episodiccbfdhz
         #params['seed']=23
@@ -230,7 +230,7 @@ if __name__ == '__main__':
                     action = teacher._expert_control(state, i).astype(np.float64)
                     action=np.clip(action,-0.02,0.02)
                     #log.info('action clipped!')
-                    log.info('action1:%f,action2:%f'%(action[0],action[1]))
+                    log.info('a1:%f,a2:%f'%(action[0],action[1]))
                     #I need to change the above to fit the setting in pushing!
                     action=np.float32(action)#has to be like this?#this is important!
                     '''
@@ -350,7 +350,7 @@ if __name__ == '__main__':
                     zdiffnorm=np.linalg.norm(zdiff)
                     hobs=cbfdot_function(zobs,already_embedded=True)##cbfd(zobs_mean)
                     hnextobs=cbfdot_function(znextobs,already_embedded=True)#cbfd(znext_obs_mean)
-                    log.info('hobs: %f, hnextobs: %f'%(hobs,hnextobs))
+                    log.info('ho: %f, hno: %f'%(hobs,hnextobs))
                     gradh2z=lambda nextobs: cbfdot_function(nextobs, True)
                     #jno=jacobian(gradh2z,next_obs,create_graph=True)#jno means jacobian next_obs
                     #jno=hessian(selfforwardtrue, next_obs, create_graph=True)  # jno means jacobian next_obs
@@ -423,8 +423,8 @@ if __name__ == '__main__':
                         lipxqsafe=max(lipxqsafe,slopexqp)
                         gammadyns=min(gammadyns,qzunop)
                         pdnsafe=max(pdnsafe,posdiffnorm)
-                        log.info('piece:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
-                        log.info('piece:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gammadyns:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
+                        log.info('p:%d,sxysp:%f,syzsp:%f,szhsp:%f,syhsp:%f,sxhsp:%f,szqsp:%f,syqsp:%f,sxqsp:%f,pdnorm:%f,qzunos:%f,ntod:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('p:%d,lxys:%f,lyzs:%f,lzhs:%f,lyhs:%f,lxhs:%f,lzqs:%f,lyqs:%f,lxqs:%f,pdns:%f,gds:%f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
                     #elif np.abs(ntodistance)<=0.15 and np.abs(ntodistance)>=0.10:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
                     elif np.abs(ntodistance)<=params['unsafethres'] and np.abs(ntodistance)>=params['unsafethressmall']:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#
                         slopexyu[piece]=slopexyp
@@ -437,11 +437,11 @@ if __name__ == '__main__':
                         lipzhunsafe=max(lipzhunsafe,slopezhp)
                         lipyhunsafe=max(lipyhunsafe,slopeyhp)
                         lipxhunsafe=max(lipxhunsafe,slopexhp)
-                        log.info('piece:%d,sxyusp:%f,syzusp:%f,szhusp:%f,syhusp:%f,sxhusp:%f,pdnorm:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,posdiffnorm,ntodistance))
-                        log.info('piece:%d,lxyus:%f,lyzus:%f,lzhus:%f,lyhus:%f,lxhus:%f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
+                        log.info('p:%d,sxyusp:%f,syzusp:%f,szhusp:%f,syhusp:%f,sxhusp:%f,pdnorm:%f,ntod:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,posdiffnorm,ntodistance))
+                        log.info('p:%d,lxyus:%f,lyzus:%f,lzhus:%f,lyhus:%f,lxhus:%f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
                     else:
-                        log.info('piece:%d,sxyp:%f,syzp:%f,szhp:%f,syhp:%f,sxhp:%f,szqp:%f,syqp:%f,sxqp:%f,pdnorm:%f,qzuno:%f,ntodistance:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
-                        log.info('piece:%d,lipxy:%f,lipyz:%f,lipzh:%f,lipyh:%f,lipxh:%f,lipzq:%f,lipyq:%f,lipxq:%f,pdn:%f,gammadyn:%f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh,lipzq,lipyq,lipxq,pdn,gammadyn))
+                        log.info('p:%d,sxyp:%f,syzp:%f,szhp:%f,syhp:%f,sxhp:%f,szqp:%f,syqp:%f,sxqp:%f,pdnorm:%f,qzuno:%f,ntod:%f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('p:%d,lxy:%f,lyz:%f,lzh:%f,lyh:%f,lxh:%f,lzq:%f,lyq:%f,lxq:%f,pdn:%f,gd:%f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh,lipzq,lipyq,lipxq,pdn,gammadyn))
 
                     obs = next_obs#don't forget this step!
                     #print('obs.shape',obs.shape)#(3, 3, 64, 64)

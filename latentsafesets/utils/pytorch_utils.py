@@ -9,7 +9,7 @@ sys.path.insert(1, '/home/cuijin/Project6remote/latent-space-safe-sets')
 #import latentsafesets.utils as utils
 from latentsafesets.utils.arg_parser_push import parse_args
 #params = parse_args()#
-gpuno=2#1#3#0#params['gpunumber']#
+gpuno=3#1#2#0#params['gpunumber']#
 if gpuno==0:
     TORCH_DEVICE = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 elif gpuno==1:

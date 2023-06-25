@@ -942,6 +942,17 @@ class CBFdotlatentplanaTrainer(Trainer):
             else:
                 log.info('Beginning cbf dot update optimization including an online buffer!')
             dhzepochave=0
+            lens=len(replay_buffer_success)
+            lenu=len(replay_buffer_unsafe)
+            lenso=len(replay_buffer_success_online)
+            lenuo=len(replay_buffer_unsafe_online)
+            #lentotal=lens+lenu+lenso+lenuo
+            lentotals=lens+lenso
+            lentotalu=lenu+lenuo
+            ratios=lens/lentotals
+            ratioso=lenso/lentotals
+            ratiou=lenu/lentotalu
+            ratiouo=lenuo/lentotalu
             #log.info('cbfd_lr: %f'%(self.params['cbfd_lr']))
             k=0
             for _ in trange(self.params['cbfd_update_iters']):#512
@@ -961,28 +972,67 @@ class CBFdotlatentplanaTrainer(Trainer):
                 obso,next_obso,constro=out_dicto['obs'],out_dicto['next_obs'],out_dicto['constraint']#focus on expanding the safe zone?
                 loss, info = self.cbfd.update_m2s_0109_online(obso,next_obso, constro, already_embedded=True)#use the constraint information by yourself!  #
                 self.loss_plotter.add_data(info)#self.constr.update, not self.update!
-                if k==0:
-                    log.info('online success buffer has been used as expected!')
+                #if k==0:
+                    #log.info('online success buffer has been used as expected!')
+                
+                if ratiouo>0:#this means online unsafe incident happens!
+                    unsafeobatch10=max(2,int(ratiouo*self.batchsize10))#max(2,int(ratiouo*self.batchsize))#
+                    unsafebatch10=self.batchsize10-unsafeobatch10#self.batchsize-unsafeobatch10
+                    unsafeobatch0to9=max(1,int(ratiouo*self.batchsize0to9))
+                    unsafebatch0to9=self.batchsize0to9-unsafeobatch0to9
+                else:
+                    unsafebatch10=self.batchsize10#self.batchsize#128
+                    unsafeobatch10=0
+                    unsafeobatch0to9=0
+                    unsafebatch0to9=self.batchsize0to9
+                
                 if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
-                    out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(self.batchsize10o,'constraint',1)#(self.params['cbfd_batch_size'])#256
+                    #out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(self.batchsize10,'constraint',1)#(self.params['cbfd_batch_size'])#256
+                    out_dictusb = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(unsafebatch10,'constraint',1)#(self.params['cbfd_batch_size'])#256
                 else:#all are offline trajectories, but not necessarily violation
-                    out_dictusb = replay_buffer_unsafe.sample_boundary_m2_0109(self.batchsize10o,'constraint',1)#(self.params['cbfd_batch_size'])#256
+                    #out_dictusb = replay_buffer_unsafe.sample_boundary_m2_0109(self.batchsize10,'constraint',1)#(self.params['cbfd_batch_size'])#256
+                    out_dictusb = replay_buffer_unsafe.sample_boundary_m2_0109(unsafebatch10,'constraint',1)#(self.params['cbfd_batch_size'])#256
                 obsusb,next_obsusb,construsb=out_dictusb['obs'],out_dictusb['next_obs'],out_dictusb['constraint']#it should be 1#
                 #print(obsusb.shape,construsb.shape)#(128,32),(128,)
                 #altogether there will be 448 samples!
                 #add a for loop to sample from 0,0.1 to 0.9!
-                ten=int(self.params['stepstohell'])
+                ten=10#int(self.params['stepstohell'])
                 #print('reach this stage0!')#
                 for j in range(ten):
                     if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
-                        out_dictusbi = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(self.batchsize0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+                        out_dictusbi = replay_buffer_unsafe.sample_boundary_meancbf_m2_0109(unsafebatch0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
                     else:#all are offline trajectories, but not necessarily violation
-                        out_dictusbi = replay_buffer_unsafe.sample_boundary_m2_0109(self.batchsize0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+                        out_dictusbi = replay_buffer_unsafe.sample_boundary_m2_0109(unsafebatch0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
                     obsusbi,next_obsusbi,construsbi=out_dictusbi['obs'],out_dictusbi['next_obs'],out_dictusbi['constraint']
                     #print(obsusbi.shape,construsbi.shape)
                     obsusb=np.vstack((obsusb,obsusbi))#pay attention to the dimension!
                     next_obsusb=np.vstack((next_obsusb,next_obsusbi))
                     construsb=np.concatenate((construsb,construsbi))
+                
+                if unsafeobatch10>=1:#ratiouo>0:#
+                    if self.params['mean']=='meancbf':
+                        out_dictusbo = replay_buffer_unsafe_online.sample_boundary_meancbf_m2(unsafeobatch10,'constraint')#(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
+                    else:
+                        out_dictusbo = replay_buffer_unsafe_online.sample_boundary_m2(unsafeobatch10,'constraint')#(self.batchsize,'constraint')#(self.params['cbfd_batch_size'])#256
+                    #obsus=out_dictus['obs']#us means unsafe#print('obsus.shape',obsus.shape)(128,32)
+                    obsusbo,next_obsusbo,construsbo=out_dictusbo['obs'],out_dictusbo['next_obs'],out_dictusbo['constraint']#it should be 1#
+                    obsusb=np.vstack((obsusb,obsusbo))#pay attention to the dimension!
+                    next_obsusb=np.vstack((next_obsusb,next_obsusbo))
+                    construsb=np.concatenate((construsb,construsbo))
+                
+                    for j in range(ten):
+                        if self.params['mean']=='meancbf':#the boundary option is not needed anymore! Because it must be it! Thanks Dr. Nadia!
+                            out_dictusbio = replay_buffer_unsafe_online.sample_boundary_meancbf_m2_0109(unsafeobatch0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+                        else:#all are offline trajectories, but not necessarily violation
+                            out_dictusbio = replay_buffer_unsafe_online.sample_boundary_m2_0109(unsafeobatch0to9,'constraint',j/ten)#(self.params['cbfd_batch_size'])#256
+                        obsusbio,next_obsusbio,construsbio=out_dictusbio['obs'],out_dictusbio['next_obs'],out_dictusbio['constraint']
+                        #print(obsusbi.shape,construsbi.shape)
+                        obsusbio=obsusbio.reshape(unsafeobatch0to9,obsusbio.shape[-1])
+                        next_obsusbio=next_obsusbio.reshape(unsafeobatch0to9,next_obsusbio.shape[-1])
+                        obsusb=np.vstack((obsusb,obsusbio))#pay attention to the dimension!
+                        next_obsusb=np.vstack((next_obsusb,next_obsusbio))
+                        construsb=np.concatenate((construsb,construsbio))
+
                 shuffleind=np.random.permutation(obsusb.shape[0])
                 obsusb=obsusb[shuffleind]
                 #print('obsusb.shape',obsusb.shape)
