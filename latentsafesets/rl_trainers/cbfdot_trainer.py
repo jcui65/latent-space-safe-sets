@@ -1007,7 +1007,12 @@ class CBFdotlatentplanaTrainer(Trainer):
             deal=dhzepochave#no need to make the above if statement!
             log.info('Creating cbf dot function heatmap')
             self.loss_plotter.plot()
-            self.plot0109(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,replay_buffer_unsafe,replay_buffer_success_online)#this is using plan a
+            #self.plot0109(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,replay_buffer_unsafe,replay_buffer_success_online)#this is using plan a
+            self.plot0109safes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success,self.batchsize0s,'soff')#s means safe, off means offline#this is using plan a
+            self.plot0109safes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_success_online,self.batchsize0so,'son')#this is using plan a
+            for k in range(10):
+                self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,k/10,self.batchsize0to9,'us'+str(k))#this is using plan a
+            self.plot0109unsafes(os.path.join(update_dir, "cbfd.pdf"), replay_buffer_unsafe,1,self.batchsize10,'us10')#us means unsafe
             self.cbfd.save(os.path.join(update_dir, 'cbfd.pth'))
             return deal
 
