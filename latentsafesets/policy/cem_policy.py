@@ -2009,15 +2009,15 @@ class CEMSafeSetPolicy(Policy):
                         elif self.rewrite=='yes':
                             lhse,lhsi=torch.min(cbf_allscbfhorizon, dim=0)#lhse means left hand side elements
                             topkvalues,indices=torch.topk(lhse[:,0],10)
-                            log.info('t10v: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item(),topkvalues[5].item(),topkvalues[6].item(),topkvalues[7].item(),topkvalues[8].item(),topkvalues[9].item()))
+                            log.info('t5v: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item()))
                             #I don't want it to be positive!
-                            log.info('inds: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item(),indices[5].item(),indices[6].item(),indices[7].item(),indices[8].item(),indices[9].item()))
+                            log.info('ind: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item(),indices[5].item(),indices[6].item(),indices[7].item(),indices[8].item(),indices[9].item()))
                             if cbfhorizon>1:
                                 mc1=lhse[:,1]
-                                log.info('t10v1: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(mc1[indices[0].item()].item(),mc1[indices[1].item()].item(),mc1[indices[2].item()].item(),mc1[indices[3].item()].item(),mc1[indices[4].item()].item(),mc1[indices[5].item()].item(),mc1[indices[6].item()].item(),mc1[indices[7].item()].item(),mc1[indices[8].item()].item(),mc1[indices[9].item()].item()))
+                                log.info('t5v1: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(mc1[indices[0].item()].item(),mc1[indices[1].item()].item(),mc1[indices[2].item()].item(),mc1[indices[3].item()].item(),mc1[indices[4].item()].item()))
                                 if cbfhorizon>2:
                                     mc2=lhse[:,2]
-                                    log.info('t10v2: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(mc2[indices[0].item()].item(),mc2[indices[1].item()].item(),mc2[indices[2].item()].item(),mc2[indices[3].item()].item(),mc2[indices[4].item()].item(),mc2[indices[5].item()].item(),mc2[indices[6].item()].item(),mc2[indices[7].item()].item(),mc2[indices[8].item()].item(),mc2[indices[9].item()].item()))
+                                    log.info('t5v2: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(mc2[indices[0].item()].item(),mc2[indices[1].item()].item(),mc2[indices[2].item()].item(),mc2[indices[3].item()].item(),mc2[indices[4].item()].item()))
                             #print('lhse.shape',lhse.shape)#(1000,5)
                             rhse,rhsi=torch.max(onemacbfs, dim=0)#rhsi means right hand side indices
                             #make some difference when alpha<1
@@ -2066,15 +2066,15 @@ class CEMSafeSetPolicy(Policy):
                             #print('that shape!',meancbfallscbfhorizon.shape)#500,3
                             topkvalues,indices=torch.topk(meancbfallscbfhorizon[:,0],10)
                             #print('meancbfallscbfhorizon',meancbfallscbfhorizon)
-                            log.info('t10v: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item(),topkvalues[5].item(),topkvalues[6].item(),topkvalues[7].item(),topkvalues[8].item(),topkvalues[9].item()))
+                            log.info('t5v: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(topkvalues[0].item(),topkvalues[1].item(),topkvalues[2].item(),topkvalues[3].item(),topkvalues[4].item()))
                             #I don't want it to be positive!#t10v means top 10 values!
-                            log.info('inds: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item(),indices[5].item(),indices[6].item(),indices[7].item(),indices[8].item(),indices[9].item()))
+                            log.info('ind: %d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item()))
                             if cbfhorizon>1:#inds means indices
                                 mc1=meancbfallscbfhorizon[:,1]
-                                log.info('t10v1: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(mc1[indices[0].item()].item(),mc1[indices[1].item()].item(),mc1[indices[2].item()].item(),mc1[indices[3].item()].item(),mc1[indices[4].item()].item(),mc1[indices[5].item()].item(),mc1[indices[6].item()].item(),mc1[indices[7].item()].item(),mc1[indices[8].item()].item(),mc1[indices[9].item()].item()))
+                                log.info('t5v1: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(mc1[indices[0].item()].item(),mc1[indices[1].item()].item(),mc1[indices[2].item()].item(),mc1[indices[3].item()].item(),mc1[indices[4].item()].item()))
                                 if cbfhorizon>2:
                                     mc2=meancbfallscbfhorizon[:,2]
-                                    log.info('t10v2: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(mc2[indices[0].item()].item(),mc2[indices[1].item()].item(),mc2[indices[2].item()].item(),mc2[indices[3].item()].item(),mc2[indices[4].item()].item(),mc2[indices[5].item()].item(),mc2[indices[6].item()].item(),mc2[indices[7].item()].item(),mc2[indices[8].item()].item(),mc2[indices[9].item()].item()))
+                                    log.info('t5v2: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(mc2[indices[0].item()].item(),mc2[indices[1].item()].item(),mc2[indices[2].item()].item(),mc2[indices[3].item()].item(),mc2[indices[4].item()].item()))
                         hopetobepositive=meancbfallscbfhorizon - meanonemacbfsrc
                         #cbfdots_violss = torch.sum( meancbfallscbfhorizon< meanonemacbfsrc,# the acbfs is subject to change
                                             #dim=1)  # those that violate the constraints#1000 0,1,2,3,4,5s#to counteract conservativeness, set self.dhdmax
@@ -2093,9 +2093,9 @@ class CEMSafeSetPolicy(Policy):
                         hopetobepositive0=hopetobepositive[:,0]#now it has shape 1000/500
                         bestk,indices=torch.topk(hopetobepositive0,10)#I just choose the safest one! As in this case there will be few safe ones!
                         bestoption=torch.argmax(hopetobepositive0)#I hope by doing this, the old and possibly bad recovery will never bee used!
-                        log.info('b10v: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(bestk[0].item(),bestk[1].item(),bestk[2].item(),bestk[3].item(),bestk[4].item(),bestk[5].item(),bestk[6].item(),bestk[7].item(),bestk[8].item(),bestk[9].item()))
+                        log.info('b5v: %2.4f,%2.4f,%2.4f,%2.4f,%2.4f'%(bestk[0].item(),bestk[1].item(),bestk[2].item(),bestk[3].item(),bestk[4].item()))
                         #I don't want it to be positive!
-                        log.info('inds: %d,%d,%d,%d,%d,%d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item(),indices[5].item(),indices[6].item(),indices[7].item(),indices[8].item(),indices[9].item()))
+                        log.info('ind: %d,%d,%d,%d,%d'%(indices[0].item(),indices[1].item(),indices[2].item(),indices[3].item(),indices[4].item()))
                         #log.info('bestone:%f'%(hopetobepositive0[bestoption]))#this should be consistent with the above line! Sanity check passed!
                         #log.info('not very critical, still trust the recovery action!')
                         actionchosen=action_samples[bestoption]
