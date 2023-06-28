@@ -216,7 +216,7 @@ if __name__ == '__main__':
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255)#
                     action,randflag= policy.actcbfdsquarelatentplanareacher(obs / 255,params['dhz'])#
-                    log.info('action1: %2.4f, action2: %2.4f'%(action[0],action[1]))
+                    log.info('a1: %2.4f, a2: %2.4f'%(action[0],action[1]))
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoal(obs_relative / 255, env.state, tp, fp,#obs / 255, env.state, tp, fp,
                                                                                             #fn, tn, tpc, fpc, fnc, tnc)
                     #action, tp, fp, fn, tn, tpc, fpc, fnc, tnc = policy.actcbfdsquarelatentplananogoaldense(obs / 255, env.state, tp, fp, fn, tn, tpc, fpc, fnc, tnc)#not finished yet!
@@ -344,7 +344,7 @@ if __name__ == '__main__':
                     bzuop=hobs-dtzobs
                     dtznextobs=gradjh2z(znextobs)*dhd
                     bzunop=hnextobs-dtznextobs
-                    log.info('hobs: %2.4f, hnextobs: %2.4f, dtzobs: %2.4f, dtznextobs: %2.4f'%(hobs,hnextobs,dtzobs,dtznextobs))
+                    log.info('ho: %2.4f, hno: %2.4f, dtzo: %2.4f, dtzno: %2.4f'%(hobs,hnextobs,dtzobs,dtznextobs))
                     qzuop=bzuop-dhz
                     qzunop=bzunop-dhz
                     qdiff=ptu.to_numpy(qzunop-qzuop)
@@ -404,8 +404,8 @@ if __name__ == '__main__':
                         lipxqsafe=max(lipxqsafe,slopexqp)
                         gammadyns=min(gammadyns,qzunop)
                         pdnsafe=max(pdnsafe,posdiffnorm)
-                        log.info('p:%d,sxysp:%2.4f,syzsp:%2.4f,szhsp:%2.4f,syhsp:%2.4f,sxhsp:%2.4f,szqsp:%2.4f,syqsp:%2.4f,sxqsp:%2.4f,pdnorm:%2.4f,qzunos:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
-                        log.info('p:%d,lxys:%2.4f,lyzs:%2.4f,lzhs:%2.4f,lyhs:%2.4f,lxhs:%2.4f,lzqs:%2.4f,lyqs:%2.4f,lxqs:%2.4f,pdns:%2.4f,gdyns:%2.4f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))
+                        log.info('p:%d,xysp:%2.4f,yzsp:%2.4f,zhsp:%2.4f,yhsp:%2.4f,xhsp:%2.4f,zqsp:%2.4f,yqsp:%2.4f,xqsp:%2.4f,pdnorm:%2.4f,qzunos:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('p:%d,lxys:%2.4f,lyzs:%2.4f,lzhs:%2.4f,lyhs:%2.4f,lxhs:%2.4f,lzqs:%2.4f,lyqs:%2.4f,lxqs:%2.4f,pdns:%2.4f,gdyns:%2.4f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))#s means slope
                     #elif np.abs(ntodistance)<=0.15 and np.abs(ntodistance)>=0.10:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
                     elif np.abs(ntodistance)<=params['unsafethres'] and np.abs(ntodistance)>=params['unsafethressmall']:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
                         slopexyu[piece]=slopexyp
@@ -418,10 +418,10 @@ if __name__ == '__main__':
                         lipzhunsafe=max(lipzhunsafe,slopezhp)
                         lipyhunsafe=max(lipyhunsafe,slopeyhp)
                         lipxhunsafe=max(lipxhunsafe,slopexhp)
-                        log.info('p:%d,sxyusp:%2.4f,syzusp:%2.4f,szhusp:%2.4f,syhusp:%2.4f,sxhusp:%2.4f,pdnorm:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,posdiffnorm,ntodistance))
-                        log.info('p:%d,lxyus:%2.4f,lyzus:%2.4f,lzhus:%f,lyhus:%2.4f,lxhus:%2.4f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
+                        log.info('p:%d,xyusp:%2.4f,yzusp:%2.4f,zhusp:%2.4f,yhusp:%2.4f,xhusp:%2.4f,pdnorm:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,posdiffnorm,ntodistance))
+                        log.info('p:%d,lxyus:%2.4f,lyzus:%2.4f,lzhus:%2.4f,lyhus:%2.4f,lxhus:%2.4f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
                     else:
-                        log.info('p:%d,sxyp:%2.4f,syzp:%2.4f,szhp:%2.4f,syhp:%2.4f,sxhp:%2.4f,szqp:%2.4f,syqp:%2.4f,sxqp:%2.4f,pdnorm:%2.4f,qzuno:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('p:%d,xyp:%2.4f,yzp:%2.4f,zhp:%2.4f,yhp:%2.4f,xhp:%2.4f,zqp:%2.4f,yqp:%2.4f,xqp:%2.4f,pdnorm:%2.4f,qzuno:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
                         log.info('p:%d,lxy:%2.4f,lyz:%2.4f,lzh:%2.4f,lyh:%2.4f,lxh:%2.4f,lzq:%2.4f,lyq:%2.4f,lxq:%2.4f,pdn:%2.4f,gdyn:%2.4f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh,lipzq,lipyq,lipxq,pdn,gammadyn))
                     piece+=1
 
@@ -468,8 +468,8 @@ if __name__ == '__main__':
                     #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d,s_x:%f,s_y:%f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc,ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand))
                     #the evaluation phase ended
                     '''
-                    log.info('s_x:%2.4f,s_y:%2.4f,c_viol:%d,c_viol_cbf:%d,c_viol_cbf2:%d,a_rand:%d,cbfpredict:%2.4f' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand,cbfpredict))
-                    if done:
+                    log.info('sx:%2.4f,sy:%2.4f,cv:%d,cv_cbf:%d,cv_cbf2:%d,ar:%d,cp:%2.4f' % (ns[0],ns[1],constr_viol,constr_viol_cbf,constr_viol_cbf2,action_rand,cbfpredict))
+                    if done:#ar for action random flag, cp for cbf predict
                         break
                 transitions[-1]['done'] = 1#change the last transition to success/done!
                 traj_reward = sum(traj_rews)#total reward, should be >=-100/-150
@@ -485,7 +485,7 @@ if __name__ == '__main__':
                 pu.make_movie(movie_traj, file=os.path.join(update_dir, 'trajectory%d.gif' % j))
                 #pu.make_movie_relative(movie_traj_relative, file=os.path.join(update_dir, 'trajectory%d_relative.gif' % j))
 
-                log.info('    Cost: %d, violation: %d, cv_cbf: %d, cv_cbf2: %d' % (traj_reward,constr_viol,constr_viol_cbf,constr_viol_cbf2))#see it in the terminal!
+                log.info('    Cost: %d, vio: %d, cv_cbf: %d, cv_cbf2: %d' % (traj_reward,constr_viol,constr_viol_cbf,constr_viol_cbf2))#see it in the terminal!
                 #log.info('tp:%d,fp:%d,fn:%d,tn:%d,tpc:%d,fpc:%d,fnc:%d,tnc:%d' % (tp, fp, fn, tn, tpc, fpc, fnc, tnc))
                 in_ss = 0
                 rtg = 0
