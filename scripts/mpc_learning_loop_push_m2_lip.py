@@ -344,7 +344,7 @@ if __name__ == '__main__':
                     bzuop=hobs-dtzobs
                     dtznextobs=gradjh2z(znextobs)*dhd
                     bzunop=hnextobs-dtznextobs
-                    log.info('ho: %2.4f, hno: %2.4f, dtzo: %2.4f, dtzno: %2.4f'%(hobs,hnextobs,dtzobs,dtznextobs))
+                    log.info('ho:%2.4f, hno:%2.4f, dtzo:%2.4f, dtzno:%2.4f'%(hobs,hnextobs,dtzobs,dtznextobs))
                     qzuop=bzuop-dhz
                     qzunop=bzunop-dhz
                     qdiff=ptu.to_numpy(qzunop-qzuop)
@@ -404,8 +404,11 @@ if __name__ == '__main__':
                         lipxqsafe=max(lipxqsafe,slopexqp)
                         gammadyns=min(gammadyns,qzunop)
                         pdnsafe=max(pdnsafe,posdiffnorm)
-                        log.info('p:%d,xysp:%2.4f,yzsp:%2.4f,zhsp:%2.4f,yhsp:%2.4f,xhsp:%2.4f,zqsp:%2.4f,yqsp:%2.4f,xqsp:%2.4f,pdnorm:%2.4f,qzunos:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
-                        log.info('p:%d,lxys:%2.4f,lyzs:%2.4f,lzhs:%2.4f,lyhs:%2.4f,lxhs:%2.4f,lzqs:%2.4f,lyqs:%2.4f,lxqs:%2.4f,pdns:%2.4f,gdyns:%2.4f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))#s means slope
+                        if posdiffnorm<params['pdnthres']:#
+                            log.info('pdnorm:%2.4f,qzunos:%2.4f,ntod:%2.4f' % (posdiffnorm,qzunop,ntodistance))
+                        else:
+                            log.info('xysp:%2.4f,yzsp:%2.4f,zhsp:%2.4f,yhsp:%2.4f,xhsp:%2.4f,zqsp:%2.4f,yqsp:%2.4f,xqsp:%2.4f,pdnorm:%2.4f,qzunos:%2.4f,ntod:%2.4f' % (slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('p%d,lxys:%2.4f,lyzs:%2.4f,lzhs:%2.4f,lyhs:%2.4f,lxhs:%2.4f,lzqs:%2.4f,lyqs:%2.4f,lxqs:%2.4f,pdns:%2.4f,gdyns:%2.4f' % (piece,lipxysafe,lipyzsafe,lipzhsafe,lipyhsafe,lipxhsafe,lipzqsafe,lipyqsafe,lipxqsafe,pdnsafe,gammadyns))#s means slope
                     #elif np.abs(ntodistance)<=0.15 and np.abs(ntodistance)>=0.10:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
                     elif np.abs(ntodistance)<=params['unsafethres'] and np.abs(ntodistance)>=params['unsafethressmall']:##np.abs(ntodistance)<=0.10:#unsafe#ntodistance<=0.06:#it is good to use distance to judge safety!
                         slopexyu[piece]=slopexyp
@@ -418,11 +421,17 @@ if __name__ == '__main__':
                         lipzhunsafe=max(lipzhunsafe,slopezhp)
                         lipyhunsafe=max(lipyhunsafe,slopeyhp)
                         lipxhunsafe=max(lipxhunsafe,slopexhp)
-                        log.info('p:%d,xyusp:%2.4f,yzusp:%2.4f,zhusp:%2.4f,yhusp:%2.4f,xhusp:%2.4f,pdnorm:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,posdiffnorm,ntodistance))
-                        log.info('p:%d,lxyus:%2.4f,lyzus:%2.4f,lzhus:%2.4f,lyhus:%2.4f,lxhus:%2.4f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
+                        if posdiffnorm<params['pdnthres']:#
+                            log.info('pdnorm:%2.4f,ntod:%2.4f' % (posdiffnorm,ntodistance))
+                        else:
+                            log.info('xyusp:%2.4f,yzusp:%2.4f,zhusp:%2.4f,yhusp:%2.4f,xhusp:%2.4f,pdnorm:%2.4f,ntod:%2.4f' % (slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,posdiffnorm,ntodistance))
+                        log.info('p%d,lxyus:%2.4f,lyzus:%2.4f,lzhus:%2.4f,lyhus:%2.4f,lxhus:%2.4f' % (piece,lipxyunsafe,lipyzunsafe,lipzhunsafe,lipyhunsafe,lipxhunsafe))
                     else:
-                        log.info('p:%d,xyp:%2.4f,yzp:%2.4f,zhp:%2.4f,yhp:%2.4f,xhp:%2.4f,zqp:%2.4f,yqp:%2.4f,xqp:%2.4f,pdnorm:%2.4f,qzuno:%2.4f,ntod:%2.4f' % (piece,slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
-                        log.info('p:%d,lxy:%2.4f,lyz:%2.4f,lzh:%2.4f,lyh:%2.4f,lxh:%2.4f,lzq:%2.4f,lyq:%2.4f,lxq:%2.4f,pdn:%2.4f,gdyn:%2.4f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh,lipzq,lipyq,lipxq,pdn,gammadyn))
+                        if posdiffnorm<params['pdnthres']:#
+                            log.info('pdnorm:%2.4f,qzuno:%2.4f,ntod:%2.4f' % (posdiffnorm,qzunop,ntodistance))
+                        else:
+                            log.info('xyp:%2.4f,yzp:%2.4f,zhp:%2.4f,yhp:%2.4f,xhp:%2.4f,zqp:%2.4f,yqp:%2.4f,xqp:%2.4f,pdnorm:%2.4f,qzuno:%2.4f,ntod:%2.4f' % (slopexyp,slopeyzp,slopezhp,slopeyhp,slopexhp,slopezqp,slopeyqp,slopexqp,posdiffnorm,qzunop,ntodistance))
+                        log.info('p%d,lxy:%2.4f,lyz:%2.4f,lzh:%2.4f,lyh:%2.4f,lxh:%2.4f,lzq:%2.4f,lyq:%2.4f,lxq:%2.4f,pdn:%2.4f,gdyn:%2.4f' % (piece,lipxy,lipyz,lipzh,lipyh,lipxh,lipzq,lipyq,lipxq,pdn,gammadyn))
                     piece+=1
 
                     obs = next_obs#don't forget this step!
