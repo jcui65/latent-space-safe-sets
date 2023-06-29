@@ -32,6 +32,8 @@ class PushEnv(BaseMujocoEnv):
         parent_params = super()._default_hparams()#It's calling the _default_hparams() from its parent, BaseMujocoEnv
         envs_folder = os.path.dirname(os.path.abspath(__file__))#this is only for the next line!
         self.reset_xml = os.path.join(envs_folder, 'push_env.xml')#I know this!
+        #self.reset_xml = os.path.join(envs_folder, 'push_envm1.xml')#I am going to change this!#I know this!
+        #self.reset_xml = os.path.join(envs_folder, 'push_envm1r.xml')#I am going to change this!#I know this!
         super().__init__(self.reset_xml, parent_params)#This's calling the __init__() from its parent, BaseMujocoEnv
         self._adim = 2
         self.substeps = 500
@@ -72,6 +74,7 @@ class PushEnv(BaseMujocoEnv):
         state = self.sim.get_state()#where is this? See its parents!
         pos = np.copy(state.qpos[:])#what is this qpos?
         pos[6:] = self.object_reset_poses().ravel()#around 257#ravel means changing into 1 dimension so it goes from (3,7) to 21
+        #print('pos',pos)
         state.qpos[:] = pos#also, the above object_reset_pose means that, at the first/0th frame, it is everything hold together
         self.sim.set_state(state)
         self._num_steps = 0
@@ -270,8 +273,8 @@ class PushEnv(BaseMujocoEnv):
         else:
             x = np.mean(self.obj_x_range)#which is -0.03
             y1 = 0.
-            y0 = y1 - np.mean(self.obj_y_dist_range)
-            y2 = y1 + np.mean(self.obj_y_dist_range)
+            y0 = y1 -np.mean(self.obj_y_dist_range)#y1 -4* np.mean(self.obj_y_dist_range)
+            y2 = y1 + np.mean(self.obj_y_dist_range)#y1 + 4*np.mean(self.obj_y_dist_range)
             new_poses[0, 0:2] = np.array([y0, x])#what is x or y? row or column?
             new_poses[1, 0:2] = np.array([y1, x])
             new_poses[2, 0:2] = np.array([y2, x])
